@@ -25,6 +25,14 @@ Decisions still pending (deferred deliberately; see spec Non-goals & deliberate 
 
 `affects:` globs are deliberately empty on all three articles — code does not yet exist. The same-task rule will attach globs as files land.
 
+## [2026-05-20] tooling: linting + type-checking + hooks
+
+Added ruff (linter + formatter), mypy (strict type-checking), pre-commit hooks for ruff/mypy. No knowledge articles changed yet — this is pure tooling, no behaviour, model, or architecture.
+
+Also converted the broad natural-language CLAUDE.md mapping row for "Date type / inference_kind / reign-table normalization" to a glob pattern (`pipeline/**/date*.py` etc.) to eliminate false-positive drift-check matches from tooling files (validate_articles.py, scripts/validate-articles) that contain the word "date" in a frontmatter-validation context.
+
+`no knowledge impact: tooling only.`
+
 ## [2026-05-20] living-docs: adopted methodology via installer
 
 Ran `install.sh` from `mpklu/living-doc`. Greenfield templates installed:

@@ -76,13 +76,9 @@ def parse_frontmatter_affects(article_path: Path) -> list[str]:
         if not in_affects and stripped.startswith("affects:"):
             # Inline form `affects: [a, b]` (rare; we ship the block form,
             # but accept either for robustness).
-            inline = stripped[len("affects:"):].strip()
+            inline = stripped[len("affects:") :].strip()
             if inline.startswith("[") and inline.endswith("]"):
-                items = [
-                    s.strip().strip("'\"")
-                    for s in inline[1:-1].split(",")
-                    if s.strip()
-                ]
+                items = [s.strip().strip("'\"") for s in inline[1:-1].split(",") if s.strip()]
                 affects.extend(items)
                 continue
             in_affects = True
@@ -119,9 +115,7 @@ def parse_articles_affects(knowledge_dir: str) -> list[MappingRow]:
             continue
         article_str = str(article).replace("\\", "/")
         for glob in affects:
-            rows.append(
-                MappingRow(code_pattern=glob, article_path=article_str)
-            )
+            rows.append(MappingRow(code_pattern=glob, article_path=article_str))
     return rows
 
 
@@ -141,7 +135,7 @@ def parse_article_mapping(claude_md_text: str) -> list[MappingRow]:
     lines = claude_md_text.splitlines()
 
     in_table = False
-    for i, line in enumerate(lines):
+    for _i, line in enumerate(lines):
         # Detect the header row of the mapping table.
         lower = line.lower()
         if "when you change" in lower and "update this article" in lower:
@@ -235,7 +229,7 @@ def _glob_to_regex(pattern: str) -> str:
     regex = ""
     i = 0
     while i < len(pattern):
-        if pattern[i:i + 2] == "**":
+        if pattern[i : i + 2] == "**":
             # If a `/` follows, treat `**/` as a single token meaning
             # "zero or more path segments" (so `a/**/b` matches `a/b`
             # and `a/x/y/b`). Otherwise emit a plain `.*`.
@@ -266,9 +260,7 @@ def _glob_to_regex(pattern: str) -> str:
     return f"^{regex}$"
 
 
-def code_pattern_matches_files(
-    code_pattern: str, changed_files: list[str]
-) -> list[str]:
+def code_pattern_matches_files(code_pattern: str, changed_files: list[str]) -> list[str]:
     """Determine which changed files match a mapping row's code pattern.
 
     The pattern can be:
@@ -284,8 +276,12 @@ def code_pattern_matches_files(
     """
     pattern = code_pattern.strip().strip("`")
 
-    looks_like_path = "/" in pattern or "*" in pattern or pattern.endswith(
-        (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".rb", ".md", ".yml", ".yaml")
+    looks_like_path = (
+        "/" in pattern
+        or "*" in pattern
+        or pattern.endswith(
+            (".py", ".ts", ".tsx", ".js", ".go", ".rs", ".rb", ".md", ".yml", ".yaml")
+        )
     )
 
     if looks_like_path:
@@ -329,9 +325,7 @@ def check_drift(
             continue
         # Normalize article path; allow it to be relative or knowledge-rooted.
         article = row.article_path
-        if not article.startswith(knowledge_dir + "/") and not article.startswith(
-            "/"
-        ):
+        if not article.startswith(knowledge_dir + "/") and not article.startswith("/"):
             article = f"{knowledge_dir}/{article}"
         if article in changed_set or article.lstrip("/") in changed_set:
             continue
@@ -357,23 +351,20 @@ def format_report(violations: list[dict], rows_total: int) -> str:
     lines = [
         "⚠️ **Living Docs drift check — same-task rule violations detected.**",
         "",
-        f"This PR touches code paths listed in `CLAUDE.md`'s article-mapping "
-        f"table, but does not update the corresponding articles. The "
-        f"living-documentation methodology requires articles to be updated "
-        f"in the **same task** as the code change.",
+        "This PR touches code paths listed in `CLAUDE.md`'s article-mapping "
+        "table, but does not update the corresponding articles. The "
+        "living-documentation methodology requires articles to be updated "
+        "in the **same task** as the code change.",
         "",
         "### Violations",
         "",
     ]
     for v in violations:
-        lines.append(f"- **{v['code_pattern']}** → expected article: "
-                     f"`{v['article_path']}`")
+        lines.append(f"- **{v['code_pattern']}** → expected article: " f"`{v['article_path']}`")
         for f in v["matched_files"][:5]:
             lines.append(f"    - changed file: `{f}`")
         if len(v["matched_files"]) > 5:
-            lines.append(
-                f"    - ... and {len(v['matched_files']) - 5} more changed file(s)"
-            )
+            lines.append(f"    - ... and {len(v['matched_files']) - 5} more changed file(s)")
     lines.extend(
         [
             "",
@@ -446,7 +437,7 @@ def run_check(
         return {
             "status": "no_mapping",
             "report": (
-                "ℹ️ Living Docs drift check found no article-mapping (no "
+                "ℹ️ Living Docs drift check found no article-mapping (no "  # noqa: RUF001
                 f"`affects:` frontmatter under `{knowledge_dir}/`, and no "
                 f"mapping table in `{claude_md_path}`). Either the project "
                 "hasn't started writing articles yet (brownfield retrofit, "
@@ -480,14 +471,8 @@ def main() -> int:
     """GitHub Action entry — env-var driven, emits to GITHUB_OUTPUT."""
     claude_md_path = os.environ.get("CLAUDE_MD_PATH", "CLAUDE.md")
     knowledge_dir = os.environ.get("KNOWLEDGE_DIR", "knowledge")
-    base_ref = (
-        os.environ.get("BASE_REF")
-        or os.environ.get("GITHUB_BASE_REF")
-        or "main"
-    )
-    fail_on_violation = (
-        os.environ.get("FAIL_ON_VIOLATION", "true").strip().lower() == "true"
-    )
+    base_ref = os.environ.get("BASE_REF") or os.environ.get("GITHUB_BASE_REF") or "main"
+    fail_on_violation = os.environ.get("FAIL_ON_VIOLATION", "true").strip().lower() == "true"
 
     if not Path(claude_md_path).exists():
         print(
@@ -524,23 +509,28 @@ def cli_main(argv: list[str] | None = None) -> int:
             "intended for local pre-commit hooks."
         ),
     )
-    parser.add_argument("--claude-md", default="CLAUDE.md",
-                        help="path to CLAUDE.md (default: CLAUDE.md)")
-    parser.add_argument("--knowledge-dir", default="knowledge",
-                        help="path to knowledge/ directory (default: knowledge)")
-    parser.add_argument("--base-ref", default=None,
-                        help="git ref to diff against (default: main, or "
-                             "$BASE_REF / $GITHUB_BASE_REF if set)")
-    parser.add_argument("--warn-only", action="store_true",
-                        help="exit 0 even if violations are found "
-                             "(default: exit 1 on violations)")
+    parser.add_argument(
+        "--claude-md", default="CLAUDE.md", help="path to CLAUDE.md (default: CLAUDE.md)"
+    )
+    parser.add_argument(
+        "--knowledge-dir",
+        default="knowledge",
+        help="path to knowledge/ directory (default: knowledge)",
+    )
+    parser.add_argument(
+        "--base-ref",
+        default=None,
+        help="git ref to diff against (default: main, or " "$BASE_REF / $GITHUB_BASE_REF if set)",
+    )
+    parser.add_argument(
+        "--warn-only",
+        action="store_true",
+        help="exit 0 even if violations are found " "(default: exit 1 on violations)",
+    )
     args = parser.parse_args(argv)
 
     base_ref = (
-        args.base_ref
-        or os.environ.get("BASE_REF")
-        or os.environ.get("GITHUB_BASE_REF")
-        or "main"
+        args.base_ref or os.environ.get("BASE_REF") or os.environ.get("GITHUB_BASE_REF") or "main"
     )
 
     result = run_check(args.claude_md, args.knowledge_dir, base_ref)

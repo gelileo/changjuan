@@ -18,8 +18,8 @@ import re
 import sys
 from pathlib import Path
 
-
 # -- Frontmatter parser (richer than drift_check's affects-only parser) --
+
 
 def parse_frontmatter(article_path: Path) -> dict | None:
     """Return the frontmatter as a dict, or None if absent / malformed.
@@ -69,8 +69,7 @@ def parse_frontmatter(article_path: Path) -> dict | None:
         elif rest.startswith("[") and rest.endswith("]"):
             inner = rest[1:-1].strip()
             items = (
-                [_strip_quotes(s.strip()) for s in inner.split(",") if s.strip()]
-                if inner else []
+                [_strip_quotes(s.strip()) for s in inner.split(",") if s.strip()] if inner else []
             )
             data[key] = items
         elif rest in ("true", "false"):
@@ -81,9 +80,7 @@ def parse_frontmatter(article_path: Path) -> dict | None:
 
 
 def _strip_quotes(s: str) -> str:
-    if (s.startswith("'") and s.endswith("'")) or (
-        s.startswith('"') and s.endswith('"')
-    ):
+    if (s.startswith("'") and s.endswith("'")) or (s.startswith('"') and s.endswith('"')):
         return s[1:-1]
     return s
 
@@ -99,9 +96,7 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MD_RE = re.compile(r".*\.md$")
 
 
-def validate_frontmatter(
-    data: dict, article_path: Path, knowledge_root: Path
-) -> list[str]:
+def validate_frontmatter(data: dict, article_path: Path, knowledge_root: Path) -> list[str]:
     """Return a list of error messages. Empty list means valid."""
     errors: list[str] = []
 
@@ -113,20 +108,13 @@ def validate_frontmatter(
 
     if "type" in data and isinstance(data["type"], str):
         if data["type"] not in ENUM_TYPE:
-            errors.append(
-                f"type '{data['type']}' not in {{{', '.join(ENUM_TYPE)}}}"
-            )
+            errors.append(f"type '{data['type']}' not in {{{', '.join(ENUM_TYPE)}}}")
     if "status" in data and isinstance(data["status"], str):
         if data["status"] not in ENUM_STATUS:
-            errors.append(
-                f"status '{data['status']}' not in "
-                f"{{{', '.join(ENUM_STATUS)}}}"
-            )
+            errors.append(f"status '{data['status']}' not in " f"{{{', '.join(ENUM_STATUS)}}}")
     if "updated" in data and isinstance(data["updated"], str):
         if not DATE_RE.match(data["updated"]):
-            errors.append(
-                f"updated '{data['updated']}' must match YYYY-MM-DD"
-            )
+            errors.append(f"updated '{data['updated']}' must match YYYY-MM-DD")
     if "load_bearing" in data and not isinstance(data["load_bearing"], bool):
         errors.append("load_bearing must be a boolean")
     if "affects" in data:
@@ -145,9 +133,7 @@ def validate_frontmatter(
                 # Check that the referenced article actually exists.
                 ref_path = knowledge_root / ref
                 if not ref_path.exists():
-                    errors.append(
-                        f"reference '{ref}' not found at {ref_path}"
-                    )
+                    errors.append(f"reference '{ref}' not found at {ref_path}")
     return errors
 
 
@@ -201,11 +187,13 @@ def cli_main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
-        "--knowledge-dir", default="knowledge",
+        "--knowledge-dir",
+        default="knowledge",
         help="path to knowledge/ directory (default: knowledge)",
     )
     parser.add_argument(
-        "--json", action="store_true",
+        "--json",
+        action="store_true",
         help="emit machine-readable JSON instead of human report",
     )
     args = parser.parse_args(argv)
@@ -218,10 +206,7 @@ def cli_main(argv: list[str] | None = None) -> int:
             print(f"⚠️ Skipped: {result['skipped_reason']}")
             return 0
         if result["total_errors"] == 0:
-            print(
-                f"✅ All {result['files_checked']} article(s) have valid "
-                f"frontmatter."
-            )
+            print(f"✅ All {result['files_checked']} article(s) have valid " f"frontmatter.")
             return 0
         print(
             f"⚠️ Frontmatter validation: {result['total_errors']} "

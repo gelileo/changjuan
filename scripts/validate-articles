@@ -38,7 +38,8 @@ def main() -> int:
     here = Path(__file__).resolve()
     repo_root = _find_repo_root(here)
     sys.path.insert(0, str(repo_root / "actions" / "drift-check"))
-    import validate_articles  # noqa: E402
+    import validate_articles
+
     return validate_articles.cli_main(sys.argv[1:])
 
 
