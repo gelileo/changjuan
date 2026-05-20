@@ -169,6 +169,18 @@ Created `pipeline/stage9_export.py` and `concepts/pipeline/export-contract.md`. 
 
 Articles created: `concepts/pipeline/export-contract.md` (new — describes snapshot strategy, manifest contents, candidate_* prefix stripping, schema_version v1).
 
+## [2026-05-20] Phase 1 complete — deterministic foundation in place
+
+The full deterministic ETL skeleton wires end-to-end. `tests/integration/test_roundtrip.py` exercises: ingest → chunk → seed synthetic candidates → load (with field-level merge semantics) → export (manifest + canonical-only snapshot). The pipeline is ready for stage 3 (LLM extraction) in Phase 2.
+
+Tables in `changjuan.sqlite`: persons, person_variants, states, state_capitals, places, events, event_participants, event_places, event_relations, person_relations, person_states, entity_citations, candidate_* (9 staging tables), conflicts, audit_log, pipeline_runs, llm_cache, merge_candidates, qa_samples. Plus the `field_history` view.
+
+CLI verbs working: `changjuan ingest`, `changjuan chunk`, `changjuan load <pipeline_run_id>`, `changjuan export <version>`.
+
+Articles updated this phase: knowledge-graph.md, architecture.md, dates-and-reigns.md (new), cli.md (new), with affects globs covering every file in `pipeline/`.
+
+Next phase: golden-chapter annotation + stage 3 extraction prompt + LLM client + sampling QA harness.
+
 ## [2026-05-20] cli: typer-based CLI scaffold (ingest/chunk/load/export)
 
 Added `pipeline/cli.py` with four subcommands via `typer.Typer()`. Each command takes `--repo-root` for non-cwd execution. `ingest` exits 1 with a clear message when the corpus file is absent. `load` requires a `pipeline_run_id` positional so promotion is always scoped to a specific run. `export` requires a `version` positional.
