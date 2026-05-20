@@ -49,6 +49,8 @@ Stage tests that require real-looking source files (e.g., ingest stages that rea
 
 Real-corpus smoke tests use `@pytest.mark.skipif` against the `corpora/` symlink so they are silently skipped when the upstream corpus is not present locally.
 
+Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into a `tmp_path`-based database before exercising `chunk_documents`.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

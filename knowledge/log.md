@@ -67,6 +67,12 @@ Created the immutable source-side schema: `documents` (one per chapter), `chunks
 
 Articles touched: `concepts/data-model/knowledge-graph.md` (+ affects glob for the schema file).
 
+## [2026-05-20] stage 2: paragraph-aware chunking with overlap
+
+Implemented `pipeline.stage2_chunk.chunk_documents`. Chunks accumulate paragraphs up to `chunk_target_chars` (default 1800), then start a new chunk that overlaps the prior chunk's tail by ~`chunk_overlap_chars` (default 200) characters. No chunk splits a paragraph mid-text. Chunk ids are deterministic `chk:<doc_id>:<paragraph_start>` so citations stay stable across re-runs. SHA-256 (first 16 chars) on chunk text in `hash` for LLM-cache keying in Phase 2.
+
+Articles touched: `concepts/pipeline/architecture.md` (+ stage2_chunk.py to affects).
+
 ## [2026-05-20] stage 1: 108-chapter sanity test wired up
 
 Added a guard test that ingests the real upstream 东周列国志 (via the `corpora/dongzhoulieguozhi` symlink) and asserts exactly 108 chapter rows land. Skipped automatically if the corpus symlink is missing. This is our canary: when upstream changes shape, this fires before silent data loss.

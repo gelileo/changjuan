@@ -11,6 +11,7 @@ references:
 affects:
   - pipeline/config.py
   - pipeline/stage1_ingest.py
+  - pipeline/stage2_chunk.py
 ---
 
 ## What this is
