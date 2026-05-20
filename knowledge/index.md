@@ -19,6 +19,12 @@ For the underlying design spec, see [`docs/superpowers/specs/2026-05-20-changjua
 | --- | --- | --- |
 | [Automation-first pipeline architecture](concepts/pipeline/architecture.md) | 9-stage sequential ETL with three LLM stages (extract, link, cross-canon). Load-bearing principle: pipeline produces a complete usable graph without curation; curation is retrospective, never a gate. | 2026-05-20 |
 
+### runtime
+
+| Article | Summary | Updated |
+| --- | --- | --- |
+| [changjuan CLI commands](concepts/runtime/cli.md) | Typer-based CLI with one subcommand per pipeline stage: `ingest`, `chunk`, `load`, `export`. Each takes `--repo-root` for non-cwd execution. | 2026-05-20 |
+
 ### verification
 
 | Article | Summary | Updated |

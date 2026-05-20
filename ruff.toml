@@ -7,3 +7,4 @@ ignore = []
 
 [lint.per-file-ignores]
 "tests/**" = ["B011", "B017"]
+"pipeline/cli.py" = ["B008"]

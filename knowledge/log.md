@@ -169,6 +169,14 @@ Created `pipeline/stage9_export.py` and `concepts/pipeline/export-contract.md`. 
 
 Articles created: `concepts/pipeline/export-contract.md` (new — describes snapshot strategy, manifest contents, candidate_* prefix stripping, schema_version v1).
 
+## [2026-05-20] cli: typer-based CLI scaffold (ingest/chunk/load/export)
+
+Added `pipeline/cli.py` with four subcommands via `typer.Typer()`. Each command takes `--repo-root` for non-cwd execution. `ingest` exits 1 with a clear message when the corpus file is absent. `load` requires a `pipeline_run_id` positional so promotion is always scoped to a specific run. `export` requires a `version` positional.
+
+Why separate subcommands over a single `run` command: the stage-checkpointed model benefits from independent re-runnable steps. A mega-command would hide per-stage cost profiles and make resumption harder.
+
+Articles created: `concepts/runtime/cli.md` (new — describes all four subcommands, design rationale, first commitments). Articles touched: `knowledge/index.md` (added runtime section).
+
 ## [2026-05-20] pipeline: LLM cache primitives (Phase 1 stub)
 
 Added `pipeline/llm_cache.py` with `cache_key`, `put`, and `get`. Phase 1 builds the cache primitives without any LLM client — they operate against the `llm_cache` table created by `CANONICAL_SCHEMA`. `cache_key` produces a stable SHA-256 hex digest keyed by `(model, prompt_template_version, normalized_request_json)`. `put` inserts with `ON CONFLICT (key_hash) DO NOTHING`. `get` returns the deserialized response dict or `None` on miss. Phase 2 (stage 3 extraction) wires these around its LLM calls.
