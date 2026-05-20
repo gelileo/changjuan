@@ -41,3 +41,29 @@ def test_zhou_xiangwang_year_20() -> None:
     d = parse_date("周襄王二十年")
     assert d["year_bce"] == 632
     assert d["inference_kind"] == "explicit_reign_zhou"
+
+
+def test_era_only_chunqiu_late() -> None:
+    d = parse_date("春秋末")
+    assert d["inference_kind"] == "era_only"
+    assert d["uncertainty"] == "range"
+    assert d["era"] == "春秋"
+    year = d["year_bce"]
+    assert year is not None
+    assert (
+        476 <= year <= 510
+    )  # midpoint of "late 春秋" (plan typo corrected: 500<=x<=480 was impossible)
+    assert d["year_bce_end"] is not None
+
+
+def test_era_only_zhanguo_early() -> None:
+    d = parse_date("战国初")
+    assert d["era"] == "战国"
+    assert d["inference_kind"] == "era_only"
+
+
+def test_unknown_passthrough() -> None:
+    d = parse_date("某时")
+    assert d["inference_kind"] == "unknown"
+    assert d["year_bce"] is None
+    assert d["original"] == "某时"

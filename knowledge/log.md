@@ -114,3 +114,9 @@ Articles touched: `concepts/data-model/dates-and-reigns.md` (added `parse_date` 
 Extended `parse_date` with `_try_zhou` handling `周X王N年` for all 13 tabulated Zhou kings (平王 through 敬王, 770–476 BCE). Refactored Lu logic into `_try_lu` helper returning `DateDict | None`.
 
 Articles touched: `concepts/data-model/dates-and-reigns.md` (Zhou parser surface note); `concepts/verification/testing.md` (Zhou test note).
+
+## [2026-05-20] dates: era_only ranges + unknown fallback
+
+Extended `parse_date` with `_try_era` (ten era patterns covering 春秋/战国 sub-periods) and `_unknown` fallback. `parse_date` no longer raises `NotImplementedError` — unrecognized inputs return `inference_kind="unknown"`, `year_bce=None`. Note: the plan's test assertion `500 <= year_bce <= 480` for 春秋末 was a typo (the chained comparison is impossible); corrected to `476 <= year_bce <= 510` (matching the configured range midpoint 493).
+
+Articles touched: `concepts/data-model/dates-and-reigns.md` (updated dispatch order, never-raises contract); `concepts/verification/testing.md` (era/unknown test notes).

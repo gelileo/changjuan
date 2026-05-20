@@ -114,11 +114,53 @@ def _try_zhou(original: str) -> DateDict | None:
     )
 
 
+_ERA_PATTERNS: list[tuple[re.Pattern[str], tuple[str, int, int]]] = [
+    (re.compile(r"^春秋初$"), ("春秋", 770, 720)),
+    (re.compile(r"^春秋早期$"), ("春秋", 770, 700)),
+    (re.compile(r"^春秋中期$"), ("春秋", 700, 600)),
+    (re.compile(r"^春秋末$"), ("春秋", 510, 476)),
+    (re.compile(r"^春秋晚期$"), ("春秋", 550, 476)),
+    (re.compile(r"^战国初$"), ("战国", 475, 430)),
+    (re.compile(r"^战国早期$"), ("战国", 475, 400)),
+    (re.compile(r"^战国中期$"), ("战国", 400, 300)),
+    (re.compile(r"^战国末$"), ("战国", 260, 221)),
+    (re.compile(r"^战国晚期$"), ("战国", 300, 221)),
+]
+
+
+def _try_era(original: str) -> DateDict | None:
+    for pat, (era, start, end) in _ERA_PATTERNS:
+        if pat.match(original):
+            return DateDict(
+                year_bce=(start + end) // 2,
+                year_bce_end=end,
+                uncertainty="range",
+                original=original,
+                era=era,
+                inference_kind="era_only",
+            )
+    return None
+
+
+def _unknown(original: str) -> DateDict:
+    return DateDict(
+        year_bce=None,
+        uncertainty="point",
+        original=original,
+        era=None,
+        inference_kind="unknown",
+    )
+
+
 def parse_date(original: str) -> DateDict:
-    """Parse a date string. Returns the structured Date dict."""
+    """Parse a date string. Returns the structured Date dict.
+
+    Never raises — returns inference_kind='unknown' for unrecognized inputs.
+    """
     if (d := _try_lu(original)) is not None:
         return d
     if (d := _try_zhou(original)) is not None:
         return d
-    # Subsequent tasks add relative, era_only, unknown
-    raise NotImplementedError(f"parse_date: no parser for {original!r}")
+    if (d := _try_era(original)) is not None:
+        return d
+    return _unknown(original)
