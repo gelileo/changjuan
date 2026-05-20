@@ -30,7 +30,9 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 
 ## First commitments (true once code lands)
 
-- SQLite schema in `pipeline/schemas/sql/` and loader in `pipeline/stage7_load.py`. Tables enumerated in the design spec §5.
+- SQLite schema in `pipeline/schemas/canonical_schema.sql` and loader in `pipeline/stage7_load.py`. Tables enumerated in the design spec §5. Schema is split into two committed parts: entity + relation tables (Task 9) and candidate staging + bookkeeping + `field_history` view (Task 10).
+- Candidate staging tables (`candidate_persons`, `candidate_events`, etc.) are the unvetted extractor output; stage 7 merges them into canonical tables with full conflict detection.
+- `audit_log` stores field-level changes as `{value, confidence}` JSON in `after_json`; the `field_history` view reconstructs per-field history without a redundant blob on entity rows. Index on `(entity_kind, entity_id, field)` keeps the view fast.
 - Person identity rule: `canonical_name` + `variants[]` with `kind ∈ {本名, 字, 谥号, 封号, 别名}`.
 - Every relation row carries its own `citation_id`, `confidence`, `provenance` — not just entities.
 - Date type: `{year_bce, uncertainty (point|range|circa), year_bce_end?, original, era, inference_kind}`.

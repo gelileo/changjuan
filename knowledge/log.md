@@ -90,3 +90,9 @@ Articles touched: `concepts/pipeline/architecture.md` (added `pipeline/stage1_in
 Added entity tables (persons, person_variants, states, state_capitals, places, events) and relation tables (event_participants, event_places, event_relations, person_relations, person_states, entity_citations) per spec §5. `person_relations.kind` includes `clan_member` — the deferred-Family lever. Every row carries `confidence`, `provenance ∈ {auto, curated}`, `pipeline_run_id` for traceability.
 
 Articles touched: `concepts/data-model/knowledge-graph.md` (+ canonical_schema.sql to affects); `concepts/verification/testing.md` (+ canonical schema tests section).
+
+## [2026-05-20] schema: changjuan.sqlite — candidate, bookkeeping, field_history view
+
+Added candidate_* staging tables (per spec §7 — re-extraction safety), bookkeeping (conflicts, audit_log with the {value, confidence} field-level shape, pipeline_runs with stats_schema_version, llm_cache, merge_candidates, qa_samples), and the `field_history` view that reconstructs per-field history from audit_log without a redundant JSON blob on entity rows. Index on `audit_log(entity_kind, entity_id, field)` keeps the view fast.
+
+Articles touched: `concepts/data-model/knowledge-graph.md` (no glob change — same file).
