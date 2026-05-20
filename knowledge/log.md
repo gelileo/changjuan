@@ -145,6 +145,12 @@ Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-fro
 
 Articles touched: `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 19 implementation).
 
+## [2026-05-20] stage 9: export bundle (manifest + canonical-only sqlite snapshot)
+
+Created `pipeline/stage9_export.py` and `concepts/pipeline/export-contract.md`. `export_bundle(src, out, version=...)` produces `out/changjuan.sqlite` (copy-then-drop snapshot) and `out/manifest.json` (version, schema_version=1, generated_at ISO 8601 UTC, per-table counts, source_corpus_editions). `candidate_*` tables and `llm_cache` are stripped dynamically via `name LIKE 'candidate_%'` enumeration — fail-loud design, no hardcoded allowlist to forget. No denormalized JSON files in v1.
+
+Articles created: `concepts/pipeline/export-contract.md` (new — describes snapshot strategy, manifest contents, candidate_* prefix stripping, schema_version v1).
+
 ## [2026-05-20] stage 7: match candidates against existing Persons by canonical_name
 
 Refactored `load_candidate_persons` to look up existing canonical Persons before creating. Two candidates with the same `canonical_name` now resolve to one Person (the second is a no-op for fields; Task 19 adds the actual scalar-merge logic). Introduced `_create_person` and `_audit` helpers — replaces the inline INSERT+audit code from Task 17.
