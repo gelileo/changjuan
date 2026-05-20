@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-05-20
-status: thin
+status: current
 load_bearing: false
 references:
   - concepts/pipeline/architecture.md
@@ -28,6 +28,10 @@ Tests live under `tests/` in two layers:
 ## Golden chapters
 
 A "golden chapter" is a small, representative excerpt of the primary corpus used to validate extraction and linking stages end-to-end. The recommended chapters are Ch. 1 (ingest baseline) and Ch. ~40 (mid-corpus with multiple states and persons). Fixtures are stored under `tests/fixtures/` and are committed; they are never regenerated automatically.
+
+## Shared fixtures
+
+Shared pytest fixtures live in `tests/conftest.py`. Currently provides `tmp_db_dir` — an empty `tmp_path`-based directory with a `data/` subdirectory, suitable for ad-hoc SQLite database tests.
 
 ## What would invalidate this article
 
