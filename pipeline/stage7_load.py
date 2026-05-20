@@ -12,9 +12,15 @@ If no match, a new Person is created with id `per:<slug>`.
 
 from __future__ import annotations
 
+import json as _json
 import re
 import sqlite3
 import uuid
+
+# Confidence delta below which two values count as "similar" — disagreement triggers Conflict.
+_SIMILAR_CONFIDENCE_DELTA = 0.1
+
+_SCALAR_FIELDS = ("gender", "birth_date_json", "death_date_json", "notes", "state_id", "clan_name")
 
 
 def _slugify(name: str) -> str:
@@ -94,6 +100,117 @@ def _create_person(
     )
 
 
+def _json_scalar(v: object) -> str:
+    return _json.dumps(v, ensure_ascii=False)
+
+
+def _set_scalar(
+    conn: sqlite3.Connection,
+    person_id: str,
+    field: str,
+    value: object,
+    confidence: float,
+    pipeline_run_id: str,
+) -> None:
+    conn.execute(
+        f"UPDATE persons SET {field} = ?, updated_at = datetime('now') WHERE id = ?;",
+        (value, person_id),
+    )
+    _audit(
+        conn,
+        "person",
+        person_id,
+        "set",
+        after_json=f'{{"value": {_json_scalar(value)}, "confidence": {confidence}}}',
+        actor="load@v1",
+        pipeline_run_id=pipeline_run_id,
+        field=field,
+    )
+
+
+def _emit_conflict(
+    conn: sqlite3.Connection,
+    subject_kind: str,
+    subject_id: str,
+    field: str,
+    old_val: object,
+    old_conf: float,
+    new_val: object,
+    new_conf: float,
+    pipeline_run_id: str,
+) -> None:
+    variants = [
+        {"value": old_val, "confidence": old_conf, "source": "existing"},
+        {"value": new_val, "confidence": new_conf, "source": f"run:{pipeline_run_id}"},
+    ]
+    best_idx = 0 if old_conf >= new_conf else 1
+    conn.execute(
+        "INSERT INTO conflicts"
+        " (id, subject_kind, subject_id, field, variants_json,"
+        " current_best_variant_idx, resolution_rule, status)"
+        " VALUES (?, ?, ?, ?, ?, ?, 'highest_confidence', 'open');",
+        (
+            f"cfl:{uuid.uuid4().hex[:12]}",
+            subject_kind,
+            subject_id,
+            field,
+            _json.dumps(variants, ensure_ascii=False),
+            best_idx,
+        ),
+    )
+
+
+def _merge_scalar_fields(
+    conn: sqlite3.Connection,
+    person_id: str,
+    c: sqlite3.Row,
+    pipeline_run_id: str,
+) -> None:
+    fields_sql = ", ".join(_SCALAR_FIELDS)
+    existing = conn.execute(
+        f"SELECT provenance, {fields_sql}, confidence FROM persons WHERE id = ?;",
+        (person_id,),
+    ).fetchone()
+    for field in _SCALAR_FIELDS:
+        new_val = c[field]
+        if new_val is None:
+            continue
+        old_val = existing[field]
+        if old_val == new_val:
+            continue
+        if old_val is None:
+            _set_scalar(conn, person_id, field, new_val, c["confidence"], pipeline_run_id)
+            continue
+        if existing["provenance"] == "curated":
+            _emit_conflict(
+                conn,
+                "person",
+                person_id,
+                field,
+                old_val,
+                existing["confidence"],
+                new_val,
+                c["confidence"],
+                pipeline_run_id,
+            )
+            continue
+        # Both auto: update if new confidence beats old by a meaningful margin.
+        if c["confidence"] > existing["confidence"] + _SIMILAR_CONFIDENCE_DELTA:
+            _set_scalar(conn, person_id, field, new_val, c["confidence"], pipeline_run_id)
+        else:
+            _emit_conflict(
+                conn,
+                "person",
+                person_id,
+                field,
+                old_val,
+                existing["confidence"],
+                new_val,
+                c["confidence"],
+                pipeline_run_id,
+            )
+
+
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
@@ -118,6 +235,6 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
             _create_person(conn, person_id, c, pipeline_run_id)
         else:
             person_id = existing["id"]
-            # No-op for fields in Task 18; later tasks add variant union and scalar merge.
+            _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
         affected += 1
     return affected

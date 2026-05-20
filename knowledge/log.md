@@ -133,6 +133,12 @@ Created `pipeline/stage4_normalize.py` with `normalize_date_string(original, anc
 
 Articles touched: `concepts/pipeline/architecture.md` (added Stage 4 normalize section, added pipeline/stage4_normalize.py to affects glob); `concepts/verification/testing.md` (added stage4 normalize test section).
 
+## [2026-05-20] stage 7: scalar merge + Conflict emission
+
+Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-from-None, never-overwrite-curated, higher-confidence-wins-by-margin (`_SIMILAR_CONFIDENCE_DELTA = 0.1`), otherwise emit Conflict. `_emit_conflict` records both variants with `current_best_variant_idx` set to the higher-confidence one and `resolution_rule='highest_confidence'`.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 19 implementation).
+
 ## [2026-05-20] stage 7: match candidates against existing Persons by canonical_name
 
 Refactored `load_candidate_persons` to look up existing canonical Persons before creating. Two candidates with the same `canonical_name` now resolve to one Person (the second is a no-op for fields; Task 19 adds the actual scalar-merge logic). Introduced `_create_person` and `_audit` helpers — replaces the inline INSERT+audit code from Task 17.
