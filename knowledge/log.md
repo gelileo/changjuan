@@ -145,6 +145,12 @@ Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-fro
 
 Articles touched: `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 19 implementation).
 
+## [2026-05-20] stage 9: export bundle + round-trip test
+
+`pipeline.stage9_export.export_bundle(src, out, version=...)` produces `out/manifest.json` and `out/changjuan.sqlite`. The snapshot is built by copy-then-drop: `candidate_*` tables and `llm_cache` are stripped via `name LIKE 'candidate_%'` enumeration (fail-loud if a future schema change adds a candidate table — no allowlist to forget). Manifest carries `version`, `schema_version`, `generated_at`, per-table counts, and source-corpus editions pulled from `corpus.sqlite.documents.source_edition`. Round-trip test confirms canonical rows survive intact.
+
+Articles touched: `concepts/pipeline/architecture.md` (+ stage9_export.py to affects). Cross-reference from `export-contract.md` already created in Task 21.
+
 ## [2026-05-20] stage 9: round-trip test (Task 23)
 
 Added `test_export_roundtrip_preserves_canonical_data`: seeds 2 Persons (auto + curated) and 1 Event, calls `export_bundle`, opens the snapshot with a raw `sqlite3.connect` handle, asserts row ids and provenance values survive intact, and confirms manifest counts match. This is the canonical regression target for stage 9.

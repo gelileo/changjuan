@@ -14,6 +14,7 @@ affects:
   - pipeline/stage2_chunk.py
   - pipeline/stage4_normalize.py
   - pipeline/stage7_load.py
+  - pipeline/stage9_export.py
 ---
 
 ## What this is
