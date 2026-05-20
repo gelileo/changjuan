@@ -12,6 +12,7 @@ affects:
   - pipeline/config.py
   - pipeline/stage1_ingest.py
   - pipeline/stage2_chunk.py
+  - pipeline/stage4_normalize.py
 ---
 
 ## What this is
@@ -28,6 +29,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 - "Current best variant" auto-resolution becoming impossible for some class of disagreement.
 - Curator overrides ever getting silently overwritten by re-extraction (they don't; divergences become Conflict records).
 - A new corpus that can't be added without redesigning stages 1–2.
+
+## Stage 4 — normalize
+
+`pipeline/stage4_normalize.py` provides `normalize_date_string(original, anchor_json=None) -> str`, a thin wrapper over `pipeline.dates.parse_date`. Callers pass a raw date string and optionally a prior date's JSON (for relative references); the function returns a JSON string ready to insert into any `*_date_json` column. This is the only stage-4 entry point in Phase 1; extraction prompts and batch normalization land in Phase 2.
 
 ## First commitments (true once code lands)
 

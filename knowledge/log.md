@@ -126,3 +126,9 @@ Articles touched: `concepts/data-model/dates-and-reigns.md` (updated dispatch or
 `pipeline.dates.parse_date(original, anchor=None)` now handles all five non-`explicit_reign_other` kinds: explicit_reign_lu, explicit_reign_zhou, relative_to_prior_event (其年/明年/次年/去年/前年/是岁/是年/是+season), era_only (春秋初/中/末/晚期 + 战国初/中/末/晚期), unknown (fallback). `explicit_reign_other` remains deferred until a non-鲁/非周 reign citation appears that needs deterministic resolution.
 
 Articles touched: `concepts/data-model/dates-and-reigns.md` (updated signature, added `_try_relative` to dispatch order); `concepts/verification/testing.md` (relative-reference test pattern note).
+
+## [2026-05-20] stage4: normalize_date_string wrapper returning JSON
+
+Created `pipeline/stage4_normalize.py` with `normalize_date_string(original, anchor_json=None) -> str` — thin wrapper over `pipeline.dates.parse_date` that serializes the result as JSON. Stages 3/5/7 call this to produce values for `*_date_json` columns.
+
+Articles touched: `concepts/pipeline/architecture.md` (added Stage 4 normalize section, added pipeline/stage4_normalize.py to affects glob); `concepts/verification/testing.md` (added stage4 normalize test section).
