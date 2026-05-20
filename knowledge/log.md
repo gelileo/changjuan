@@ -169,6 +169,12 @@ Created `pipeline/stage9_export.py` and `concepts/pipeline/export-contract.md`. 
 
 Articles created: `concepts/pipeline/export-contract.md` (new — describes snapshot strategy, manifest contents, candidate_* prefix stripping, schema_version v1).
 
+## [2026-05-20] pipeline: LLM cache primitives (Phase 1 stub)
+
+Added `pipeline/llm_cache.py` with `cache_key`, `put`, and `get`. Phase 1 builds the cache primitives without any LLM client — they operate against the `llm_cache` table created by `CANONICAL_SCHEMA`. `cache_key` produces a stable SHA-256 hex digest keyed by `(model, prompt_template_version, normalized_request_json)`. `put` inserts with `ON CONFLICT (key_hash) DO NOTHING`. `get` returns the deserialized response dict or `None` on miss. Phase 2 (stage 3 extraction) wires these around its LLM calls.
+
+Articles touched: `concepts/verification/testing.md` (added LLM cache tests section).
+
 ## [2026-05-20] stage 7: match candidates against existing Persons by canonical_name
 
 Refactored `load_candidate_persons` to look up existing canonical Persons before creating. Two candidates with the same `canonical_name` now resolve to one Person (the second is a no-op for fields; Task 19 adds the actual scalar-merge logic). Introduced `_create_person` and `_audit` helpers — replaces the inline INSERT+audit code from Task 17.
