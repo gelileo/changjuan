@@ -211,6 +211,22 @@ def _merge_scalar_fields(
             )
 
 
+def _find_existing_person(conn: sqlite3.Connection, name: str) -> str | None:
+    """Return the id of an existing Person matching name, or None.
+
+    Checks canonical_name first, then person_variants.variant.
+    """
+    row = conn.execute("SELECT id FROM persons WHERE canonical_name = ?;", (name,)).fetchone()
+    if row is not None:
+        return str(row["id"])
+    row = conn.execute(
+        "SELECT person_id FROM person_variants WHERE variant = ?;", (name,)
+    ).fetchone()
+    if row is None:
+        return None
+    return str(row["person_id"])
+
+
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
@@ -226,15 +242,12 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     candidates = cur.fetchall()
     affected = 0
     for c in candidates:
-        existing = conn.execute(
-            "SELECT id FROM persons WHERE canonical_name = ?;",
-            (c["canonical_name"],),
-        ).fetchone()
-        if existing is None:
+        existing_id = _find_existing_person(conn, c["canonical_name"])
+        if existing_id is None:
             person_id = f"per:{_slugify(c['canonical_name'])}"
             _create_person(conn, person_id, c, pipeline_run_id)
         else:
-            person_id = existing["id"]
+            person_id = existing_id
             _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
         affected += 1
     return affected

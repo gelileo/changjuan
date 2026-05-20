@@ -13,6 +13,7 @@ affects:
   - pipeline/stage1_ingest.py
   - pipeline/stage2_chunk.py
   - pipeline/stage4_normalize.py
+  - pipeline/stage7_load.py
 ---
 
 ## What this is

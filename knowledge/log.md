@@ -133,6 +133,12 @@ Created `pipeline/stage4_normalize.py` with `normalize_date_string(original, anc
 
 Articles touched: `concepts/pipeline/architecture.md` (added Stage 4 normalize section, added pipeline/stage4_normalize.py to affects glob); `concepts/verification/testing.md` (added stage4 normalize test section).
 
+## [2026-05-20] stage 7: variant-aware Person matching
+
+`_find_existing_person` now consults both `persons.canonical_name` and `person_variants.variant` when looking up an existing Person to match. The match-by-variant path correctly resolves `'晋文公'` to a Person whose canonical_name is `'重耳'` if that variant is registered. Scalar merge runs on matched-existing-Person path.
+
+Articles touched: `concepts/pipeline/architecture.md` (+ stage7_load.py to affects); `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 20 implementation).
+
 ## [2026-05-20] stage 7: scalar merge + Conflict emission
 
 Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-from-None, never-overwrite-curated, higher-confidence-wins-by-margin (`_SIMILAR_CONFIDENCE_DELTA = 0.1`), otherwise emit Conflict. `_emit_conflict` records both variants with `current_best_variant_idx` set to the higher-confidence one and `resolution_rule='highest_confidence'`.

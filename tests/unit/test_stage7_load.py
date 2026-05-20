@@ -127,3 +127,35 @@ def test_load_emits_conflict_on_disagreement_at_similar_confidence(tmp_path: Pat
 
     variants = _json.loads(conflicts[0]["variants_json"])
     assert {"M", "F"} == {v["value"] for v in variants}
+
+
+def test_load_unions_name_variants(tmp_path: Path) -> None:
+    """Candidate whose canonical_name is a known variant maps to the existing Person."""
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Pre-seed Person per:zhong-er with canonical_name 重耳
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, confidence, provenance)"
+            " VALUES ('per:zhong-er', '重耳', 0.9, 'auto');"
+        )
+        # Pre-seed variant mapping 晋文公 → per:zhong-er
+        conn.execute(
+            "INSERT INTO person_variants (id, person_id, variant, kind)"
+            " VALUES ('pv:1', 'per:zhong-er', '晋文公', '谥号');"
+        )
+        # Load a candidate with canonical_name 晋文公
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:2', '晋文公', 0.92, 'run:2', 'chk:2', 'q2');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:2")
+        rows = list(conn.execute("SELECT id, canonical_name FROM persons;"))
+        variants = list(
+            conn.execute(
+                "SELECT variant, kind FROM person_variants WHERE person_id='per:zhong-er';"
+            )
+        )
+    # Still one Person; 晋文公 was already a variant; no duplicate should be created.
+    assert len(rows) == 1
+    assert any(v["variant"] == "晋文公" for v in variants)
