@@ -87,7 +87,7 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | When you change... | Update this article |
 | --- | --- |
 | The entity schema (Person, Event, Place, State, Citation, Conflict) or relations | `concepts/data-model/knowledge-graph.md` |
-| `pipeline/**/date*.py` or `pipeline/**/reign*.py` or `pipeline/**/dates.py` | `concepts/data-model/date-and-reigns.md` |
+| `pipeline/**/date*.py` or `pipeline/**/reign*.py` or `pipeline/**/dates.py` | `concepts/data-model/dates-and-reigns.md` |
 | Pipeline stages 1–9 boundaries, inputs/outputs, or invariants | `concepts/pipeline/architecture.md` |
 | Stage 3 prompt, extraction schema, justification mechanism | `concepts/pipeline/extraction.md` |
 | Stage 5 linking, dedup, merge-candidate logic | `concepts/pipeline/linking.md` |
