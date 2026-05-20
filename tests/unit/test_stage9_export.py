@@ -34,3 +34,36 @@ def test_export_snapshot_is_readable_sqlite(tmp_path: Path) -> None:
         cur = snap.execute("SELECT name FROM sqlite_master WHERE type='table';")
         names = {r[0] for r in cur}
     assert "persons" in names
+
+
+def test_export_strips_all_candidate_tables(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "x-v1"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Seed a candidate_persons row so the table is non-empty in src
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:1', 'x', 0.5, 'r', 'c', 'q');"
+        )
+    export_bundle(src, out, version="x-v1")
+    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+        cur = snap.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'candidate_%';"
+        )
+        leaked = [r[0] for r in cur]
+    assert leaked == [], f"export leaked candidate tables: {leaked}"
+
+
+def test_export_strips_llm_cache(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "x-v1"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    export_bundle(src, out, version="x-v1")
+    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+        cur = snap.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_cache';"
+        )
+        assert cur.fetchone() is None

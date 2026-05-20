@@ -145,6 +145,12 @@ Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-fro
 
 Articles touched: `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 19 implementation).
 
+## [2026-05-20] stage 9: strip-candidate-tables + llm_cache tests (Task 22)
+
+Added `test_export_strips_all_candidate_tables` (seeds a `candidate_persons` row, exports, asserts zero `candidate_*` tables in snapshot) and `test_export_strips_llm_cache` (asserts `llm_cache` absent from snapshot). Both pass with the Task 21 implementation — the tests document the stripping contract explicitly.
+
+Articles touched: `concepts/verification/testing.md` (no new section needed; Task 21 log entry already covers the stage 9 test file).
+
 ## [2026-05-20] stage 9: export bundle (manifest + canonical-only sqlite snapshot)
 
 Created `pipeline/stage9_export.py` and `concepts/pipeline/export-contract.md`. `export_bundle(src, out, version=...)` produces `out/changjuan.sqlite` (copy-then-drop snapshot) and `out/manifest.json` (version, schema_version=1, generated_at ISO 8601 UTC, per-table counts, source_corpus_editions). `candidate_*` tables and `llm_cache` are stripped dynamically via `name LIKE 'candidate_%'` enumeration — fail-loud design, no hardcoded allowlist to forget. No denormalized JSON files in v1.
