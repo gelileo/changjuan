@@ -132,3 +132,9 @@ Articles touched: `concepts/data-model/dates-and-reigns.md` (updated signature, 
 Created `pipeline/stage4_normalize.py` with `normalize_date_string(original, anchor_json=None) -> str` — thin wrapper over `pipeline.dates.parse_date` that serializes the result as JSON. Stages 3/5/7 call this to produce values for `*_date_json` columns.
 
 Articles touched: `concepts/pipeline/architecture.md` (added Stage 4 normalize section, added pipeline/stage4_normalize.py to affects glob); `concepts/verification/testing.md` (added stage4 normalize test section).
+
+## [2026-05-20] stage 7: simple create path (candidate_persons → persons)
+
+Created `pipeline/stage7_load.py` with `load_candidate_persons(conn, pipeline_run_id)`. Task 17 implements the naive create path: every candidate_persons row for the given run becomes a new canonical Person with id `per:<slug>` (slug from `_slugify`, which applies regex `[^\w]+`→`-`). Collision on id gets a uuid hex suffix. Audit log row emitted with `change_kind='create'`, `actor='load@v1'`. Returns count of candidates processed.
+
+Articles created: `concepts/pipeline/load-and-merge.md` (new — describes matching, merge semantics, Conflict emission, variant union, provenance rules). Articles touched: `concepts/verification/testing.md` (added stage 7 load test section).

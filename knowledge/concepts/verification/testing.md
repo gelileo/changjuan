@@ -67,6 +67,10 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 `tests/unit/test_reign_table.py` loads `pipeline/reign_table.json` directly via `Path(__file__).resolve().parents[2]` and asserts that the anchor cases resolve correctly (鲁隐公元年 = 722 BCE, 鲁僖公二十八年 = 632 BCE, 周平王元年 = 770 BCE). This file carries no SQLite or pipeline fixtures — it reads only the bundled JSON.
 
+## Stage 7 load tests
+
+`tests/unit/test_stage7_load.py` exercises `pipeline.stage7_load.load_candidate_persons`. Tests seed `candidate_persons` rows directly into a `tmp_path`-based database, call `load_candidate_persons`, then query `persons` and `audit_log` to assert outcomes. Task 17 adds basic create-path tests; Task 18 adds the dedup-by-name test; Task 19 adds scalar-merge and Conflict-emission tests; Task 20 adds the variant-lookup test.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
