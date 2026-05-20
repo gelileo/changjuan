@@ -108,3 +108,9 @@ Articles created: `concepts/data-model/dates-and-reigns.md`. `concepts/verificat
 Created `pipeline/dates.py` with `parse_date(original: str) -> DateDict`. Task 12 implements `explicit_reign_lu` only. `DateDict` is a `TypedDict` with fields `year_bce`, `uncertainty`, `year_bce_end?`, `original`, `era`, `inference_kind`. Subsequent tasks extend `parse_date` in-place.
 
 Articles touched: `concepts/data-model/dates-and-reigns.md` (added `parse_date` surface section); `concepts/verification/testing.md` (added date parser tests section).
+
+## [2026-05-20] dates: explicit_reign_zhou parser
+
+Extended `parse_date` with `_try_zhou` handling `周X王N年` for all 13 tabulated Zhou kings (平王 through 敬王, 770–476 BCE). Refactored Lu logic into `_try_lu` helper returning `DateDict | None`.
+
+Articles touched: `concepts/data-model/dates-and-reigns.md` (Zhou parser surface note); `concepts/verification/testing.md` (Zhou test note).

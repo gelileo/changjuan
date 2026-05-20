@@ -88,9 +88,37 @@ def _try_lu(original: str) -> DateDict | None:
     )
 
 
+_ZHOU_PATTERN = re.compile(
+    r"^周(平|桓|庄|釐|惠|襄|顷|匡|定|简|灵|景|敬)(?:王)?([元一二三四五六七八九十]+)年$"
+)
+
+
+def _try_zhou(original: str) -> DateDict | None:
+    m = _ZHOU_PATTERN.match(original)
+    if not m:
+        return None
+    king, year_cn = m.groups()
+    king_full = king + "王"
+    reigns = _reigns()
+    zhou_reigns = reigns["zhou"]
+    assert isinstance(zhou_reigns, dict)
+    reign = zhou_reigns[king_full]
+    assert isinstance(reign, dict)
+    n = _cn_to_int(year_cn)
+    return DateDict(
+        year_bce=reign["start_bce"] - (n - 1),
+        uncertainty="point",
+        original=original,
+        era="春秋",
+        inference_kind="explicit_reign_zhou",
+    )
+
+
 def parse_date(original: str) -> DateDict:
     """Parse a date string. Returns the structured Date dict."""
     if (d := _try_lu(original)) is not None:
         return d
-    # Subsequent tasks add Zhou, relative, era_only, unknown
+    if (d := _try_zhou(original)) is not None:
+        return d
+    # Subsequent tasks add relative, era_only, unknown
     raise NotImplementedError(f"parse_date: no parser for {original!r}")

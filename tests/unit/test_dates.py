@@ -28,3 +28,16 @@ def test_lu_lenient_prefixes(variant: str) -> None:
     """Tolerate dropped 鲁 prefix or dropped 公 suffix (common in the novel)."""
     d = parse_date(variant)
     assert d["year_bce"] == 632
+
+
+def test_zhou_pingwang_year_1() -> None:
+    d = parse_date("周平王元年")
+    assert d["year_bce"] == 770
+    assert d["inference_kind"] == "explicit_reign_zhou"
+
+
+def test_zhou_xiangwang_year_20() -> None:
+    """周襄王 starts 651 BCE; year 20 = 632 BCE."""
+    d = parse_date("周襄王二十年")
+    assert d["year_bce"] == 632
+    assert d["inference_kind"] == "explicit_reign_zhou"
