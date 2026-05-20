@@ -51,6 +51,10 @@ Real-corpus smoke tests use `@pytest.mark.skipif` against the `corpora/` symlink
 
 Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into a `tmp_path`-based database before exercising `chunk_documents`.
 
+## Canonical schema tests
+
+Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` creates all entity and relation tables (Task 9), all candidate and bookkeeping tables plus the `field_history` view (Task 10), and that `person_relations.kind` accepts `clan_member` without a constraint violation.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

@@ -10,6 +10,7 @@ references:
   - concepts/verification/confidence-and-invariants.md
 affects:
   - pipeline/schemas/corpus_schema.sql
+  - pipeline/schemas/canonical_schema.sql
 ---
 
 ## What this is
