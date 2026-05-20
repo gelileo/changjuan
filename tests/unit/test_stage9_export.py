@@ -67,3 +67,41 @@ def test_export_strips_llm_cache(tmp_path: Path) -> None:
             "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_cache';"
         )
         assert cur.fetchone() is None
+
+
+def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
+    """Load export bundle into a fresh sqlite handle; counts and key rows must match source."""
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "rt-v1"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, confidence, provenance)"
+            " VALUES ('per:a', 'a', 0.9, 'auto');"
+        )
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, confidence, provenance)"
+            " VALUES ('per:b', 'b', 0.5, 'curated');"
+        )
+        conn.execute(
+            "INSERT INTO events (id, type, confidence, provenance)"
+            " VALUES ('evt:1', 'battle', 0.8, 'auto');"
+        )
+    export_bundle(src, out, version="rt-v1")
+
+    # Fresh handle on the snapshot
+    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+        persons = list(
+            snap.execute("SELECT id, canonical_name, provenance FROM persons ORDER BY id;")
+        )
+        events = list(snap.execute("SELECT id, type FROM events;"))
+    assert [r[0] for r in persons] == ["per:a", "per:b"]
+    assert [r[2] for r in persons] == ["auto", "curated"]
+    assert events == [("evt:1", "battle")]
+
+    # Manifest counts agree with snapshot reality
+    import json as _json
+
+    manifest = _json.loads((out / "manifest.json").read_text())
+    assert manifest["counts"]["persons"] == 2
+    assert manifest["counts"]["events"] == 1

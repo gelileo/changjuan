@@ -145,6 +145,12 @@ Implemented `_merge_scalar_fields` per spec §7: skip None, skip equal, fill-fro
 
 Articles touched: `concepts/pipeline/load-and-merge.md` (frontmatter updated to reflect Task 19 implementation).
 
+## [2026-05-20] stage 9: round-trip test (Task 23)
+
+Added `test_export_roundtrip_preserves_canonical_data`: seeds 2 Persons (auto + curated) and 1 Event, calls `export_bundle`, opens the snapshot with a raw `sqlite3.connect` handle, asserts row ids and provenance values survive intact, and confirms manifest counts match. This is the canonical regression target for stage 9.
+
+Articles touched: `concepts/verification/testing.md` (Task 23 round-trip test description added).
+
 ## [2026-05-20] stage 9: strip-candidate-tables + llm_cache tests (Task 22)
 
 Added `test_export_strips_all_candidate_tables` (seeds a `candidate_persons` row, exports, asserts zero `candidate_*` tables in snapshot) and `test_export_strips_llm_cache` (asserts `llm_cache` absent from snapshot). Both pass with the Task 21 implementation — the tests document the stripping contract explicitly.
