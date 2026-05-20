@@ -11,6 +11,7 @@ For the underlying design spec, see [`docs/superpowers/specs/2026-05-20-changjua
 | Article | Summary | Updated |
 | --- | --- | --- |
 | [Knowledge graph — entities, relations, citations](concepts/data-model/knowledge-graph.md) | Six-entity model (Person, State, Place, Event, Citation, Conflict) + structured Date + name variants. Family deferred to a relation kind. Every relation row carries its own citation. | 2026-05-20 |
+| [Dates, reigns, and inference kinds](concepts/data-model/dates-and-reigns.md) | Structured Date dict with `inference_kind` (explicit_reign_lu/zhou, relative_to_prior_event, era_only, unknown). Bundled reign table for 鲁公 and 周王 (722–468 BCE / 770–476 BCE). | 2026-05-20 |
 
 ### pipeline
 

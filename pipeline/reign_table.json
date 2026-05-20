@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "convention": "All years are BCE as positive integers (722 means 722 BCE). Each reign entry has start_bce (the king/duke's year 1) and end_bce (last year). Reign year N corresponds to BCE year = start_bce - (N - 1).",
+    "source": "杨伯峻《春秋左传注》chronology; verified against 史记·十二诸侯年表"
+  },
+  "zhou": {
+    "平王":   {"start_bce": 770, "end_bce": 720},
+    "桓王":   {"start_bce": 719, "end_bce": 697},
+    "庄王":   {"start_bce": 696, "end_bce": 682},
+    "釐王":   {"start_bce": 681, "end_bce": 677},
+    "惠王":   {"start_bce": 676, "end_bce": 652},
+    "襄王":   {"start_bce": 651, "end_bce": 619},
+    "顷王":   {"start_bce": 618, "end_bce": 613},
+    "匡王":   {"start_bce": 612, "end_bce": 607},
+    "定王":   {"start_bce": 606, "end_bce": 586},
+    "简王":   {"start_bce": 585, "end_bce": 572},
+    "灵王":   {"start_bce": 571, "end_bce": 545},
+    "景王":   {"start_bce": 544, "end_bce": 520},
+    "敬王":   {"start_bce": 519, "end_bce": 476}
+  },
+  "lu": {
+    "隐公":   {"start_bce": 722, "end_bce": 712},
+    "桓公":   {"start_bce": 711, "end_bce": 694},
+    "庄公":   {"start_bce": 693, "end_bce": 662},
+    "闵公":   {"start_bce": 661, "end_bce": 660},
+    "僖公":   {"start_bce": 659, "end_bce": 627},
+    "文公":   {"start_bce": 626, "end_bce": 609},
+    "宣公":   {"start_bce": 608, "end_bce": 591},
+    "成公":   {"start_bce": 590, "end_bce": 573},
+    "襄公":   {"start_bce": 572, "end_bce": 542},
+    "昭公":   {"start_bce": 541, "end_bce": 510},
+    "定公":   {"start_bce": 509, "end_bce": 495},
+    "哀公":   {"start_bce": 494, "end_bce": 468}
+  }
+}

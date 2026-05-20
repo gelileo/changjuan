@@ -96,3 +96,9 @@ Articles touched: `concepts/data-model/knowledge-graph.md` (+ canonical_schema.s
 Added candidate_* staging tables (per spec §7 — re-extraction safety), bookkeeping (conflicts, audit_log with the {value, confidence} field-level shape, pipeline_runs with stats_schema_version, llm_cache, merge_candidates, qa_samples), and the `field_history` view that reconstructs per-field history from audit_log without a redundant JSON blob on entity rows. Index on `audit_log(entity_kind, entity_id, field)` keeps the view fast.
 
 Articles touched: `concepts/data-model/knowledge-graph.md` (no glob change — same file).
+
+## [2026-05-20] data-model: reign table + dates-and-reigns article
+
+Bundled `pipeline/reign_table.json` with 鲁 and 周 chronologies for the Spring-Autumn period. Created `concepts/data-model/dates-and-reigns.md` as a separate article from the knowledge-graph article — the date model is intricate enough (six `inference_kind` values, reign-year arithmetic) to warrant its own durable explanation.
+
+Articles created: `concepts/data-model/dates-and-reigns.md`. `concepts/verification/testing.md` updated to document `test_reign_table.py`.
