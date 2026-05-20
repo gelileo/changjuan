@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 from pipeline.db import apply_schema, connect
@@ -159,3 +160,38 @@ def test_load_unions_name_variants(tmp_path: Path) -> None:
     # Still one Person; 晋文公 was already a variant; no duplicate should be created.
     assert len(rows) == 1
     assert any(v["variant"] == "晋文公" for v in variants)
+
+
+def test_load_slug_collision_guard(tmp_path: Path) -> None:
+    """When a new candidate's slug collides with an existing Person id, the loader
+    must append a hash suffix to the new id instead of crashing on PRIMARY KEY violation."""
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Pre-seed a Person whose id is per:foo (canonical_name 'alpha' ≠ 'beta')
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, confidence, provenance)"
+            " VALUES ('per:foo', 'alpha', 0.9, 'auto');"
+        )
+        # Craft a candidate_persons row whose canonical_name slugifies to 'foo'
+        # so _slugify('foo-candidate') -> 'foo-candidate', but we use canonical_name='foo'
+        # which slugifies to exactly 'foo', producing id 'per:foo' — the collision.
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:c1', 'foo', 0.8, 'run:1', 'chk:1', 'q1');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+        persons = {
+            r["id"]: r["canonical_name"]
+            for r in conn.execute("SELECT id, canonical_name FROM persons;")
+        }
+
+    # Still exactly two Persons (not a crash, not a collision)
+    assert len(persons) == 2, f"expected 2 persons, got {persons}"
+    assert "per:foo" in persons
+    assert persons["per:foo"] == "alpha"
+    # The new person must carry the hash-suffixed id
+    expected_hash = hashlib.sha256(b"foo").hexdigest()[:6]
+    expected_id = f"per:foo-{expected_hash}"
+    assert expected_id in persons, f"expected '{expected_id}' in {list(persons)}"
+    assert persons[expected_id] == "foo"

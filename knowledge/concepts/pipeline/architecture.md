@@ -36,6 +36,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/stage4_normalize.py` provides `normalize_date_string(original, anchor_json=None) -> str`, a thin wrapper over `pipeline.dates.parse_date`. Callers pass a raw date string and optionally a prior date's JSON (for relative references); the function returns a JSON string ready to insert into any `*_date_json` column. This is the only stage-4 entry point in Phase 1; extraction prompts and batch normalization land in Phase 2.
 
+## Stage 7 — slug collision guard
+
+`load_candidate_persons` derives each new Person's id as `per:<slug>`. If that id is already held by a *different* Person (slug collision from distinct names), the loader appends a 6-character SHA-256 hex suffix: `per:<slug>-<hash6>`. This is a defensive correctness guarantee; in practice the matcher merges same-name candidates before this path is reached, but it prevents a `PRIMARY KEY` crash when two distinct canonical names happen to produce the same ASCII slug.
+
 ## First commitments (true once code lands)
 
 - Stages live under `pipeline/stage{1,2,3,4,5,6,7,9}_*.py`. Stage 8 is the Streamlit curation app under `curation/`.

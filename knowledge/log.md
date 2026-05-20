@@ -2,6 +2,12 @@
 
 Append-only chronological log of significant changes to this project. Each entry records what changed, why, and which articles were touched. Read sequentially, this log tells the story of the project's decisions.
 
+## [2026-05-20] fix(stage7): add hash-suffix collision guard to Person id slugs
+
+Added a slug-collision guard in `load_candidate_persons`: after computing `per:<slug>`, the loader checks whether that id is already held by a *different* Person. If so, a 6-char SHA-256 suffix derived from `canonical_name` is appended (`per:<slug>-<hash6>`). Prevents `PRIMARY KEY` crash when two distinct names share the same slug.
+
+Articles updated: `concepts/pipeline/load-and-merge.md` (slug collision rule documented).
+
 ## [2026-05-20] living-docs: seed first 3 north-star articles (greenfield)
 
 Seeded the knowledge base with three thin "north star" articles capturing the load-bearing decisions made before any code is written. Source of truth for these decisions is `docs/superpowers/specs/2026-05-20-changjuan-design.md`; the articles distill the design spec into durable per-concept references that the same-task rule can attach to as code lands.

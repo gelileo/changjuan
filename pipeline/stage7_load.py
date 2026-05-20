@@ -12,6 +12,7 @@ If no match, a new Person is created with id `per:<slug>`.
 
 from __future__ import annotations
 
+import hashlib
 import json as _json
 import re
 import sqlite3
@@ -245,6 +246,14 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         existing_id = _find_existing_person(conn, c["canonical_name"])
         if existing_id is None:
             person_id = f"per:{_slugify(c['canonical_name'])}"
+            # Guard against slug collisions: if a different Person already holds this id,
+            # append a 6-char SHA-256 hex suffix derived from the canonical_name.
+            existing_id_row = conn.execute(
+                "SELECT 1 FROM persons WHERE id = ?;", (person_id,)
+            ).fetchone()
+            if existing_id_row is not None:
+                h = hashlib.sha256(c["canonical_name"].encode("utf-8")).hexdigest()[:6]
+                person_id = f"{person_id}-{h}"
             _create_person(conn, person_id, c, pipeline_run_id)
         else:
             person_id = existing_id

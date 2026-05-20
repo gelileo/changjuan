@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-20
-implemented: Task 20 (variant-aware matching)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes
 status: thin
 load_bearing: true
 references:
@@ -24,7 +24,7 @@ Candidate records are matched against existing canonical Persons by two checks a
 1. **canonical_name equality** — if a Person with the same `canonical_name` exists, the candidate merges into it.
 2. **person_variants lookup** — if the candidate's `canonical_name` appears as a `variant` in `person_variants`, the candidate merges into the owning Person.
 
-If neither check finds a match, a new canonical Person is created with id `per:<slug>` where the slug is derived from `canonical_name` via `_slugify` (regex `[^\w]+` → `-`, lowercased).
+If neither check finds a match, a new canonical Person is created with id `per:<slug>` where the slug is derived from `canonical_name` via `_slugify` (regex `[^\w]+` → `-`, lowercased). If that id already exists in `persons` (slug collision from a different `canonical_name`), a 6-character SHA-256 hex suffix is appended: `per:<slug>-<hash6>`.
 
 ## Provenance: auto vs curated
 
