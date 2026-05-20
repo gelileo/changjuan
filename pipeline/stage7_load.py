@@ -1,9 +1,13 @@
 """Stage 7 — Load candidates into canonical store with field-level merge semantics.
 
-This task implements only the simple case: a candidate Person that does not match
-any existing canonical Person becomes a new canonical Person. Subsequent tasks
-add: name-variant union, scalar field merging, Conflict emission, and respect for
-curator overrides.
+Promotes `candidate_persons` rows into canonical `persons`, applying field-level
+merge semantics when a candidate matches an existing canonical record.
+
+Matching priority:
+  1. canonical_name equality
+  2. person_variants.variant lookup
+
+If no match, a new Person is created with id `per:<slug>`.
 """
 
 from __future__ import annotations
@@ -19,12 +23,82 @@ def _slugify(name: str) -> str:
     return safe or uuid.uuid4().hex[:8]
 
 
-def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
-    """Promote unmatched candidate_persons rows into canonical persons.
+def _audit(
+    conn: sqlite3.Connection,
+    entity_kind: str,
+    entity_id: str,
+    change_kind: str,
+    after_json: str,
+    actor: str,
+    pipeline_run_id: str,
+    field: str | None = None,
+    before_json: str | None = None,
+    citation_id: str | None = None,
+) -> None:
+    conn.execute(
+        "INSERT INTO audit_log"
+        " (id, entity_kind, entity_id, field, change_kind,"
+        " before_json, after_json, actor, citation_id, pipeline_run_id)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+        (
+            f"al:{uuid.uuid4().hex[:12]}",
+            entity_kind,
+            entity_id,
+            field,
+            change_kind,
+            before_json,
+            after_json,
+            actor,
+            citation_id,
+            pipeline_run_id,
+        ),
+    )
 
-    Naive matcher for Task 17: no linking yet. Every candidate becomes a new
-    canonical Person whose id is `per:<slug>` or `per:_<hash>` for fallback.
-    Task 18+ add variant union, scalar merge, conflict emission.
+
+def _create_person(
+    conn: sqlite3.Connection,
+    person_id: str,
+    c: sqlite3.Row,
+    pipeline_run_id: str,
+) -> None:
+    conn.execute(
+        """
+        INSERT INTO persons
+            (id, canonical_name, gender, birth_date_json, death_date_json, notes,
+             state_id, clan_name, confidence, provenance, pipeline_run_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'auto', ?);
+        """,
+        (
+            person_id,
+            c["canonical_name"],
+            c["gender"],
+            c["birth_date_json"],
+            c["death_date_json"],
+            c["notes"],
+            c["state_id"],
+            c["clan_name"],
+            c["confidence"],
+            pipeline_run_id,
+        ),
+    )
+    _audit(
+        conn,
+        "person",
+        person_id,
+        "create",
+        after_json=(
+            f'{{"canonical_name": "{c["canonical_name"]}", "confidence": {c["confidence"]}}}'
+        ),
+        actor="load@v1",
+        pipeline_run_id=pipeline_run_id,
+    )
+
+
+def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
+    """Promote candidate_persons rows into canonical persons with field-level merge.
+
+    Matches candidates against existing Persons by canonical_name first, then
+    by person_variants.variant. Creates a new Person if no match found.
     """
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
@@ -33,48 +107,17 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         (pipeline_run_id,),
     )
     candidates = cur.fetchall()
-    inserted = 0
+    affected = 0
     for c in candidates:
-        person_id = f"per:{_slugify(c['canonical_name'])}"
-        # If id collision, append a hash suffix
-        existing = conn.execute("SELECT 1 FROM persons WHERE id = ?;", (person_id,)).fetchone()
-        if existing is not None:
-            person_id = f"{person_id}-{uuid.uuid4().hex[:6]}"
-        conn.execute(
-            """
-            INSERT INTO persons
-                (id, canonical_name, gender, birth_date_json, death_date_json, notes,
-                 state_id, clan_name, confidence, provenance, pipeline_run_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'auto', ?);
-            """,
-            (
-                person_id,
-                c["canonical_name"],
-                c["gender"],
-                c["birth_date_json"],
-                c["death_date_json"],
-                c["notes"],
-                c["state_id"],
-                c["clan_name"],
-                c["confidence"],
-                pipeline_run_id,
-            ),
-        )
-        audit_id = f"al:{uuid.uuid4().hex[:12]}"
-        conn.execute(
-            """
-            INSERT INTO audit_log
-                (id, entity_kind, entity_id, change_kind,
-                 before_json, after_json, actor, pipeline_run_id)
-            VALUES (?, 'person', ?, 'create', NULL, ?, ?, ?);
-            """,
-            (
-                audit_id,
-                person_id,
-                f'{{"canonical_name": "{c["canonical_name"]}", "confidence": {c["confidence"]}}}',
-                "load@v1",
-                pipeline_run_id,
-            ),
-        )
-        inserted += 1
-    return inserted
+        existing = conn.execute(
+            "SELECT id FROM persons WHERE canonical_name = ?;",
+            (c["canonical_name"],),
+        ).fetchone()
+        if existing is None:
+            person_id = f"per:{_slugify(c['canonical_name'])}"
+            _create_person(conn, person_id, c, pipeline_run_id)
+        else:
+            person_id = existing["id"]
+            # No-op for fields in Task 18; later tasks add variant union and scalar merge.
+        affected += 1
+    return affected

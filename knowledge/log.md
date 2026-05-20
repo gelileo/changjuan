@@ -133,6 +133,12 @@ Created `pipeline/stage4_normalize.py` with `normalize_date_string(original, anc
 
 Articles touched: `concepts/pipeline/architecture.md` (added Stage 4 normalize section, added pipeline/stage4_normalize.py to affects glob); `concepts/verification/testing.md` (added stage4 normalize test section).
 
+## [2026-05-20] stage 7: match candidates against existing Persons by canonical_name
+
+Refactored `load_candidate_persons` to look up existing canonical Persons before creating. Two candidates with the same `canonical_name` now resolve to one Person (the second is a no-op for fields; Task 19 adds the actual scalar-merge logic). Introduced `_create_person` and `_audit` helpers — replaces the inline INSERT+audit code from Task 17.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (matching by canonical_name documented in existing article).
+
 ## [2026-05-20] stage 7: simple create path (candidate_persons → persons)
 
 Created `pipeline/stage7_load.py` with `load_candidate_persons(conn, pipeline_run_id)`. Task 17 implements the naive create path: every candidate_persons row for the given run becomes a new canonical Person with id `per:<slug>` (slug from `_slugify`, which applies regex `[^\w]+`→`-`). Collision on id gets a uuid hex suffix. Audit log row emitted with `change_kind='create'`, `actor='load@v1'`. Returns count of candidates processed.

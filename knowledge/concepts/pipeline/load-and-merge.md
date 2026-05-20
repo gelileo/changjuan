@@ -3,6 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-20
+implemented: Task 18 (canonical_name match)
 status: thin
 load_bearing: true
 references:
