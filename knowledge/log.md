@@ -2,6 +2,12 @@
 
 Append-only chronological log of significant changes to this project. Each entry records what changed, why, and which articles were touched. Read sequentially, this log tells the story of the project's decisions.
 
+## [2026-05-20] docs: add thin Streamlit curation app article
+
+Created `knowledge/concepts/curation/streamlit-app.md` — the article referenced by `curation/**/*.py` in the CLAUDE.md article-mapping table. Documents the three review queues, home screen v1 design, audit/reversibility contract, and Phase 1 status (placeholder only). Without this article the drift-check would fail on the first Phase 2 commit touching `curation/`.
+
+Articles created: `concepts/curation/streamlit-app.md` (new). Articles updated: `knowledge/index.md` (curation section added).
+
 ## [2026-05-20] fix(stage7): JSON-aware equality for *_json fields in merge
 
 Added `_scalars_equal(field, old_val, new_val)` to `stage7_load.py`. For fields ending in `_json`, it deserializes both values before comparison so that two JSON strings with the same content but different key orderings are treated as equal. `_merge_scalar_fields` uses `_scalars_equal` instead of bare `==`. Prevents spurious Conflict records from repeated extractions where LLM output key order is non-deterministic.

@@ -19,6 +19,12 @@ For the underlying design spec, see [`docs/superpowers/specs/2026-05-20-changjua
 | --- | --- | --- |
 | [Automation-first pipeline architecture](concepts/pipeline/architecture.md) | 9-stage sequential ETL with three LLM stages (extract, link, cross-canon). Load-bearing principle: pipeline produces a complete usable graph without curation; curation is retrospective, never a gate. | 2026-05-20 |
 
+### curation
+
+| Article | Summary | Updated |
+| --- | --- | --- |
+| [Curation app — Streamlit retrospective review](concepts/curation/streamlit-app.md) | Single-page Streamlit app (local, read/write `changjuan.sqlite`) presenting three review queues: Person merge candidates, open Conflicts, low-confidence extractions. All decisions write to `audit_log`; fully reversible. Phase 1 status: placeholder only — Phase 2 build target. | 2026-05-20 |
+
 ### runtime
 
 | Article | Summary | Updated |
