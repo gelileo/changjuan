@@ -45,6 +45,10 @@ Tests in `tests/unit/test_corpus_schema.py` verify that `CORPUS_SCHEMA` (importe
 
 Stage tests that require real-looking source files (e.g., ingest stages that read from `corpora/`) use `_make_fake_corpus`-style helper functions defined at module level in each test file. These helpers write minimal JSON or text fixtures into `tmp_path`-based directories and return the synthesized path. They live in the test module rather than `conftest.py` because they are corpus-specific, not shared across tests.
 
+## Real-corpus smoke tests
+
+Real-corpus smoke tests use `@pytest.mark.skipif` against the `corpora/` symlink so they are silently skipped when the upstream corpus is not present locally.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

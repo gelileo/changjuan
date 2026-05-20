@@ -67,6 +67,12 @@ Created the immutable source-side schema: `documents` (one per chapter), `chunks
 
 Articles touched: `concepts/data-model/knowledge-graph.md` (+ affects glob for the schema file).
 
+## [2026-05-20] stage 1: 108-chapter sanity test wired up
+
+Added a guard test that ingests the real upstream 东周列国志 (via the `corpora/dongzhoulieguozhi` symlink) and asserts exactly 108 chapter rows land. Skipped automatically if the corpus symlink is missing. This is our canary: when upstream changes shape, this fires before silent data loss.
+
+`no knowledge impact: same affects glob (pipeline/stage1_ingest.py).`
+
 ## [2026-05-20] stage 1: ingest 东周列国志 from JSON
 
 Implemented `pipeline.stage1_ingest.ingest_dongzhoulieguozhi`: reads the upstream `dongzhoulieguozhi/json/东周列国志.json`, inserts one row per chapter into `corpus.sqlite.documents` with stable id `dzl:<n>`. Idempotent via ON CONFLICT DO NOTHING on `(corpus, chapter_num)`.
