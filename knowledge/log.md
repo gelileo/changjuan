@@ -102,3 +102,9 @@ Articles touched: `concepts/data-model/knowledge-graph.md` (no glob change — s
 Bundled `pipeline/reign_table.json` with 鲁 and 周 chronologies for the Spring-Autumn period. Created `concepts/data-model/dates-and-reigns.md` as a separate article from the knowledge-graph article — the date model is intricate enough (six `inference_kind` values, reign-year arithmetic) to warrant its own durable explanation.
 
 Articles created: `concepts/data-model/dates-and-reigns.md`. `concepts/verification/testing.md` updated to document `test_reign_table.py`.
+
+## [2026-05-20] dates: explicit_reign_lu parser (pipeline/dates.py created)
+
+Created `pipeline/dates.py` with `parse_date(original: str) -> DateDict`. Task 12 implements `explicit_reign_lu` only. `DateDict` is a `TypedDict` with fields `year_bce`, `uncertainty`, `year_bce_end?`, `original`, `era`, `inference_kind`. Subsequent tasks extend `parse_date` in-place.
+
+Articles touched: `concepts/data-model/dates-and-reigns.md` (added `parse_date` surface section); `concepts/verification/testing.md` (added date parser tests section).
