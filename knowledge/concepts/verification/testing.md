@@ -33,8 +33,13 @@ A "golden chapter" is a small, representative excerpt of the primary corpus used
 
 Shared pytest fixtures live in `tests/conftest.py`. Currently provides `tmp_db_dir` — an empty `tmp_path`-based directory with a `data/` subdirectory, suitable for ad-hoc SQLite database tests.
 
+## DDL fixtures
+
+Test modules that exercise `apply_schema` must supply DDL using `CREATE TABLE IF NOT EXISTS` (not bare `CREATE TABLE`). `apply_schema` is a thin wrapper around `executescript` — it does not suppress `OperationalError`; idempotency is the DDL script's responsibility. Using `IF NOT EXISTS` in test DDL mirrors exactly how every real Phase 1 schema (`pipeline/schemas/*.sql`) is written.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
 - Changing the golden-chapter selection criteria.
 - Moving fixtures out of `tests/fixtures/`.
+- Changing `apply_schema`'s idempotency contract (currently delegated to DDL).

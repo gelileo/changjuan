@@ -47,6 +47,12 @@ Added `pipeline.config.Config` — a frozen dataclass that centralizes repo path
 
 Articles touched: `concepts/pipeline/architecture.md` (added `affects: [pipeline/config.py]`); also created `concepts/verification/testing.md` because the CLAUDE.md article-mapping table requires a test-conventions article for any change touching `tests/**/*.py` (the `tests/unit/test_config.py` added in this task triggered the same-task rule). The new article documents pytest as the only runner, `tmp_path` for unit tests, `@pytest.mark.integration` for golden-chapter tests, and `[mypy-tests.*]` loose typing. `knowledge/index.md` updated to list the new article.
 
+## [2026-05-20] fix(pipeline): apply_schema thin wrapper; test fixture uses IF NOT EXISTS
+
+Removed the silent `OperationalError` catch from `apply_schema`. The function is now a thin `executescript` + `commit` wrapper; idempotency is the DDL script's responsibility (via `IF NOT EXISTS`). Updated `tests/unit/test_db.py`'s `SCHEMA_SQL` fixture to use `CREATE TABLE IF NOT EXISTS` to match. No change to observable behaviour for compliant DDL; non-compliant DDL will now surface errors rather than silently swallowing them.
+
+`concepts/verification/testing.md` is unaffected — test conventions (pytest, `tmp_path`, markers, conftest) are unchanged. The `SCHEMA_SQL` fixture update is a correctness fix, not a convention change.
+
 ## [2026-05-20] pipeline: SQLite helpers (db.py)
 
 Added `pipeline.db.connect` (context-manager: foreign_keys ON, WAL on, Row factory) and `pipeline.db.apply_schema` (idempotent DDL via `executescript`). All future stages use these rather than calling sqlite3 directly.

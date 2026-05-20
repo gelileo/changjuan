@@ -5,7 +5,7 @@ import pytest
 from pipeline.db import apply_schema, connect
 
 SCHEMA_SQL = """
-CREATE TABLE widgets (
+CREATE TABLE IF NOT EXISTS widgets (
     id TEXT PRIMARY KEY,
     parent_id TEXT REFERENCES widgets(id)
 );

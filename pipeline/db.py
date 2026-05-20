@@ -24,12 +24,6 @@ def connect(db_path: Path) -> Iterator[sqlite3.Connection]:
 
 
 def apply_schema(conn: sqlite3.Connection, sql: str) -> None:
-    """Apply a SQL DDL script. Idempotent: re-running on an existing schema is a no-op."""
-    # executescript issues an implicit COMMIT; wrap in try/except so that
-    # repeated calls with the same DDL (without IF NOT EXISTS) are safe.
-    try:
-        conn.executescript(sql)
-    except sqlite3.OperationalError as exc:
-        if "already exists" not in str(exc):
-            raise
+    """Apply a SQL DDL script. Idempotent if the script uses IF NOT EXISTS."""
+    conn.executescript(sql)
     conn.commit()
