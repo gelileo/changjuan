@@ -10,6 +10,7 @@ references:
   - concepts/verification/confidence-and-invariants.md
 affects:
   - pipeline/config.py
+  - pipeline/stage1_ingest.py
 ---
 
 ## What this is

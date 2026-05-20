@@ -66,3 +66,9 @@ Articles touched: none yet (db.py is utility; will be referenced by article `aff
 Created the immutable source-side schema: `documents` (one per chapter), `chunks` (paragraph-aware splits with overlap), `citations` (verbatim quote spans). Foreign keys on `chunks.document_id` and `citations.chunk_id` enforced; `UNIQUE (corpus, chapter_num)` prevents accidental double-ingest. WAL mode and PRAGMA foreign_keys=ON by way of `pipeline.db.connect`.
 
 Articles touched: `concepts/data-model/knowledge-graph.md` (+ affects glob for the schema file).
+
+## [2026-05-20] stage 1: ingest 东周列国志 from JSON
+
+Implemented `pipeline.stage1_ingest.ingest_dongzhoulieguozhi`: reads the upstream `dongzhoulieguozhi/json/东周列国志.json`, inserts one row per chapter into `corpus.sqlite.documents` with stable id `dzl:<n>`. Idempotent via ON CONFLICT DO NOTHING on `(corpus, chapter_num)`.
+
+Articles touched: `concepts/pipeline/architecture.md` (added `pipeline/stage1_ingest.py` to affects); `concepts/verification/testing.md` (added "Synthetic corpus helpers" section documenting the `_make_fake_corpus` pattern used in stage tests).
