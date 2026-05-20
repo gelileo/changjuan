@@ -8,6 +8,8 @@ load_bearing: true
 references:
   - concepts/pipeline/architecture.md
   - concepts/verification/confidence-and-invariants.md
+affects:
+  - pipeline/schemas/corpus_schema.sql
 ---
 
 ## What this is

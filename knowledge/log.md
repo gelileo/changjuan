@@ -60,3 +60,9 @@ Added `pipeline.db.connect` (context-manager: foreign_keys ON, WAL on, Row facto
 Also added `tests/conftest.py` with the `tmp_db_dir` shared fixture (an empty directory with a `data/` subdirectory, available to all test modules). Updated `concepts/verification/testing.md` to note that shared fixtures live in `tests/conftest.py`.
 
 Articles touched: none yet (db.py is utility; will be referenced by article `affects:` globs once stages 1/7/9 land). `concepts/verification/testing.md` updated to document the conftest.py fixture layer.
+
+## [2026-05-20] schema: corpus.sqlite (documents, chunks, citations)
+
+Created the immutable source-side schema: `documents` (one per chapter), `chunks` (paragraph-aware splits with overlap), `citations` (verbatim quote spans). Foreign keys on `chunks.document_id` and `citations.chunk_id` enforced; `UNIQUE (corpus, chapter_num)` prevents accidental double-ingest. WAL mode and PRAGMA foreign_keys=ON by way of `pipeline.db.connect`.
+
+Articles touched: `concepts/data-model/knowledge-graph.md` (+ affects glob for the schema file).

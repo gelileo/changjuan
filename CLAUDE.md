@@ -89,20 +89,20 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | The entity schema (Person, Event, Place, State, Citation, Conflict) or relations | `concepts/data-model/knowledge-graph.md` |
 | `pipeline/**/date*.py` or `pipeline/**/reign*.py` or `pipeline/**/dates.py` | `concepts/data-model/dates-and-reigns.md` |
 | Pipeline stages 1–9 boundaries, inputs/outputs, or invariants | `concepts/pipeline/architecture.md` |
-| Stage 3 prompt, extraction schema, justification mechanism | `concepts/pipeline/extraction.md` |
-| Stage 5 linking, dedup, merge-candidate logic | `concepts/pipeline/linking.md` |
-| Stage 6 cross-canon retrieval or Conflict emission | `concepts/pipeline/cross-canon.md` |
-| Field-level merge semantics or upsert behaviour (stage 7) | `concepts/pipeline/load-and-merge.md` |
-| Export bundle shape, manifest, candidate-table stripping | `concepts/pipeline/export-contract.md` |
-| Confidence score computation or LLM-judge weighting | `concepts/verification/confidence.md` |
-| Verbatim invariant, per-field justification, sampling QA | `concepts/verification/extraction-invariants.md` |
-| Curation UI queues, ergonomics, audit log | `concepts/curation/streamlit-app.md` |
-| Re-extraction or incremental merge behaviour | `concepts/pipeline/incremental.md` |
-| Adding a new corpus (左传 / 史记 / 战国策…) | `concepts/corpora/{corpus}.md` |
-| Stats schema or tracked metrics | `concepts/verification/stats-schema.md` |
-| Env vars, model selection, budgets | `concepts/runtime/configuration.md` |
-| Local dev setup or CLI verbs | `concepts/runtime/cli.md` |
-| Test conventions, golden chapters, fixtures | `concepts/verification/testing.md` |
+| `pipeline/**/stage3*.py` or `pipeline/**/prompts/**` | `concepts/pipeline/extraction.md` |
+| `pipeline/**/stage5*.py` or `pipeline/**/link*.py` | `concepts/pipeline/linking.md` |
+| `pipeline/**/stage6*.py` or `pipeline/**/cross_canon*.py` | `concepts/pipeline/cross-canon.md` |
+| `pipeline/**/stage7*.py` or `pipeline/**/load*.py` | `concepts/pipeline/load-and-merge.md` |
+| `pipeline/**/stage9*.py` or `pipeline/**/export*.py` | `concepts/pipeline/export-contract.md` |
+| `pipeline/**/confidence*.py` or `pipeline/**/scoring*.py` | `concepts/verification/confidence.md` |
+| `pipeline/**/invariant*.py` or `pipeline/**/justif*.py` | `concepts/verification/extraction-invariants.md` |
+| `curation/**/*.py` | `concepts/curation/streamlit-app.md` |
+| `pipeline/**/incremental*.py` or `pipeline/**/reextract*.py` | `concepts/pipeline/incremental.md` |
+| `corpora/**` or `pipeline/**/ingest*.py` | `concepts/corpora/{corpus}.md` |
+| `pipeline/**/stats*.py` or `pipeline/**/metrics*.py` | `concepts/verification/stats-schema.md` |
+| `.env` or `pipeline/config.py` | `concepts/runtime/configuration.md` |
+| `pipeline/**/__main__.py` or `pipeline/**/cli*.py` | `concepts/runtime/cli.md` |
+| `tests/**/*.py` | `concepts/verification/testing.md` |
 
 ### When the agent encounters code without a matching article
 
