@@ -161,6 +161,25 @@ def _emit_conflict(
     )
 
 
+def _scalars_equal(field: str, old_val: object, new_val: object) -> bool:
+    """Return True if old_val and new_val are semantically equal for this field.
+
+    For *_json fields, deserializes both values and compares as Python objects so
+    that two JSON strings with the same content but different key orderings are
+    treated as equal, preventing spurious Conflicts.
+    """
+    if old_val is None and new_val is None:
+        return True
+    if old_val is None or new_val is None:
+        return False
+    if field.endswith("_json"):
+        try:
+            return bool(_json.loads(str(old_val)) == _json.loads(str(new_val)))
+        except (_json.JSONDecodeError, TypeError):
+            pass  # fall through to string comparison
+    return old_val == new_val
+
+
 def _last_field_confidence(
     conn: sqlite3.Connection, entity_kind: str, entity_id: str, field: str
 ) -> float | None:
@@ -196,7 +215,7 @@ def _merge_scalar_fields(
         if new_val is None:
             continue
         old_val = existing[field]
-        if old_val == new_val:
+        if _scalars_equal(field, old_val, new_val):
             continue
         if old_val is None:
             _set_scalar(conn, person_id, field, new_val, c["confidence"], pipeline_run_id)

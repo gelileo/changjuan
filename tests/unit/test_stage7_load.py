@@ -247,3 +247,38 @@ def test_merge_uses_per_field_confidence_from_audit_log(tmp_path: Path) -> None:
     assert variant_values == {"M", "F"}, f"expected {{M, F}} in variants, got {variant_values}"
     confidences = {v["confidence"] for v in variants}
     assert 0.9 in confidences, f"expected 0.9 (audit_log per-field confidence) in {confidences}"
+
+
+def test_merge_json_field_same_content_different_key_order_no_conflict(tmp_path: Path) -> None:
+    """Two JSON strings with the same content but different key orderings must not produce
+    a spurious Conflict or audit-log set-event for *_json fields."""
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Create Person via direct insert (not load) to set birth_date_json with one key order
+        conn.execute(
+            "INSERT INTO persons"
+            " (id, canonical_name, birth_date_json, confidence, provenance)"
+            " VALUES ('per:zhong-er', '重耳',"
+            ' \'{"year_bce": 632, "uncertainty": "point"}\', 0.9, \'auto\');'
+        )
+        # Load a candidate with same JSON content but different key order
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, birth_date_json, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:1', '重耳',"
+            ' \'{"uncertainty": "point", "year_bce": 632}\','
+            " 0.85, 'run:1', 'chk:1', 'q1');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+        conflicts = list(conn.execute("SELECT field FROM conflicts WHERE field='birth_date_json';"))
+        set_events = list(
+            conn.execute(
+                "SELECT field FROM audit_log"
+                " WHERE change_kind='set' AND field='birth_date_json';"
+            )
+        )
+
+    assert conflicts == [], "same JSON content with different key order must not produce a Conflict"
+    assert (
+        set_events == []
+    ), "same JSON content with different key order must not produce a set audit-log event"

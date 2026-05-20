@@ -2,6 +2,12 @@
 
 Append-only chronological log of significant changes to this project. Each entry records what changed, why, and which articles were touched. Read sequentially, this log tells the story of the project's decisions.
 
+## [2026-05-20] fix(stage7): JSON-aware equality for *_json fields in merge
+
+Added `_scalars_equal(field, old_val, new_val)` to `stage7_load.py`. For fields ending in `_json`, it deserializes both values before comparison so that two JSON strings with the same content but different key orderings are treated as equal. `_merge_scalar_fields` uses `_scalars_equal` instead of bare `==`. Prevents spurious Conflict records from repeated extractions where LLM output key order is non-deterministic.
+
+Articles updated: `concepts/pipeline/load-and-merge.md` (skip-if-equal rule updated), `concepts/verification/testing.md` (new test documented).
+
 ## [2026-05-20] fix(stage7): use per-field confidence (audit_log lookup) for merge decisions
 
 Added `_last_field_confidence` helper to `stage7_load.py`. `_merge_scalar_fields` now looks up the most recent `set`-event confidence for each field from `audit_log` before deciding whether to update or conflict. Row-level `persons.confidence` is used as fallback only when no prior set-event exists. Prevents a high-confidence field value from being overwritten by a lower-confidence extraction in a later run that compares against the stale creation-time confidence.
