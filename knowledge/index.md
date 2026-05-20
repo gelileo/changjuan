@@ -23,6 +23,7 @@ For the underlying design spec, see [`docs/superpowers/specs/2026-05-20-changjua
 | Article | Summary | Updated |
 | --- | --- | --- |
 | [Confidence as a computed score; extraction invariants](concepts/verification/confidence-and-invariants.md) | Confidence is deterministic, not LLM self-report. Two-layer extraction invariant: verbatim (real backstop) + per-field justification (gameable generation-time nudge); 5% sampling QA is the actual claim verification, sized by a binomial power calculation. | 2026-05-20 |
+| [Testing conventions, golden chapters, and fixtures](concepts/verification/testing.md) | Pytest is the only runner; unit tests use `tmp_path` and never touch `data/` or `corpora/`; integration tests behind `@pytest.mark.integration` against golden chapter fixtures. | 2026-05-20 |
 
 ## External Systems
 

@@ -8,6 +8,8 @@ load_bearing: true
 references:
   - concepts/data-model/knowledge-graph.md
   - concepts/verification/confidence-and-invariants.md
+affects:
+  - pipeline/config.py
 ---
 
 ## What this is
