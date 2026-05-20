@@ -57,7 +57,7 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 ## Date parser tests
 
-`tests/unit/test_dates.py` exercises `pipeline.dates.parse_date`. Tests use direct string input — no fixtures beyond the imported function. The `@pytest.mark.parametrize` decorator covers lenient-prefix variants (`鲁僖二十八年`, `僖公二十八年`). New tasks append to this file as new `inference_kind` values are implemented. Zhou-king tests assert both the `year_bce` value and `inference_kind == "explicit_reign_zhou"`. Era-only tests assert `uncertainty == "range"` and that `year_bce` falls within the era's expected range. The unknown-passthrough test asserts `year_bce is None` and `inference_kind == "unknown"` — confirming `parse_date` never raises for unrecognized input.
+`tests/unit/test_dates.py` exercises `pipeline.dates.parse_date`. Tests use direct string input — no fixtures beyond the imported function. The `@pytest.mark.parametrize` decorator covers lenient-prefix variants (`鲁僖二十八年`, `僖公二十八年`). New tasks append to this file as new `inference_kind` values are implemented. Zhou-king tests assert both the `year_bce` value and `inference_kind == "explicit_reign_zhou"`. Era-only tests assert `uncertainty == "range"` and that `year_bce` falls within the era's expected range. The unknown-passthrough test asserts `year_bce is None` and `inference_kind == "unknown"` — confirming `parse_date` never raises for unrecognized input. Relative-reference tests build an `anchor` by first calling `parse_date` on a known date string, then pass it to the second call; without anchor, the test confirms the relative form falls through to `unknown`.
 
 ## Reign table tests
 

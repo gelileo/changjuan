@@ -120,3 +120,9 @@ Articles touched: `concepts/data-model/dates-and-reigns.md` (Zhou parser surface
 Extended `parse_date` with `_try_era` (ten era patterns covering 春秋/战国 sub-periods) and `_unknown` fallback. `parse_date` no longer raises `NotImplementedError` — unrecognized inputs return `inference_kind="unknown"`, `year_bce=None`. Note: the plan's test assertion `500 <= year_bce <= 480` for 春秋末 was a typo (the chained comparison is impossible); corrected to `476 <= year_bce <= 510` (matching the configured range midpoint 493).
 
 Articles touched: `concepts/data-model/dates-and-reigns.md` (updated dispatch order, never-raises contract); `concepts/verification/testing.md` (era/unknown test notes).
+
+## [2026-05-20] dates: all six inference_kinds parseable
+
+`pipeline.dates.parse_date(original, anchor=None)` now handles all five non-`explicit_reign_other` kinds: explicit_reign_lu, explicit_reign_zhou, relative_to_prior_event (其年/明年/次年/去年/前年/是岁/是年/是+season), era_only (春秋初/中/末/晚期 + 战国初/中/末/晚期), unknown (fallback). `explicit_reign_other` remains deferred until a non-鲁/非周 reign citation appears that needs deterministic resolution.
+
+Articles touched: `concepts/data-model/dates-and-reigns.md` (updated signature, added `_try_relative` to dispatch order); `concepts/verification/testing.md` (relative-reference test pattern note).

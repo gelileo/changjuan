@@ -142,6 +142,36 @@ def _try_era(original: str) -> DateDict | None:
     return None
 
 
+_RELATIVE_OFFSETS: dict[str, int] = {
+    "其年": 0,
+    "明年": -1,  # next year — BCE year decreases
+    "次年": -1,
+    "去年": +1,  # last year
+    "前年": +1,
+    "是岁": 0,
+    "是年": 0,
+}
+
+
+def _try_relative(original: str, anchor: DateDict | None) -> DateDict | None:
+    # Strip a leading 是冬/是夏/是春/是秋 — they're season markers attached to 是年.
+    stripped = re.sub(r"^是[春夏秋冬]", "是年", original)
+    if stripped not in _RELATIVE_OFFSETS:
+        return None
+    if anchor is None or anchor.get("year_bce") is None:
+        return None
+    anchor_year = anchor["year_bce"]
+    assert isinstance(anchor_year, int)
+    offset = _RELATIVE_OFFSETS[stripped]
+    return DateDict(
+        year_bce=anchor_year + offset,
+        uncertainty="point",
+        original=original,
+        era=anchor.get("era"),
+        inference_kind="relative_to_prior_event",
+    )
+
+
 def _unknown(original: str) -> DateDict:
     return DateDict(
         year_bce=None,
@@ -152,14 +182,19 @@ def _unknown(original: str) -> DateDict:
     )
 
 
-def parse_date(original: str) -> DateDict:
+def parse_date(original: str, anchor: DateDict | None = None) -> DateDict:
     """Parse a date string. Returns the structured Date dict.
 
     Never raises — returns inference_kind='unknown' for unrecognized inputs.
+    The optional `anchor` is a previously-parsed DateDict used to resolve
+    relative references (其年, 明年, 次年, 去年, 前年, 是岁, 是年, 是+season).
+    Without an anchor, relative references fall through to unknown.
     """
     if (d := _try_lu(original)) is not None:
         return d
     if (d := _try_zhou(original)) is not None:
+        return d
+    if (d := _try_relative(original, anchor)) is not None:
         return d
     if (d := _try_era(original)) is not None:
         return d

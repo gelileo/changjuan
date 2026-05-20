@@ -67,3 +67,29 @@ def test_unknown_passthrough() -> None:
     assert d["inference_kind"] == "unknown"
     assert d["year_bce"] is None
     assert d["original"] == "某时"
+
+
+def test_relative_明年_with_anchor() -> None:
+    anchor = parse_date("鲁僖公二十八年")  # 632 BCE
+    d = parse_date("明年", anchor=anchor)
+    assert d["year_bce"] == 631
+    assert d["inference_kind"] == "relative_to_prior_event"
+    assert d["uncertainty"] == "point"
+
+
+def test_relative_其年_returns_anchor_year() -> None:
+    anchor = parse_date("鲁僖公二十八年")
+    d = parse_date("其年", anchor=anchor)
+    assert d["year_bce"] == 632
+    assert d["inference_kind"] == "relative_to_prior_event"
+
+
+def test_relative_前年_with_anchor() -> None:
+    anchor = parse_date("鲁僖公二十八年")
+    d = parse_date("前年", anchor=anchor)
+    assert d["year_bce"] == 633
+
+
+def test_relative_without_anchor_returns_unknown() -> None:
+    d = parse_date("明年")
+    assert d["inference_kind"] == "unknown"
