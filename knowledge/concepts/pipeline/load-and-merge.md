@@ -38,7 +38,7 @@ When a candidate matches an existing Person, each scalar field (`gender`, `birth
 - **Skip if old == new** — already in sync.
 - **Set if old is None** — first non-null value wins; logged as `change_kind='set'` in `audit_log`.
 - **Curated provenance** — if the existing Person is `provenance='curated'`, any disagreement emits a `Conflict` record instead of overwriting.
-- **Both auto, new confidence > old + 0.1** — update the field; logged as `change_kind='set'`.
+- **Both auto, new confidence > prior field confidence + 0.1** — update the field; logged as `change_kind='set'`. The "prior field confidence" is read from the most recent `set`-event in `audit_log` for this field (via `_last_field_confidence`); if no prior set-event exists, the row-level `persons.confidence` is used as the fallback.
 - **Otherwise** — emit a `Conflict` record (both values, both confidences, `resolution_rule='highest_confidence'`, `status='open'`).
 
 The confidence delta threshold is `_SIMILAR_CONFIDENCE_DELTA = 0.1`. Below this margin the new extraction is not considered meaningfully better, so disagreement is flagged for human review.
@@ -64,6 +64,10 @@ Every create and every scalar field set emits an `audit_log` row with:
 - `after_json={"value": ..., "confidence": ...}` for field-level sets; `{"canonical_name": ..., "confidence": ...}` for creates.
 
 The `field_history` view reconstructs per-field history from these rows.
+
+## Per-field confidence lookup
+
+`_last_field_confidence(conn, entity_kind, entity_id, field)` queries `audit_log` for the most recent `set`-event for a given field and returns the `confidence` extracted from `after_json`. This prevents a stale row-level confidence (set at Person creation time) from being used as the comparison baseline in multi-run scenarios where a high-confidence update has already occurred.
 
 ## What would invalidate this article
 

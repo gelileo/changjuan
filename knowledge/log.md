@@ -2,6 +2,12 @@
 
 Append-only chronological log of significant changes to this project. Each entry records what changed, why, and which articles were touched. Read sequentially, this log tells the story of the project's decisions.
 
+## [2026-05-20] fix(stage7): use per-field confidence (audit_log lookup) for merge decisions
+
+Added `_last_field_confidence` helper to `stage7_load.py`. `_merge_scalar_fields` now looks up the most recent `set`-event confidence for each field from `audit_log` before deciding whether to update or conflict. Row-level `persons.confidence` is used as fallback only when no prior set-event exists. Prevents a high-confidence field value from being overwritten by a lower-confidence extraction in a later run that compares against the stale creation-time confidence.
+
+Articles updated: `concepts/pipeline/load-and-merge.md` (per-field confidence lookup documented), `concepts/verification/testing.md` (new test documented).
+
 ## [2026-05-20] fix(stage9): dynamic table enumeration in _count_rows
 
 Replaced the hardcoded `_CANONICAL_TABLES` constant in `stage9_export.py` with dynamic `sqlite_master` enumeration in `_count_rows`. The snapshot already strips `candidate_*` and `llm_cache`, so dynamic enumeration is equivalent and stays correct as new canonical tables are added. `_CANONICAL_TABLES` removed.

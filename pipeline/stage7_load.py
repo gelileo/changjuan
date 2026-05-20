@@ -161,6 +161,25 @@ def _emit_conflict(
     )
 
 
+def _last_field_confidence(
+    conn: sqlite3.Connection, entity_kind: str, entity_id: str, field: str
+) -> float | None:
+    """Return the confidence recorded in the most recent set-event for this field, or None.
+
+    Looks up the audit_log for the most recent 'set' change for the given field.
+    Returns None if no prior set-event exists (field was never updated since creation).
+    """
+    row = conn.execute(
+        "SELECT json_extract(after_json, '$.confidence') AS c "
+        "FROM audit_log WHERE entity_kind = ? AND entity_id = ? AND field = ? "
+        "ORDER BY at DESC, id DESC LIMIT 1;",
+        (entity_kind, entity_id, field),
+    ).fetchone()
+    if row is None or row["c"] is None:
+        return None
+    return float(row["c"])
+
+
 def _merge_scalar_fields(
     conn: sqlite3.Connection,
     person_id: str,
@@ -195,8 +214,12 @@ def _merge_scalar_fields(
                 pipeline_run_id,
             )
             continue
-        # Both auto: update if new confidence beats old by a meaningful margin.
-        if c["confidence"] > existing["confidence"] + _SIMILAR_CONFIDENCE_DELTA:
+        # Both auto: use per-field confidence from audit_log (most recent set-event),
+        # falling back to the row-level confidence only if no prior set-event exists.
+        prior_confidence = (
+            _last_field_confidence(conn, "person", person_id, field) or existing["confidence"]
+        )
+        if c["confidence"] > prior_confidence + _SIMILAR_CONFIDENCE_DELTA:
             _set_scalar(conn, person_id, field, new_val, c["confidence"], pipeline_run_id)
         else:
             _emit_conflict(
@@ -205,7 +228,7 @@ def _merge_scalar_fields(
                 person_id,
                 field,
                 old_val,
-                existing["confidence"],
+                prior_confidence,
                 new_val,
                 c["confidence"],
                 pipeline_run_id,

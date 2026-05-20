@@ -195,3 +195,55 @@ def test_load_slug_collision_guard(tmp_path: Path) -> None:
     expected_id = f"per:foo-{expected_hash}"
     assert expected_id in persons, f"expected '{expected_id}' in {list(persons)}"
     assert persons[expected_id] == "foo"
+
+
+def test_merge_uses_per_field_confidence_from_audit_log(tmp_path: Path) -> None:
+    """_merge_scalar_fields must consult audit_log for per-field confidence, not just the
+    stale row-level confidence. Scenario: Run1 creates Person (confidence 0.5), Run2 sets
+    gender='M' with confidence 0.9 (audit_log records 0.9), Run3 proposes gender='F' with
+    confidence 0.7 — should emit a Conflict (0.7 < 0.9 + 0.1), not silently overwrite.
+    """
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Run 1: create Person with confidence 0.5, no gender
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:r1', '重耳', 0.5, 'run:1', 'chk:1', 'q1');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+        # Run 2: same name, gender='M', confidence 0.9 → sets gender, audit_log records 0.9
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, gender, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:r2', '重耳', 'M', 0.9, 'run:2', 'chk:2', 'q2');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:2")
+        # Verify gender was set to 'M' and audit_log has confidence 0.9 for it
+        gender_after_run2 = conn.execute(
+            "SELECT gender FROM persons WHERE canonical_name='重耳';"
+        ).fetchone()["gender"]
+        assert gender_after_run2 == "M", "pre-condition: Run2 must set gender='M'"
+        # Run 3: same name, gender='F', confidence 0.7 → 0.7 < 0.9 + 0.1 → Conflict, NOT update
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, gender, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:r3', '重耳', 'F', 0.7, 'run:3', 'chk:3', 'q3');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:3")
+        gender_final = conn.execute(
+            "SELECT gender FROM persons WHERE canonical_name='重耳';"
+        ).fetchone()["gender"]
+        conflicts = list(
+            conn.execute("SELECT field, variants_json FROM conflicts WHERE field='gender';")
+        )
+
+    import json as _json
+
+    assert gender_final == "M", "gender must remain 'M'; Run3 confidence 0.7 is not > 0.9 + 0.1"
+    assert len(conflicts) == 1, f"expected 1 Conflict for gender, got {conflicts}"
+    variants = _json.loads(conflicts[0]["variants_json"])
+    variant_values = {v["value"] for v in variants}
+    assert variant_values == {"M", "F"}, f"expected {{M, F}} in variants, got {variant_values}"
+    confidences = {v["confidence"] for v in variants}
+    assert 0.9 in confidences, f"expected 0.9 (audit_log per-field confidence) in {confidences}"

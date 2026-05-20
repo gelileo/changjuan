@@ -40,6 +40,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `_count_rows` in `stage9_export.py` enumerates tables via `sqlite_master` rather than a hardcoded list, matching the same dynamic approach used in `_snapshot_canonical_only`. Since the snapshot has `candidate_*` and `llm_cache` already stripped, the dynamic set equals the canonical set exactly. No separate constant to keep in sync.
 
+## Stage 7 — per-field confidence lookup
+
+`_merge_scalar_fields` consults `_last_field_confidence` (an `audit_log` query) to determine the prior confidence for each scalar field before deciding whether to update or emit a Conflict. This prevents the stale row-level `persons.confidence` from being used as the baseline after a high-confidence update has already occurred in a previous run. If no prior set-event exists for the field, the row-level confidence is used as fallback.
+
 ## Stage 7 — slug collision guard
 
 `load_candidate_persons` derives each new Person's id as `per:<slug>`. If that id is already held by a *different* Person (slug collision from distinct names), the loader appends a 6-character SHA-256 hex suffix: `per:<slug>-<hash6>`. This is a defensive correctness guarantee; in practice the matcher merges same-name candidates before this path is reached, but it prevents a `PRIMARY KEY` crash when two distinct canonical names happen to produce the same ASCII slug.
