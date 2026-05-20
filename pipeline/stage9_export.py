@@ -15,26 +15,6 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-_CANONICAL_TABLES = (
-    "persons",
-    "person_variants",
-    "states",
-    "state_capitals",
-    "places",
-    "events",
-    "event_participants",
-    "event_places",
-    "event_relations",
-    "person_relations",
-    "person_states",
-    "entity_citations",
-    "conflicts",
-    "audit_log",
-    "pipeline_runs",
-    "merge_candidates",
-    "qa_samples",
-)
-
 SCHEMA_VERSION = 1
 
 
@@ -80,10 +60,22 @@ def _snapshot_canonical_only(src_db: Path, snap_path: Path) -> None:
 
 
 def _count_rows(snap_path: Path) -> dict[str, int]:
-    """Return row counts for every canonical table that exists in the snapshot."""
+    """Return row counts for every table in the snapshot, enumerated dynamically.
+
+    Enumerates via sqlite_master rather than a hardcoded list, so any future
+    table added to the canonical schema is counted automatically without touching
+    this function.  The snapshot has already had candidate_* and llm_cache tables
+    stripped, so dynamic enumeration produces exactly the canonical set.
+    """
     counts: dict[str, int] = {}
     with sqlite3.connect(snap_path) as conn:
-        for t in _CANONICAL_TABLES:
+        table_names = [
+            r[0]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+            )
+        ]
+        for t in table_names:
             row = conn.execute(f"SELECT COUNT(*) FROM {t};").fetchone()
             counts[t] = row[0]
     return counts

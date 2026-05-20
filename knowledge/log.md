@@ -2,6 +2,12 @@
 
 Append-only chronological log of significant changes to this project. Each entry records what changed, why, and which articles were touched. Read sequentially, this log tells the story of the project's decisions.
 
+## [2026-05-20] fix(stage9): dynamic table enumeration in _count_rows
+
+Replaced the hardcoded `_CANONICAL_TABLES` constant in `stage9_export.py` with dynamic `sqlite_master` enumeration in `_count_rows`. The snapshot already strips `candidate_*` and `llm_cache`, so dynamic enumeration is equivalent and stays correct as new canonical tables are added. `_CANONICAL_TABLES` removed.
+
+Articles updated: `concepts/pipeline/export-contract.md` (`_count_rows` dynamic enumeration section added).
+
 ## [2026-05-20] fix(stage7): add hash-suffix collision guard to Person id slugs
 
 Added a slug-collision guard in `load_candidate_persons`: after computing `per:<slug>`, the loader checks whether that id is already held by a *different* Person. If so, a 6-char SHA-256 suffix derived from `canonical_name` is appended (`per:<slug>-<hash6>`). Prevents `PRIMARY KEY` crash when two distinct names share the same slug.
