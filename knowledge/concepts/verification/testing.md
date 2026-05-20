@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-05-20
-status: current
+status: mature
 load_bearing: false
 references:
   - concepts/pipeline/architecture.md
