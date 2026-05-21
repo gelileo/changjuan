@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] stage7: load_candidate_states with field-level scalar merge (Task 17)
+
+Added `pipeline/stage7_load/states.py::load_candidate_states`. Mirrors `places.py` shape: match by `name`; scalar merge (`type`, `ruling_clan`, `founded_date_json`, `ended_date_json`) with higher-confidence-wins (delta threshold 0.1); citation accumulation via `record_citation`; `audit_log` uses `change_kind='create'/'set'`. No variants table — name-only match. Slug collision guard uses SHA-256 hex suffix (`sta:<slug>-<hash6>`). Date JSON fields treated as opaque strings for now; Task 18 will add `merge_date_field` for semantic date merging. `state_capitals` relation rows are NOT handled here — they land in Task 19 (`load_candidate_relations`). `pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_states`.
+
+Three new tests in `tests/unit/test_stage7_load_states.py`. Total: 110 tests.
+
+Key adaptation from spec: `candidate_states` uses `chunk_id`/`quote` columns (not `citation_id`), matching the canonical schema. Scalar fields are `type`, `ruling_clan`, `founded_date_json`, `ended_date_json` (not `name` in the merge loop — name is the match key).
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (new States section; updated `implemented:` and `What would invalidate this article`), `concepts/verification/testing.md` (new States test section).
+
 ## [2026-05-21] stage7: load_candidate_places with field-level scalar merge (Task 16)
 
 Added `pipeline/stage7_load/places.py::load_candidate_places`. Mirrors `load_candidate_persons` shape: match by `name`; scalar merge (`type`, `lat`, `lon`, `coord_confidence`, `modern_equiv`) with higher-confidence-wins (delta threshold 0.1); citation accumulation via `record_citation`; `audit_log` uses `change_kind='create'/'set'`. No variants table — name-only match. Slug collision guard uses SHA-256 hex suffix (same as persons). `pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_places`.

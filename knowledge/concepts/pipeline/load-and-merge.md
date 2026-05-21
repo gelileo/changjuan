@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-21
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states)
 status: thin
 load_bearing: true
 references:
@@ -80,10 +80,17 @@ Scalar fields merged: `type`, `lat`, `lon`, `coord_confidence`, `modern_equiv`. 
 
 Every create emits `audit_log` with `change_kind='create'` and `after_json={"value": name, "confidence": ...}`. Every scalar field update emits `change_kind='set'` with the new value and confidence.
 
+## States
+
+`pipeline/stage7_load/states.py::load_candidate_states` mirrors `places.py` exactly, adapted for the `states` table. Candidates are matched against existing canonical `states` rows by `name` equality only. If no match exists, a new State is created with id `sta:<slug>`, using the same SHA-256 hex-suffix collision guard.
+
+Scalar fields merged: `type`, `ruling_clan`, `founded_date_json`, `ended_date_json`. For the date JSON fields (`founded_date_json`, `ended_date_json`), the same opaque-string merge rule applies as for other scalars: skip if `None`; set unconditionally if existing value is `None`; otherwise apply the `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold using per-field confidence from `audit_log`. A dedicated `merge_date_field` helper (Task 18) will later provide semantic date-aware merging; for now the simple higher-confidence-wins rule is used. The `state_capitals` relation table (a separate join table between states and places) is not populated here — that is handled in Task 19 (`load_candidate_relations`). Citation accumulation works identically: `record_citation(conn, "state", state_id, chunk_id)` is called for every candidate. Every create emits `audit_log` with `change_kind='create'`; every field update emits `change_kind='set'`.
+
 ## What would invalidate this article
 
-- Adding a new entity kind to the load stage (events, states).
+- Adding a new entity kind to the load stage (events).
 - Changing the confidence-delta threshold.
 - Curated records becoming mergeable under any condition.
 - Citation accumulation being added to this stage.
-- Adding a place-variants table (would require match-by-variant logic like persons).
+- Adding a place-variants or state-variants table (would require match-by-variant logic like persons).
+- Task 18 landing `merge_date_field` and wiring it into the states loader for date fields.

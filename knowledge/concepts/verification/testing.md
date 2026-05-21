@@ -137,6 +137,16 @@ to a fake_lookup returning year 600 — result is 599, not the walkback target 7
 matching "cycle"). A private `_date()` helper extracts and asserts-isinstance the nested
 `date` sub-dict to satisfy mypy strict without cluttering every assertion.
 
+## Stage 7 load_candidate_states tests
+
+`tests/unit/test_stage7_load_states.py` (Phase 2 Task 17) exercises `pipeline.stage7_load.load_candidate_states`. A `_seed_candidate_state` helper inserts a minimal `candidate_states` row (using `chunk_id`/`quote` columns matching the canonical schema). Three tests:
+
+- `test_creates_canonical_state_on_first_load` — seeds one candidate, calls `load_candidate_states`, asserts one `states` row with the correct name.
+- `test_second_load_with_same_name_merges_not_creates` — two runs with the same name, second adds `ruling_clan='姬'`; asserts exactly one `states` row and two `entity_citations` rows.
+- `test_higher_confidence_field_overrides_lower` — first run sets `ruling_clan='姒'` at confidence 0.7; second run proposes `ruling_clan='姬'` at confidence 0.9 (delta 0.2 > threshold 0.1); asserts `ruling_clan` updates to `'姬'`.
+
+These tests guard the name-match, null-fill, and higher-confidence-override paths for states. The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the places tests pattern.
+
 ## Stage 7 load_candidate_places tests
 
 `tests/unit/test_stage7_load_places.py` (Phase 2 Task 16) exercises `pipeline.stage7_load.load_candidate_places`. A `_seed_candidate_place` helper inserts a minimal `candidate_places` row (using `chunk_id`/`quote` columns matching the canonical schema). Three tests:

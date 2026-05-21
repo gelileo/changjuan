@@ -13,5 +13,6 @@ Package layout:
 
 from pipeline.stage7_load.persons import load_candidate_persons
 from pipeline.stage7_load.places import load_candidate_places
+from pipeline.stage7_load.states import load_candidate_states
 
-__all__ = ["load_candidate_persons", "load_candidate_places"]
+__all__ = ["load_candidate_persons", "load_candidate_places", "load_candidate_states"]
