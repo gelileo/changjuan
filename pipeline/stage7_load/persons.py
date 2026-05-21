@@ -1,65 +1,16 @@
-"""Stage 7 — Load candidates into canonical store with field-level merge semantics.
-
-Promotes `candidate_persons` rows into canonical `persons`, applying field-level
-merge semantics when a candidate matches an existing canonical record.
-
-Matching priority:
-  1. canonical_name equality
-  2. person_variants.variant lookup
-
-If no match, a new Person is created with id `per:<slug>`.
-"""
-
 from __future__ import annotations
 
 import hashlib
 import json as _json
-import re
 import sqlite3
 import uuid
 
-# Confidence delta below which two values count as "similar" — disagreement triggers Conflict.
-_SIMILAR_CONFIDENCE_DELTA = 0.1
-
-_SCALAR_FIELDS = ("gender", "birth_date_json", "death_date_json", "notes", "state_id", "clan_name")
-
-
-def _slugify(name: str) -> str:
-    """Naive Chinese→ASCII-ish slug — fine for v1; will be replaced when pinyin is needed."""
-    safe = re.sub(r"[^\w]+", "-", name).strip("-").lower()
-    return safe or uuid.uuid4().hex[:8]
-
-
-def _audit(
-    conn: sqlite3.Connection,
-    entity_kind: str,
-    entity_id: str,
-    change_kind: str,
-    after_json: str,
-    actor: str,
-    pipeline_run_id: str,
-    field: str | None = None,
-    before_json: str | None = None,
-    citation_id: str | None = None,
-) -> None:
-    conn.execute(
-        "INSERT INTO audit_log"
-        " (id, entity_kind, entity_id, field, change_kind,"
-        " before_json, after_json, actor, citation_id, pipeline_run_id)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        (
-            f"al:{uuid.uuid4().hex[:12]}",
-            entity_kind,
-            entity_id,
-            field,
-            change_kind,
-            before_json,
-            after_json,
-            actor,
-            citation_id,
-            pipeline_run_id,
-        ),
-    )
+from pipeline.stage7_load.audit import _audit
+from pipeline.stage7_load.helpers import (
+    _PERSON_SCALAR_FIELDS,
+    _SIMILAR_CONFIDENCE_DELTA,
+    _slugify,
+)
 
 
 def _create_person(
@@ -205,12 +156,12 @@ def _merge_scalar_fields(
     c: sqlite3.Row,
     pipeline_run_id: str,
 ) -> None:
-    fields_sql = ", ".join(_SCALAR_FIELDS)
+    fields_sql = ", ".join(_PERSON_SCALAR_FIELDS)
     existing = conn.execute(
         f"SELECT provenance, {fields_sql}, confidence FROM persons WHERE id = ?;",
         (person_id,),
     ).fetchone()
-    for field in _SCALAR_FIELDS:
+    for field in _PERSON_SCALAR_FIELDS:
         new_val = c[field]
         if new_val is None:
             continue

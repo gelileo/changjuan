@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] stage 7: split monolith into package (deferred #5)
+
+`pipeline/stage7_load.py` → `pipeline/stage7_load/` package. Public API (`load_candidate_persons`) preserved via `__init__.py` re-export. Moved helpers to `helpers.py`, audit helper to `audit.py`, person loader to `persons.py`. Prerequisite for Phase 2's per-kind loaders (events, places, states, relations).
+
+Articles touched: none (pure refactor; no behaviour change).
+
 ## [2026-05-21] stage 1: ingest_documents returns actual insert count (deferred #3)
 
 `pipeline/stage1_ingest.py::ingest_dongzhoulieguozhi` now sums `cursor.rowcount` per row instead of returning `len(rows)`. Changed from `executemany` to per-row `execute` to count inserts properly. Re-ingesting an existing chapter now correctly reports 0 inserts. Test `test_ingest_returns_actual_insert_count_not_input_length` added.
