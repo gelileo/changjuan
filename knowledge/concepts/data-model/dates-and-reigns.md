@@ -2,7 +2,7 @@
 title: Dates, reigns, and inference kinds
 type: concept
 area: data-model
-updated: 2026-05-20
+updated: 2026-05-21
 status: thin
 load_bearing: true
 references:
@@ -10,6 +10,7 @@ references:
 affects:
   - pipeline/reign_table.json
   - pipeline/dates.py
+  - tests/unit/test_dates_relative.py
 ---
 
 ## What this is
@@ -36,6 +37,33 @@ Storing only `year_bce` would lose the distinction between a citation like 鲁�
 5. `_unknown` — fallback; `year_bce=None`, `uncertainty="point"`
 
 The Chinese numeral parser (`_cn_to_int`) covers 元 and compound forms up to ~60.
+
+## `relative_to_prior_event` resolution
+
+Phase 1 shipped `parse_date(original, anchor=...)` — given an anchor DateDict
+with a non-null `year_bce`, it resolves a relative token (其年/明年/次年/
+去年/前年/是岁/是年/是+season) via the `_RELATIVE_OFFSETS` table in BCE
+arithmetic ("明年" = −1 because BCE years decrease as time advances).
+
+Phase 2 adds `resolve_relative_dates(records, conn)` — a record-walking
+wrapper that maintains a rolling anchor across a chunk's records and
+dereferences relative dates in order.
+
+**Explicit cross-chunk anchor.** A record's `date.relative_anchor_event_id`
+(optional field) names a specific anchor event; resolution looks it up via
+`anchor_lookup(conn, event_id)` (default: query canonical events). Explicit
+anchor overrides walkback. Cycle detection rejects an anchor chain that
+visits the resolving record. Dangling anchors raise `RelativeResolveError`.
+
+**Offset resolution for the explicit-anchor path.** If `original` is a known
+token in `_RELATIVE_OFFSETS` → use that. Else, if the curator-supplied
+`offset_override` is passed (calendar-years-later) → use `−offset_override`
+(negated for BCE). Else → record's year_bce stays null.
+
+**Out of scope (Phase 2).** Automatic cross-chunk dereferencing (the
+walkback only sees records in the current batch). Extending
+`_RELATIVE_OFFSETS` to cover numeric patterns ("其后N年"). Both surface
+in `concepts/pipeline/incremental.md` as Phase 3+ work.
 
 ## First commitments
 

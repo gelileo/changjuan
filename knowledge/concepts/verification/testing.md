@@ -111,6 +111,21 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 `tests/unit/test_config.py::test_phase2_constants_exist` (Task 12) validates that Phase 2 configuration constants are present and have correct types and ranges: `EXTRACTION_DIR` is a string; `QA_SAMPLE_FRACTION` and `QA_MISMATCH_THRESHOLD` are in (0, 1); `QA_SAMPLE_FLOOR < QA_SAMPLE_CEILING`; and all five entity kinds in `GOLDEN_PR_THRESHOLDS` (person, event, place, state, relation) have precision and recall values in (0, 1]. This guards against typos in constant names and ensures the threshold structure is valid before the constants are read by stage-3 extraction (Task 22), sampling QA (Task 31), and the golden-eval CLI (Task 29).
 
+## resolve_relative_dates tests
+
+`tests/unit/test_dates_relative.py` (Phase 2 Task 14) exercises
+`pipeline.dates.resolve_relative_dates` and `RelativeResolveError`. Six tests:
+`test_within_chunk_walkback_resolves` (e1 has year 771, e2 "明年" resolves to 770
+via rolling anchor); `test_cascading_relatives` (three records — first anchored,
+second and third each "明年" step forward: 771 → 770 → 769);
+`test_no_prior_anchor_leaves_null_and_reduces_confidence` (no prior anchor — year_bce
+stays None); `test_explicit_anchor_overrides_walkback` (relative_anchor_event_id points
+to a fake_lookup returning year 600 — result is 599, not the walkback target 770);
+`test_dangling_anchor_raises` (fake_lookup returns None — RelativeResolveError matching
+"dangling"); `test_anchor_cycle_raises` (e1 anchors to itself — RelativeResolveError
+matching "cycle"). A private `_date()` helper extracts and asserts-isinstance the nested
+`date` sub-dict to satisfy mypy strict without cluttering every assertion.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

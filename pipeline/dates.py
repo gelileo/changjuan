@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
@@ -200,3 +201,136 @@ def parse_date(original: str, anchor: DateDict | None = None) -> DateDict:
     if (d := _try_era(original)) is not None:
         return d
     return _unknown(original)
+
+
+class RelativeResolveError(Exception):
+    """Raised on dangling/cyclic relative-anchor references."""
+
+
+def _default_anchor_lookup(conn: object, event_id: str) -> dict[str, object] | None:
+    """Default lookup: query canonical events table by id; return {'year_bce': ...} or None."""
+    if conn is None:
+        return None
+    # conn is a sqlite3.Connection at runtime
+    row = conn.execute(  # type: ignore[attr-defined]
+        "SELECT json_extract(date_json, '$.year_bce') FROM events WHERE id = ?",
+        (event_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return {"year_bce": row[0]}
+
+
+def _offset_from_original(original: str, override: int | None) -> int | None:
+    """Return the BCE-arithmetic offset to apply.
+    `override` is calendar-years-later (so negated). Returns None if no offset known."""
+    if override is not None:
+        return -override
+    return _RELATIVE_OFFSETS.get(original)
+
+
+def resolve_relative_dates(
+    records: Sequence[dict[str, object]],
+    conn: object,
+    *,
+    anchor_lookup: Callable[[object, str], dict[str, object] | None] | None = None,
+    offset_override: int | None = None,
+) -> list[dict[str, object]]:
+    """Resolve `relative_to_prior_event` records in-place against the same batch (walkback)
+    or via an explicit `relative_anchor_event_id` looked up through `anchor_lookup`.
+
+    Returns the same records (mutated in place for convenience).
+    """
+    lookup = anchor_lookup or _default_anchor_lookup
+    by_id: dict[str, dict[str, object]] = {}
+    for r in records:
+        rid = r.get("id")
+        if isinstance(rid, str):
+            by_id[rid] = r
+    rolling_anchor: dict[str, object] | None = None
+
+    for record in records:
+        date_raw = record.get("date")
+        if not isinstance(date_raw, dict):
+            continue
+        date: dict[str, object] = date_raw
+        kind = date.get("inference_kind")
+
+        if kind != "relative_to_prior_event":
+            if date.get("year_bce") is not None:
+                rolling_anchor = date
+            continue
+
+        explicit_id_raw = date.get("relative_anchor_event_id")
+        if explicit_id_raw is not None:
+            if not isinstance(explicit_id_raw, str):
+                date["year_bce"] = None
+                continue
+            explicit_id: str = explicit_id_raw
+            record_id = record.get("id")
+            if explicit_id == record_id:
+                raise RelativeResolveError(f"anchor cycle: event {record_id} anchors to itself")
+            visited: set[str | None] = {record_id if isinstance(record_id, str) else None}
+            cursor: str | None = explicit_id
+            anchor_record: dict[str, object] | None = None
+            while cursor is not None:
+                if cursor in visited:
+                    raise RelativeResolveError(f"anchor cycle through {cursor}")
+                visited.add(cursor)
+                chunk_match = by_id.get(cursor)
+                if chunk_match is not None:
+                    anchor_record = chunk_match
+                else:
+                    anchor_record = lookup(conn, cursor)
+                if anchor_record is None:
+                    raise RelativeResolveError(f"dangling relative_anchor_event_id '{cursor}'")
+                next_anchor_date_raw = anchor_record.get("date")
+                next_anchor_date = (
+                    next_anchor_date_raw
+                    if isinstance(next_anchor_date_raw, dict)
+                    else anchor_record
+                )
+                next_id_raw = next_anchor_date.get("relative_anchor_event_id")
+                if next_id_raw is None:
+                    break
+                if not isinstance(next_id_raw, str):
+                    break
+                cursor = next_id_raw
+            assert anchor_record is not None  # loop body guarantees this
+            anchor_year_container = anchor_record.get("date")
+            if isinstance(anchor_year_container, dict):
+                anchor_year = anchor_year_container.get("year_bce")
+            else:
+                anchor_year = anchor_record.get("year_bce")
+            if anchor_year is None:
+                date["year_bce"] = None
+                continue
+            original_str = date.get("original", "")
+            if not isinstance(original_str, str):
+                original_str = ""
+            offset = _offset_from_original(original_str, offset_override)
+            if offset is None:
+                date["year_bce"] = None
+                continue
+            assert isinstance(anchor_year, int)
+            date["year_bce"] = anchor_year + offset
+            continue
+
+        # Walkback path
+        if rolling_anchor is None or rolling_anchor.get("year_bce") is None:
+            date["year_bce"] = None
+            continue
+        original_str = date.get("original", "")
+        if not isinstance(original_str, str):
+            original_str = ""
+        offset = _offset_from_original(original_str, None)
+        if offset is None:
+            date["year_bce"] = None
+            continue
+        rolling_year = rolling_anchor["year_bce"]
+        assert isinstance(rolling_year, int)
+        date["year_bce"] = rolling_year + offset
+        if date["year_bce"] is not None:
+            rolling_anchor = date
+
+    return list(records)

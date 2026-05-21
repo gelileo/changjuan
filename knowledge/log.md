@@ -1,5 +1,22 @@
 # Build Log
 
+## [2026-05-21] dates: resolve_relative_dates wrapper for within- and cross-chunk anchors (Task 14)
+
+Added `pipeline.dates.resolve_relative_dates(records, conn, *, anchor_lookup, offset_override)`.
+Walks a sequence of records, maintaining a rolling anchor for walkback resolution. When
+`date.relative_anchor_event_id` is set, the explicit anchor overrides walkback and is
+resolved via `anchor_lookup(conn, event_id)` (default: query canonical events table).
+Cycle detection raises `RelativeResolveError("cycle ...")` and dangling anchors raise
+`RelativeResolveError("dangling ...")`. BCE-arithmetic offset convention matches existing
+`_RELATIVE_OFFSETS` table (明年 = −1). Also promoted `from typing import Callable, Optional,
+Sequence` to the top-level imports block. Six new tests in
+`tests/unit/test_dates_relative.py` covering: walkback, cascading relatives, null anchor,
+explicit-anchor override, dangling, and cycle.
+
+Articles touched: `concepts/data-model/dates-and-reigns.md` (new
+`relative_to_prior_event` resolution section + `affects` glob updated to include
+`tests/unit/test_dates_relative.py`).
+
 ## [2026-05-21] dates: DateDict accepts optional relative_anchor_event_id
 
 Added `relative_anchor_event_id: NotRequired[str | None]` to `DateDict`.
