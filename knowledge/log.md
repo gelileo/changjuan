@@ -1,5 +1,18 @@
 # Build Log
 
+## [2026-05-21] config: Phase 2 constants for extraction, QA, golden thresholds (Task 12)
+
+Added Phase 2 configuration constants to `pipeline/config.py`: EXTRACTION_DIR,
+QA_MISMATCH_THRESHOLD, QA_SAMPLE_FRACTION, QA_SAMPLE_FLOOR, QA_SAMPLE_CEILING,
+and GOLDEN_PR_THRESHOLDS. Threshold values are placeholders to be recalibrated
+after the first golden Ch.1 measurement (Task 29). Used by stage-3 extraction
+(Task 22), sampling QA (Task 31), and golden-eval CLI (Task 29). Added
+`test_phase2_constants_exist()` in `tests/unit/test_config.py`.
+
+Articles touched: concepts/runtime/configuration.md (new, explains all Phase 2
+constants and design rationale), concepts/verification/testing.md (Phase 2
+constants test section added).
+
 ## [2026-05-21] confidence: deterministic stage-3 score stub (Task 11)
 
 Created `pipeline/confidence.py::score_extraction_record` — the entry point for

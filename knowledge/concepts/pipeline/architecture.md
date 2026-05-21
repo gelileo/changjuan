@@ -2,7 +2,7 @@
 title: Automation-first pipeline architecture
 type: concept
 area: pipeline
-updated: 2026-05-20
+updated: 2026-05-21
 status: thin
 load_bearing: true
 references:

@@ -38,3 +38,27 @@ class Config:
     @property
     def corpora_dir(self) -> Path:
         return self.repo_root / "corpora"
+
+
+# Phase 2 — stage 3 extraction + QA
+
+# Directory for skill-produced extraction YAMLs (gitignored)
+EXTRACTION_DIR: str = "data/extractions"
+
+# Sampling-QA mismatch rate threshold; breaching this writes
+# "claim_defensible_mismatch_rate" into pipeline_runs.stats_json.thresholds_breached
+QA_MISMATCH_THRESHOLD: float = 0.10
+
+# 5% sample of scalar facts per pipeline_run, bounded
+QA_SAMPLE_FRACTION: float = 0.05
+QA_SAMPLE_FLOOR: int = 30
+QA_SAMPLE_CEILING: int = 250
+
+# Golden Ch.1 P/R thresholds; gate `changjuan golden-eval`; recalibrated after first measurement
+GOLDEN_PR_THRESHOLDS: dict[str, dict[str, float]] = {
+    "person": {"precision": 0.90, "recall": 0.85},
+    "event": {"precision": 0.80, "recall": 0.70},
+    "place": {"precision": 0.85, "recall": 0.75},
+    "state": {"precision": 0.95, "recall": 0.90},
+    "relation": {"precision": 0.75, "recall": 0.65},
+}

@@ -107,6 +107,10 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 `tests/unit/test_extract_output_schema.py` exercises `pipeline.schemas.extract_output.EXTRACT_OUTPUT_SCHEMA` and the `PROMPT_TEMPLATE_VERSION` constant. Eight tests: `test_minimal_valid_passes` (minimal payload with one person, empty lists for other entities — asserts jsonschema validates without error); `test_missing_top_level_required_fails` (deletes `events` key — asserts `ValidationError`); `test_person_missing_citation_fails` (deletes `citation` from a person entry — asserts `ValidationError`); `test_event_with_date_inference_kind_validated` (appends an event with a valid `inference_kind="explicit_reign_zhou"` — asserts validates); `test_event_with_invalid_inference_kind_fails` (appends an event with `inference_kind="bogus"` — asserts `ValidationError`); `test_prompt_template_version_constant_exists` (asserts `PROMPT_TEMPLATE_VERSION` starts with `"v"`); `test_person_accepts_valid_social_category` (sets `social_category="royalty"` on a person — asserts validates); `test_person_rejects_invalid_social_category` (sets `social_category="wizard"` — asserts `ValidationError`). Tests use `jsonschema.validate` directly with no database or filesystem fixtures.
 
+## Phase 2 constants tests
+
+`tests/unit/test_config.py::test_phase2_constants_exist` (Task 12) validates that Phase 2 configuration constants are present and have correct types and ranges: `EXTRACTION_DIR` is a string; `QA_SAMPLE_FRACTION` and `QA_MISMATCH_THRESHOLD` are in (0, 1); `QA_SAMPLE_FLOOR < QA_SAMPLE_CEILING`; and all five entity kinds in `GOLDEN_PR_THRESHOLDS` (person, event, place, state, relation) have precision and recall values in (0, 1]. This guards against typos in constant names and ensures the threshold structure is valid before the constants are read by stage-3 extraction (Task 22), sampling QA (Task 31), and the golden-eval CLI (Task 29).
+
 ## What would invalidate this article
 
 - Adding a second test runner.
