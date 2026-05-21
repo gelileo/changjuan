@@ -6,7 +6,7 @@ Added two regression tests in `tests/unit/test_stage2_chunk.py`:
 - `test_empty_paragraphs_are_skipped` — empty paragraphs (from `\n\n\n` runs) don't produce empty chunks.
 - `test_oversized_single_paragraph_emits_one_chunk` — paragraphs larger than the target chunk size still emit exactly one chunk; v1 chunker doesn't split mid-paragraph.
 
-Articles touched: `concepts/verification/testing.md` (chunking edge-case tests section added).
+Articles touched: none (test-only; behavior already correct).
 
 ## [2026-05-21] stage 2: _PARA_SEP regex accepts single-newline paragraphs (deferred #1)
 
