@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] test(dates): reign-year boundary tests for 鲁僖公33/鲁文公1/鲁庄公32 (deferred #2)
+
+Added three boundary regression tests to `tests/unit/test_dates.py`. The tests assert canonical conversions: 鲁僖公33年→627 BCE, 鲁文公元年→626 BCE, 鲁庄公32年→662 BCE. All tests passed against existing `pipeline/reign_table.json` with no data or parser fixes required.
+
+Article touched: `concepts/verification/testing.md` (added "Reign-year boundary tests" section documenting the three new regression tests).
+
 ## [2026-05-21] docs(knowledge): sampling QA harness + same-model verifier limitation (Task 34)
 
 Extended `concepts/verification/confidence-and-invariants.md` with two new sections:

@@ -108,3 +108,21 @@ def test_datedict_accepts_relative_anchor_event_id() -> None:
         "relative_anchor_event_id": "evt:zhou-you-wang-killed-771bce",
     }
     assert d["relative_anchor_event_id"] == "evt:zhou-you-wang-killed-771bce"
+
+
+def test_lu_xi_gong_33_resolves_to_627_bce() -> None:
+    """鲁僖公33年 → 627 BCE (鲁僖公 reigned 659-627 BCE; year 1 = 659, year 33 = 627)."""
+    d = parse_date("鲁僖公三十三年")
+    assert d["year_bce"] == 627
+
+
+def test_lu_wen_gong_1_resolves_to_626_bce() -> None:
+    """鲁文公1年 → 626 BCE (鲁文公 reigned 626-609 BCE)."""
+    d = parse_date("鲁文公元年")
+    assert d["year_bce"] == 626
+
+
+def test_lu_zhuang_gong_32_resolves_to_662_bce() -> None:
+    """鲁庄公32年 → 662 BCE (鲁庄公 reigned 693-662 BCE; year 32 = 662)."""
+    d = parse_date("鲁庄公三十二年")
+    assert d["year_bce"] == 662
