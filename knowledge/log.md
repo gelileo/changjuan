@@ -2,7 +2,7 @@
 
 ## [2026-05-21] stage 2: _PARA_SEP regex accepts single-newline paragraphs (deferred #1)
 
-Changed `pipeline/stage2_chunk.py::_PARA_SEP` from `r"\r?\n\s*\r?\n+"` to `r"\r?\n+"`. Upstream 东周列国志 JSON uses single `\n` between paragraphs; the previous regex required blank-line separators and silently collapsed each chapter into one ~5KB chunk. Added regression test `test_chunks_emerge_from_single_newline_separated_paragraphs`. Re-chunked the corpus: chunk count went from 108 (one per chapter) to 606 (record the actual number from Step 1.5).
+Changed `pipeline/stage2_chunk.py::_PARA_SEP` from `r"\r?\n\s*\r?\n+"` to `r"\r?\n+"`. Upstream 东周列国志 JSON uses single `\n` between paragraphs; the previous regex required blank-line separators and silently collapsed each chapter into one ~5KB chunk. Added regression test `test_chunks_emerge_from_single_newline_separated_paragraphs`. Re-chunked the corpus: chunk count went from 108 (one per chapter) to 606.
 
 Articles touched: `concepts/pipeline/architecture.md` (chunking section).
 
