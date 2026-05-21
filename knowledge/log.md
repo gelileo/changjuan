@@ -1,5 +1,26 @@
 # Build Log
 
+## [2026-05-21] feat(cli): re-extract verb + concepts/pipeline/incremental.md (Task 28)
+
+Added `re-extract` subcommand to `pipeline/cli.py`. The verb:
+
+1. **Checks** `data/extractions/ch{N:02d}/extract-{v}.yaml` exists at the expected path.
+2. **Prints an actionable user-instruction** (exact slash-command to invoke in Claude Code) and exits non-zero (code 1) when the file is missing.
+3. **Re-loads** the existing YAML as a fresh `pipeline_run_id` (`run:re-extract-ch{N}-{v}-{timestamp}`) when the file exists.
+4. **Delegates** to `load_extraction` — the same stage-3 loader used by `extract-load`; stage-7 merge semantics handle accumulation and Conflict emission automatically.
+5. **Reports** per-entity-kind written counts and invariant violation count.
+
+The `--prompt-version` flag follows the skill-directory naming convention: `v1` maps to `changjuan-extract/`, `v2` to `changjuan-extract-v2/`, etc. This convention is documented in the new article.
+
+Two new tests in `tests/unit/test_re_extract.py`:
+- `test_missing_extraction_file_instructs_user` — verifies exit != 0 and that stdout includes both "Invoke"/"Claude Code" and "changjuan-extract".
+- `test_reload_when_file_exists` — verifies exit 0 for an empty-payload YAML (zero records written).
+
+Articles created: `concepts/pipeline/incremental.md` (covers why incremental extraction matters, `re-extract` semantics, prompt-version convention, missing-file path, Conflict-on-divergence, `curated` safety guarantee).
+Articles updated: `knowledge/index.md` (pipeline table row added), `CLAUDE.md` (existing `incremental.md` mapping row extended to cover `pipeline/cli.py` re_extract_cmd and `.claude/skills/changjuan-extract*/**`).
+
+Total: 145 tests.
+
 ## [2026-05-21] feat(skill): .claude/skills/changjuan-extract/ — stage 3 extraction skill (Task 27)
 
 Created the full changjuan-extract skill directory (first-draft pass):

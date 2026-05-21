@@ -97,7 +97,7 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | `pipeline/**/confidence*.py` or `pipeline/**/scoring*.py` | `concepts/verification/confidence.md` |
 | `pipeline/**/invariant*.py` or `pipeline/**/justif*.py` | `concepts/verification/extraction-invariants.md` |
 | `curation/**/*.py` | `concepts/curation/streamlit-app.md` |
-| `pipeline/**/incremental*.py` or `pipeline/**/reextract*.py` | `concepts/pipeline/incremental.md` |
+| `pipeline/**/incremental*.py` or `pipeline/**/reextract*.py` or `pipeline/cli.py` (re_extract_cmd) or `.claude/skills/changjuan-extract*/**` | `concepts/pipeline/incremental.md` |
 | `corpora/**` or `pipeline/**/ingest*.py` | `concepts/corpora/{corpus}.md` |
 | `pipeline/**/stats*.py` or `pipeline/**/metrics*.py` | `concepts/verification/stats-schema.md` |
 | `.env` or `pipeline/config.py` | `concepts/runtime/configuration.md` |

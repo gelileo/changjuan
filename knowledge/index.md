@@ -19,6 +19,7 @@ For the underlying design spec, see [`docs/superpowers/specs/2026-05-20-changjua
 | --- | --- | --- |
 | [Automation-first pipeline architecture](concepts/pipeline/architecture.md) | 9-stage sequential ETL with three LLM stages (extract, link, cross-canon). Load-bearing principle: pipeline produces a complete usable graph without curation; curation is retrospective, never a gate. | 2026-05-20 |
 | [Stage 3 extraction — Claude-Code-skill-driven architecture](concepts/pipeline/extraction.md) | Two-actor design: Claude Code skill produces YAML; Python loader/validator persists. Four static invariants, chunk-local id scheme, prompt-versioning via skill directory naming, "different prompt only" sampling-QA limitation. | 2026-05-21 |
+| [Incremental extraction — re-extract semantics and prompt-version accumulation](concepts/pipeline/incremental.md) | `re-extract` CLI verb reloads existing YAML as a new `pipeline_run_id`. Stage 7 merge semantics accumulate findings across runs; `curated` records never silently overwritten; missing-file path prints exact slash-command to invoke in Claude Code. | 2026-05-21 |
 
 ### curation
 

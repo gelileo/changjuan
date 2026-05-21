@@ -191,6 +191,51 @@ def resolve_relative_date_cmd(
     typer.echo(f"resolved {event_id}: year_bce = {after.get('year_bce')}")
 
 
+@app.command(name="re-extract")
+def re_extract_cmd(
+    chapter: int = typer.Option(..., "--chapter"),
+    prompt_version: str = typer.Option(..., "--prompt-version"),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Re-load an existing extraction YAML as a new pipeline_run, or instruct the user
+    to invoke the corresponding skill in Claude Code first."""
+    from datetime import UTC
+    from datetime import datetime as _datetime
+
+    extraction_file = (
+        repo_root / "data" / "extractions" / f"ch{chapter:02d}" / f"extract-{prompt_version}.yaml"
+    )
+    if not extraction_file.exists():
+        skill_dir = "changjuan-extract" + (f"-{prompt_version}" if prompt_version != "v1" else "")
+        typer.echo(
+            f"Extraction file not found: {extraction_file}\n\n"
+            f"Skill `.claude/skills/{skill_dir}/` has not been run for chapter {chapter}.\n"
+            f"Invoke in Claude Code first:\n"
+            f"  /{skill_dir} chapter:{chapter}\n"
+        )
+        raise typer.Exit(code=1)
+
+    ts = _datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+    run_id = f"run:re-extract-ch{chapter}-{prompt_version}-{ts}"
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(repo_root / "data" / "corpus.sqlite")
+    stats = load_extraction(
+        canonical,
+        corpus_conn=corpus,
+        chapter_num=chapter,
+        extraction_file=extraction_file,
+        prompt_version=prompt_version,
+        pipeline_run_id=run_id,
+    )
+    typer.echo(
+        f"re-extracted as {run_id}: persons={stats['persons_written']} "
+        f"events={stats['events_written']} places={stats['places_written']} "
+        f"states={stats['states_written']} relations={stats['relations_written']}"
+    )
+    if stats["invariant_violations"]:
+        typer.echo(f"invariant violations: {len(stats['invariant_violations'])}")
+
+
 @app.command()
 def extract(
     chapter: int = typer.Option(..., "--chapter"),

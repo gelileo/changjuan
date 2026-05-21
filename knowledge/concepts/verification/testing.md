@@ -228,6 +228,15 @@ Helper functions `_chunk` and `_person_record` produce minimal dicts; no fixture
 - `test_preflight_fails_when_chapter_has_no_chunks` — seeds an empty `corpus.sqlite` (schema applied, no rows); asserts non-zero exit and `✗` (chapter-chunks check fails).
 - `test_preflight_passes_when_chunks_and_skill_present` — seeds `corpus.sqlite` with two chunks for chapter 1, creates a `.claude/skills/changjuan-extract/` directory with `SKILL.md`, `system-prompt.md`, and a `extraction-schema.yaml` generated via `yaml.safe_dump(EXTRACT_OUTPUT_SCHEMA)`; asserts exit 0, `✓` in stdout, and `/changjuan-extract` in stdout (skill invocation is printed). Uses `corpus = 'dongzhoulieguozhi'` to satisfy the `documents.corpus` CHECK constraint.
 
+## re-extract CLI tests
+
+`tests/unit/test_re_extract.py` (Phase 2 Task 28) exercises the `re-extract` subcommand via `typer.testing.CliRunner`. A `_seed_corpus_with_one_chunk` helper creates a minimal `corpus.sqlite` and `changjuan.sqlite` under `tmp_path/data/`. Two tests:
+
+- `test_missing_extraction_file_instructs_user` — invokes `re-extract --chapter 1 --prompt-version v2` with no YAML file present; asserts non-zero exit code and that stdout contains both a "Invoke"/"Claude Code" guidance string and "changjuan-extract" (the skill name).
+- `test_reload_when_file_exists` — seeds `data/extractions/ch01/extract-v1.yaml` with an empty-payload YAML; invokes `re-extract --chapter 1 --prompt-version v1`; asserts exit 0 (empty payload passes all invariants, zero records written).
+
+Tests use `corpus = 'dongzhoulieguozhi'` to satisfy the `documents.corpus` CHECK constraint, matching the pattern established in `test_extract_load.py`.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

@@ -12,6 +12,7 @@ affects:
   - pipeline/cli.py
   - tests/unit/test_resolve_relative_date_cli.py
   - tests/unit/test_extract_preflight.py
+  - tests/unit/test_re_extract.py
 ---
 
 ## What this is
@@ -42,6 +43,8 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
   Exits 1 with a clear error if the event or anchor is not found, the anchor has no resolved `year_bce`, or the offset cannot be determined.
 
   The `--offset` flag is calendar-years-later (positive = forward in time). For BCE arithmetic: `year_bce_result = anchor_year_bce - offset`.
+
+- **`changjuan re-extract --chapter N --prompt-version V [--repo-root PATH]`** — Reload-only mode: re-loads an existing `data/extractions/ch{N:02d}/extract-{V}.yaml` as a **new** `pipeline_run_id` without invoking the LLM skill again. Useful when a validator bug is fixed and existing YAML needs re-processing. Auto-generates a fresh `pipeline_run_id` (`run:re-extract-ch{N}-{V}-{timestamp}`), delegates to `load_extraction`, and reports per-entity-kind written counts. When the YAML file does not exist, prints an actionable message with the exact slash-command to invoke in Claude Code first (`/<skill-dir> chapter:N`) and exits non-zero (code 1). The `--prompt-version` flag follows the skill-directory naming convention (`v1` → `changjuan-extract/`; `v2` → `changjuan-extract-v2/`). See [`concepts/pipeline/incremental.md`](../pipeline/incremental.md) for full re-extract semantics.
 
 ## Why this shape, not the alternatives
 
