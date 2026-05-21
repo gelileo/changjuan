@@ -15,7 +15,7 @@ affects:
 
 ## What this is
 
-The `changjuan` command is a typer-based CLI exposing one subcommand per pipeline stage that has a stable user-facing surface. Phase 1 wires `ingest`, `chunk`, `load`, `export`. Phase 2 adds `list-unresolved-dates` and `resolve-relative-date` as the curator triage surface for cross-chunk relative-date anchoring.
+The `changjuan` command is a typer-based CLI exposing one subcommand per pipeline stage that has a stable user-facing surface. Phase 1 wires `ingest`, `chunk`, `load`, `export`. Phase 2 adds `extract-load`, `list-unresolved-dates`, and `resolve-relative-date` — the first a thin wrapper around stage-3 extraction; the latter two the curator triage surface for cross-chunk relative-date anchoring.
 
 ## Subcommands
 
@@ -23,6 +23,7 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 
 - **`changjuan ingest [--repo-root PATH]`** — Stage 1: reads the dongzhoulieguozhi JSON from `corpora/dongzhoulieguozhi/json/东周列国志.json` and inserts one row per chapter into `corpus.sqlite`. Exits 1 with a clear message if the corpus file is absent.
 - **`changjuan chunk [--repo-root PATH]`** — Stage 2: splits all unchunked documents into paragraph-aware overlapping chunks and writes them to `corpus.sqlite`.
+- **`changjuan extract-load --chapter N --extraction-file PATH --prompt-version V [--pipeline-run-id ID] [--repo-root PATH]`** — Stage 3: validates a skill-produced extraction YAML file, runs all extraction invariants per record, and writes passing records to `candidate_persons`, `candidate_events`, `candidate_places`, `candidate_states`, and `candidate_relations`. Auto-generates a `pipeline_run_id` (format: `run:extract-ch<chapter>-<prompt_version>-<timestamp>`) if `--pipeline-run-id` not supplied. Returns per-entity-kind counts and lists up to 10 invariant violations (or count if >10). Invariant failures prevent a record from being written but do not cause the command to exit non-zero.
 - **`changjuan load <pipeline_run_id> [--repo-root PATH]`** — Stage 7: promotes all five entity-kind candidates matching the given `pipeline_run_id` into canonical entities with field-level merge semantics (curated-never-overwritten, higher-confidence-wins, Conflict on disagreement). Load order: places + states first (other entity types reference them via foreign keys), then persons, events, and finally all six relation kinds. Returns counts for each entity kind loaded.
 - **`changjuan export <version> [--repo-root PATH]`** — Stage 9: freezes a versioned export bundle at `data/exports/changjuan-export-<version>/`, containing `manifest.json` and a `candidate_*`-stripped SQLite snapshot.
 

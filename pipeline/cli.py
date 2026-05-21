@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json as _json
 import uuid as _uuid
+from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
@@ -16,10 +17,11 @@ import typer
 
 from pipeline.config import Config
 from pipeline.dates import RelativeResolveError, resolve_relative_dates
-from pipeline.db import apply_schema, connect, open_canonical_db
+from pipeline.db import apply_schema, connect, open_canonical_db, open_corpus_db
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
 from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
 from pipeline.stage2_chunk import chunk_documents
+from pipeline.stage3_extract import load_extraction
 from pipeline.stage7_load import (
     load_candidate_events,
     load_candidate_persons,
@@ -187,3 +189,40 @@ def resolve_relative_date_cmd(
     )
     canonical.commit()
     typer.echo(f"resolved {event_id}: year_bce = {after.get('year_bce')}")
+
+
+@app.command(name="extract-load")
+def extract_load_cmd(
+    chapter: int = typer.Option(..., "--chapter"),
+    extraction_file: Path = typer.Option(..., "--extraction-file", exists=True),
+    prompt_version: str = typer.Option(..., "--prompt-version"),
+    pipeline_run_id: str | None = typer.Option(None, "--pipeline-run-id"),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Validate + load a skill-produced extraction YAML into candidate_* tables."""
+    if pipeline_run_id is None:
+        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+        pipeline_run_id = f"run:extract-ch{chapter}-{prompt_version}-{ts}"
+
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(repo_root / "data" / "corpus.sqlite")
+    stats = load_extraction(
+        canonical,
+        corpus_conn=corpus,
+        chapter_num=chapter,
+        extraction_file=extraction_file,
+        prompt_version=prompt_version,
+        pipeline_run_id=pipeline_run_id,
+    )
+    typer.echo(f"pipeline_run_id: {pipeline_run_id}")
+    typer.echo(
+        f"written: persons={stats['persons_written']} events={stats['events_written']} "
+        f"places={stats['places_written']} states={stats['states_written']} "
+        f"relations={stats['relations_written']}"
+    )
+    if stats["invariant_violations"]:
+        typer.echo(f"invariant violations: {len(stats['invariant_violations'])}")
+        for v in stats["invariant_violations"][:10]:
+            typer.echo(f"  - {v}")
+        if len(stats["invariant_violations"]) > 10:
+            typer.echo(f"  ... and {len(stats['invariant_violations']) - 10} more")

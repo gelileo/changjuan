@@ -1,5 +1,21 @@
 # Build Log
 
+## [2026-05-21] cli: extract-load CLI verb wiring stage3_extract.load_extraction (Task 23)
+
+Added `extract-load` subcommand to `pipeline/cli.py`. The verb:
+
+1. **Accepts** `--chapter`, `--extraction-file` (must exist), `--prompt-version`, optional `--pipeline-run-id`, and optional `--repo-root`.
+2. **Auto-generates `pipeline_run_id`** if not supplied: `run:extract-ch<chapter>-<prompt_version>-<timestamp>` (UTC ISO 8601).
+3. **Opens** both `corpus.sqlite` and `changjuan.sqlite` via `open_corpus_db` / `open_canonical_db`.
+4. **Calls** `load_extraction()` with all parameters, collecting stats (per-entity-kind counts + invariant violations list).
+5. **Reports** the generated/supplied `pipeline_run_id`, per-entity-kind counts, and up to 10 invariant violations (with count of remaining).
+
+Test added: `test_extract_load_cli_loads_yaml_via_cli` in `tests/unit/test_cli.py` validates the verb round-trip: creates a minimal corpus and extraction YAML, invokes the CLI, and verifies exit 0 with "persons=1" in stdout.
+
+Articles touched: `concepts/runtime/cli.md` (expanded `extract-load` documentation with full signature + semantics).
+
+Total: 140 tests.
+
 ## [2026-05-21] stage3: load_extraction — YAML → candidate_* with invariant gating (Task 22)
 
 Added `load_extraction` to `pipeline/stage3_extract.py`. The function:

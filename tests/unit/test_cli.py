@@ -110,3 +110,73 @@ def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
 
         events = canonical.execute("SELECT COUNT(*) as cnt FROM events").fetchone()
         assert events[0] > 0, "events table is empty after load"
+
+
+def test_extract_load_cli_loads_yaml_via_cli(tmp_path: Path) -> None:
+    """CLI wrapper around load_extraction: validates + writes candidate_persons rows."""
+    import yaml
+
+    from pipeline.db import open_corpus_db
+
+    (tmp_path / "data").mkdir()
+    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
+    open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus.execute(
+        "INSERT INTO documents "
+        "(id, corpus, title, chapter_num, chapter_title, raw_text, "
+        "source_edition, ingested_at) "
+        "VALUES (1, 'dongzhoulieguozhi', 't', 1, 'ch1', '...', "
+        "'test', datetime('now'))"
+    )
+    corpus.execute(
+        "INSERT INTO chunks "
+        "(id, document_id, paragraph_start, paragraph_end, text, hash) "
+        "VALUES ('chk:ch01-001', 1, 1, 1, '重耳奔狄', 'h')"
+    )
+    corpus.commit()
+    corpus.close()
+
+    extraction_file = tmp_path / "extract.yaml"
+    extraction_file.write_text(
+        yaml.safe_dump(
+            {
+                "persons": [
+                    {
+                        "id": "p1",
+                        "canonical_name": "重耳",
+                        "citation": {
+                            "chunk_id": "chk:ch01-001",
+                            "paragraph": 1,
+                            "span": [0, 2],
+                            "quote": "重耳",
+                        },
+                        "justifications": {"canonical_name": "重耳"},
+                    }
+                ],
+                "events": [],
+                "places": [],
+                "states": [],
+                "relations": [],
+            },
+            allow_unicode=True,
+        ),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "extract-load",
+            "--chapter",
+            "1",
+            "--extraction-file",
+            str(extraction_file),
+            "--prompt-version",
+            "v1",
+            "--repo-root",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "persons=1" in result.stdout
