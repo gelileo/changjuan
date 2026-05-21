@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-21] docs(knowledge): concepts/pipeline/extraction.md — stage 3 architecture (Task 25)
+
+Created `knowledge/concepts/pipeline/extraction.md`. Covers the full stage-3 picture:
+two-actor design (Claude Code skill produces YAML; Python loader/validator persists),
+four static invariants enforced by `validate_record`, chunk-local id scheme, prompt
+versioning via skill directory naming, single source of truth for the extraction schema
+(`pipeline/schemas/extract_output.py` ↔ `extraction-schema.yaml`), confidence stub
+formula, and the Phase 2 "different prompt only" sampling-QA limitation.
+
+Articles created: `concepts/pipeline/extraction.md`.
+Articles updated: `knowledge/index.md` (pipeline table row added), `CLAUDE.md`
+(article-mapping table row expanded to cover `pipeline/schemas/extract_output.py`,
+`.claude/skills/changjuan-extract*/**`, `pipeline/confidence.py`).
+
 ## [2026-05-21] cli: extract pre-flight verb — non-LLM checklist before invoking skill (Task 24)
 
 Added `extract` subcommand to `pipeline/cli.py`. The verb:

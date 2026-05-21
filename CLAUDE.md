@@ -89,7 +89,7 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | `pipeline/schemas/*.sql` | `concepts/data-model/knowledge-graph.md` |
 | `pipeline/**/date*.py` or `pipeline/**/reign*.py` or `pipeline/**/dates.py` | `concepts/data-model/dates-and-reigns.md` |
 | Pipeline stages 1–9 boundaries, inputs/outputs, or invariants | `concepts/pipeline/architecture.md` |
-| `pipeline/**/stage3*.py` or `pipeline/**/prompts/**` | `concepts/pipeline/extraction.md` |
+| `pipeline/**/stage3*.py` or `pipeline/**/prompts/**` or `pipeline/schemas/extract_output.py` or `.claude/skills/changjuan-extract*/**` or `pipeline/confidence.py` | `concepts/pipeline/extraction.md` |
 | `pipeline/**/stage5*.py` or `pipeline/**/link*.py` | `concepts/pipeline/linking.md` |
 | `pipeline/**/stage6*.py` or `pipeline/**/cross_canon*.py` | `concepts/pipeline/cross-canon.md` |
 | `pipeline/**/stage7*.py` or `pipeline/**/load*.py` | `concepts/pipeline/load-and-merge.md` |
