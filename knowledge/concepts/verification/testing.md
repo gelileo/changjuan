@@ -99,6 +99,10 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 `tests/integration/test_roundtrip.py` is the regression target for the full Phase 1 deterministic pipeline. `test_phase1_roundtrip` walks all four stages against a synthetic 1-chapter corpus: (1) ingest a single-chapter JSON into `corpus.sqlite`, (2) chunk the document, (3) seed a `candidate_persons` row directly and call `load_candidate_persons`, (4) call `export_bundle`. Assertions: `manifest["counts"]["persons"] == 1`, `audit_log` key present in counts, no `candidate_*` tables in snapshot, canonical Person's `canonical_name == "重耳"`. This test uses direct function calls (not the CLI) so it validates the pipeline layer, not the CLI layer. It lives in `tests/integration/` and is collected by default (no marker required in Phase 1).
 
+## Extraction-output schema tests
+
+`tests/unit/test_extract_output_schema.py` exercises `pipeline.schemas.extract_output.EXTRACT_OUTPUT_SCHEMA` and the `PROMPT_TEMPLATE_VERSION` constant. Eight tests: `test_minimal_valid_passes` (minimal payload with one person, empty lists for other entities — asserts jsonschema validates without error); `test_missing_top_level_required_fails` (deletes `events` key — asserts `ValidationError`); `test_person_missing_citation_fails` (deletes `citation` from a person entry — asserts `ValidationError`); `test_event_with_date_inference_kind_validated` (appends an event with a valid `inference_kind="explicit_reign_zhou"` — asserts validates); `test_event_with_invalid_inference_kind_fails` (appends an event with `inference_kind="bogus"` — asserts `ValidationError`); `test_prompt_template_version_constant_exists` (asserts `PROMPT_TEMPLATE_VERSION` starts with `"v"`); `test_person_accepts_valid_social_category` (sets `social_category="royalty"` on a person — asserts validates); `test_person_rejects_invalid_social_category` (sets `social_category="wizard"` — asserts `ValidationError`). Tests use `jsonschema.validate` directly with no database or filesystem fixtures.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

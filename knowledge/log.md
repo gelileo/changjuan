@@ -1,5 +1,18 @@
 # Build Log
 
+## [2026-05-21] schemas: canonical extraction-output schema (Task 10)
+
+Created `pipeline/schemas/extract_output.py::EXTRACT_OUTPUT_SCHEMA` —
+single source of truth for stage 3's structured output. Used by the Python
+validator (Task 21) and mirrored to .claude/skills/changjuan-extract/extraction-schema.yaml
+via the regenerator script (Task 26). PROMPT_TEMPLATE_VERSION constant
+tracks the prompt template version (initial value 'v1'). Person schema
+includes the social_category enum field added in the previous commit.
+
+Also added `[mypy-jsonschema]` override to `mypy.ini` (suppress `import-untyped` for jsonschema — no stubs installed) and `disallow_untyped_calls = False` to `[mypy-tests.*]` (test helper functions are untyped by convention in this project).
+
+Articles touched: concepts/verification/testing.md (extraction-output schema tests section added).
+
 ## [2026-05-21] schema: add `social_category` to Person (coarse-grained type)
 
 Added an optional enum field to the Person entity (and `candidate_persons`):
