@@ -1,5 +1,22 @@
 # Build Log
 
+## [2026-05-21] cli: extract pre-flight verb — non-LLM checklist before invoking skill (Task 24)
+
+Added `extract` subcommand to `pipeline/cli.py`. The verb:
+
+1. **Checks** `corpus.sqlite` exists at `data/corpus.sqlite`.
+2. **Counts** chunks for the target chapter (must be >1 — regression guard for _PARA_SEP fix).
+3. **Scans** `.claude/skills/changjuan-extract*/` for at least one skill directory.
+4. **Validates** that `SKILL.md`, `system-prompt.md`, and `extraction-schema.yaml` exist in the latest skill dir.
+5. **Compares** the on-disk `extraction-schema.yaml` against the canonical `EXTRACT_OUTPUT_SCHEMA` Python object (drift detection).
+6. **Prints** copy-paste skill invocation (`/<skill-name> chapter:N`) and follow-up `extract-load` command when all checks pass; exits 1 otherwise. All checks are printed with ✓/✗ prefixes.
+
+Tests added: `tests/unit/test_extract_preflight.py` — 3 tests covering no-corpus, empty-chapter, and all-green scenarios.
+
+Articles touched: `concepts/runtime/cli.md` (documented `extract` pre-flight verb, updated overview paragraph and `affects:` list).
+
+Total: 143 tests.
+
 ## [2026-05-21] cli: extract-load CLI verb wiring stage3_extract.load_extraction (Task 23)
 
 Added `extract-load` subcommand to `pipeline/cli.py`. The verb:

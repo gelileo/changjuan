@@ -220,6 +220,14 @@ The fixture uses corpus `'dongzhoulieguozhi'` (the CHECK constraint on `document
 
 Helper functions `_chunk` and `_person_record` produce minimal dicts; no fixtures or database are needed.
 
+## Extract pre-flight tests
+
+`tests/unit/test_extract_preflight.py` (Phase 2 Task 24) exercises `pipeline.cli.extract` — the non-LLM pre-flight verb. Three tests:
+
+- `test_preflight_fails_when_no_corpus` — invokes `extract --chapter 1` against a `tmp_path` with only an empty `data/` dir; asserts non-zero exit and `✗` in stdout.
+- `test_preflight_fails_when_chapter_has_no_chunks` — seeds an empty `corpus.sqlite` (schema applied, no rows); asserts non-zero exit and `✗` (chapter-chunks check fails).
+- `test_preflight_passes_when_chunks_and_skill_present` — seeds `corpus.sqlite` with two chunks for chapter 1, creates a `.claude/skills/changjuan-extract/` directory with `SKILL.md`, `system-prompt.md`, and a `extraction-schema.yaml` generated via `yaml.safe_dump(EXTRACT_OUTPUT_SCHEMA)`; asserts exit 0, `✓` in stdout, and `/changjuan-extract` in stdout (skill invocation is printed). Uses `corpus = 'dongzhoulieguozhi'` to satisfy the `documents.corpus` CHECK constraint.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

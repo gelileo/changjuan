@@ -191,6 +191,70 @@ def resolve_relative_date_cmd(
     typer.echo(f"resolved {event_id}: year_bce = {after.get('year_bce')}")
 
 
+@app.command()
+def extract(
+    chapter: int = typer.Option(..., "--chapter"),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Pre-flight check for stage 3. Does NOT call an LLM.
+
+    Verifies: corpus exists, target chapter has chunks (>1, post _PARA_SEP fix),
+    latest changjuan-extract skill directory exists, extraction-schema.yaml is in
+    sync with the Python schema. Prints copy-paste skill invocation if green.
+    """
+    import sqlite3
+
+    import yaml
+
+    from pipeline.schemas.extract_output import EXTRACT_OUTPUT_SCHEMA
+
+    checks: list[tuple[str, bool]] = []
+    corpus_path = repo_root / "data" / "corpus.sqlite"
+    checks.append(("corpus.sqlite exists", corpus_path.exists()))
+
+    if corpus_path.exists():
+        c = sqlite3.connect(corpus_path)
+        n = c.execute(
+            "SELECT COUNT(*) FROM chunks c JOIN documents d ON c.document_id = d.id "
+            "WHERE d.chapter_num = ?",
+            (chapter,),
+        ).fetchone()[0]
+        checks.append((f"chapter {chapter} has chunks (>1)", n > 1))
+    else:
+        checks.append((f"chapter {chapter} has chunks (>1)", False))
+
+    skill_dirs = sorted((repo_root / ".claude" / "skills").glob("changjuan-extract*"))
+    checks.append(("at least one .claude/skills/changjuan-extract*/ exists", bool(skill_dirs)))
+
+    latest = skill_dirs[-1] if skill_dirs else None
+    if latest:
+        for required in ("SKILL.md", "system-prompt.md", "extraction-schema.yaml"):
+            checks.append((f"{latest.name}/{required} exists", (latest / required).exists()))
+        schema_yaml = latest / "extraction-schema.yaml"
+        if schema_yaml.exists():
+            on_disk = yaml.safe_load(schema_yaml.read_text(encoding="utf-8"))
+            checks.append(
+                ("extraction-schema.yaml matches Python schema", on_disk == EXTRACT_OUTPUT_SCHEMA)
+            )
+
+    all_pass = all(ok for _, ok in checks)
+    for label, ok in checks:
+        typer.echo(f"  {'✓' if ok else '✗'} {label}")
+
+    if all_pass and latest is not None:
+        prompt_version = latest.name.removeprefix("changjuan-extract").lstrip("-") or "v1"
+        typer.echo("\nReady. Invoke in Claude Code:")
+        typer.echo(f"  /{latest.name} chapter:{chapter}")
+        typer.echo("Then run:")
+        typer.echo(
+            f"  uv run changjuan extract-load --chapter {chapter} "
+            f"--extraction-file data/extractions/ch{chapter:02d}/extract-{prompt_version}.yaml "
+            f"--prompt-version {prompt_version}"
+        )
+    else:
+        raise typer.Exit(code=1)
+
+
 @app.command(name="extract-load")
 def extract_load_cmd(
     chapter: int = typer.Option(..., "--chapter"),
