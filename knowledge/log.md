@@ -1,5 +1,25 @@
 # Build Log
 
+## [2026-05-21] docs(knowledge): sampling QA harness + same-model verifier limitation (Task 34)
+
+Extended `concepts/verification/confidence-and-invariants.md` with two new sections:
+
+- **Sampling QA harness (Phase 2)** — documents the deterministic 5% sampler
+  (`pipeline/qa_sampling.py::select_sample`), the verifier skill
+  (`.claude/skills/changjuan-verify-sample/`), and the operational flow
+  (`qa-sample` → skill → `qa-load`). Covers mismatch-rate gating and
+  `thresholds_breached` wiring.
+
+- **Known limitation: Phase 2 verifier uses same model as extractor** — explains
+  the escape hatch from the spec: different-prompt-only decorrelation when
+  Claude Code sessions are single-model. Documents the path for future
+  per-skill model configuration.
+
+Frontmatter `affects:` glob updated to include `pipeline/qa_sampling.py` and
+`.claude/skills/changjuan-verify-sample/**`.
+
+Article touched: `concepts/verification/confidence-and-invariants.md`.
+
 ## [2026-05-21] feat(cli): qa-sample + qa-load — sampling QA harness CLIs (Task 33)
 
 Added two CLI verbs to `pipeline/cli.py`:
