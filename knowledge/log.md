@@ -1,5 +1,122 @@
 # Build Log
 
+## [2026-05-21] phase 2: golden Ch.1 v1 baseline + systematic-differences analysis (Task 29.3)
+
+**pipeline_run_id:** `run:extract-ch1-v1-20260521T204317`
+**Prompt version:** v1 (`.claude/skills/changjuan-extract/`)
+**Skill output:** `data/extractions/ch01/extract-v1.yaml` — 13 persons, 13 events, 8 places, 3 states, 49 relations; **0 invariant violations**.
+
+### Precision / Recall (`changjuan golden-eval --chapter 1`)
+
+```
+person      precision=0.69 ✗  recall=0.69 ✗  (tp=9  fp=4  fn=4)
+event       precision=0.23 ✗  recall=0.21 ✗  (tp=3  fp=10 fn=11)
+place       precision=1.00 ✓  recall=1.00 ✓  (tp=8  fp=0  fn=0)
+state       precision=1.00 ✓  recall=0.75 ✗  (tp=3  fp=0  fn=1)
+relation    precision=0.51 ✗  recall=0.40 ✗  (tp=25 fp=24 fn=38)
+```
+
+Targets per `pipeline/config.py::GOLDEN_PR_THRESHOLDS`:
+
+| Kind | P target | R target | v1 P | v1 R |
+|---|---|---|---|---|
+| person | 0.90 | 0.85 | 0.69 | 0.69 |
+| event | 0.80 | 0.70 | 0.23 | 0.21 |
+| place | 0.85 | 0.75 | 1.00 ✓ | 1.00 ✓ |
+| state | 0.95 | 0.90 | 1.00 ✓ | 0.75 |
+| relation | 0.75 | 0.65 | 0.51 | 0.40 |
+
+Place + state are essentially solved (state's 1-miss is 晋 — see Coverage table below). Person + relation are within striking distance. **Event is the long pole** (0.23/0.21 vs. 0.80/0.70 targets).
+
+### Systematic differences vs. golden (drives v2 prompt iteration)
+
+#### 1. Event under-segmentation (v1 fuses multi-beat sequences golden splits)
+
+| Issue | v1 | Golden | Note |
+|---|---|---|---|
+| 童谣 incident | collapsed into e3 (朝议) | separate event `tong-yao-incident-789bce` (type 童谣) → council | v1 missed the children-singing-in-market as its own event |
+| 老宫人 生女 | collapsed into e4 (弃婴) | separate event `lao-gong-ren-births-girl-789bce` (type 怪诞) → abandonment | v1 fused birth + abandonment |
+| 杜伯/左儒 受命 (诏令) | v1 e5 is type 占卜 | golden `du-bo-search-order` is type 诏令 | v1 names the act (divination) by what triggered it; golden names by the decree it produced |
+| 东郊游猎 | included as e12 | commented out | golden judges it narratively unimportant for ch1 |
+
+**Pattern:** golden prefers the outer/narrative type when an event nests sub-acts; v1 picked the inner/triggering act. Two specific cases:
+- 朝议 council enclosing 童谣 ⇒ golden splits; v1 fuses under 朝议
+- 诏令 (decree) enclosing 占卜 (the divination that motivated it) ⇒ golden = 诏令; v1 = 占卜
+
+#### 2. Role vocabulary (event_participant)
+
+| v1 role | Golden role | Where |
+|---|---|---|
+| 颁令 / 听政 / 游猎 / 命占 (king-as-doer) | 主行 (or 主问, 主将 contextual) | Golden uses a single canonical "primary actor" tag for the king across most events; v1 spelled the action out each time |
+| 受弃, 受救 | 弃, 被救 | Golden's passive-side tag is shorter |
+| 奏诛 | 奏报 | for 左儒 reporting the woman caught |
+| 随行 | 侍御 + role_detail: 左/右 | golden uses a dedicated role_detail field for left/right escort |
+| 救婴 (as role) | 主行 | v1 reused event type as role |
+| (missing) | 受命 | golden adds 受命 entries for 杜伯/左儒 receiving the search decree |
+| (missing) | 脱 | golden adds 脱 (escape) for the husband at the wife-execution event |
+| (missing) | 后命复察 (宣王 ordering 守宫侍者 to check 清水河) | v1 dropped this nuance |
+
+#### 3. Unnamed-person canonical names (chapter-suffix convention)
+
+| v1 | Golden |
+|---|---|
+| 卖箕袋妇人 | 妇人之卖箕袋 (ch01) |
+| 卖桑弓男子 | 男子之卖桑弓 (ch01) |
+| 女婴 | 女婴 (ch01) |
+| 老宫人 | 老宫人 (ch01) |
+
+Golden uses `<noun>之<role> (chNN)` form with explicit chapter suffix for cross-chapter linker stability; v1 used a compressed gloss without chapter suffix.
+
+#### 4. Variant kind for 姜后
+
+- v1: no variants entry (just `canonical_name: 姜后`)
+- Golden: `variants: [{variant: 姜后, kind: 封号}]` — flags 姜后 as a 封号 (consort title) even though it's also the canonical name
+
+#### 5. person_relation gaps
+
+| Missing in v1 | Golden has it |
+|---|---|
+| 宣王 ↔ 姜后 spouse | ✓ |
+| 宣王 → 杜伯 killed_by (with date) | ✓ |
+| 老宫人 → 女婴 parent | v1 has it ✓ |
+| 男子(p10) → 妇人(p9) spouse | v1 added; golden does not record for the unnamed pair |
+
+v1 over-added an unnamed-couple spouse; v1 missed the royal couple spouse and the king-killed-杜伯 link.
+
+#### 6. Date inference style
+
+- v1 marked e2 (太原料民) as `explicit_reign_zhou` reusing 宣王三十九年.
+- Golden marks `tai-yuan-liao-min` as `relative_to_prior_event` with `original: (千亩之后)` — defers to Stage 4 walkback rather than re-citing the explicit year.
+
+**Rule of thumb in golden:** only the first event in a reign-year run carries `explicit_reign_zhou`; subsequent events in the same year use `relative_to_prior_event` with a within-chunk anchor.
+
+#### 7. state_capital
+
+- v1 skipped (was conservative per "only when chunk explicitly states").
+- Golden includes 周 → 镐京 with `era_only` / `(西周开国)` — they treat the implicit attestation as sufficient since the king "回宫" / "离镐京不远" establishes it.
+
+#### 8. event_relation gaps
+
+v1 missed:
+- `tong-yao-incident → tong-yao-council`
+- `tong-yao-council → du-bo-search-order`
+- `du-bo-search-order → fu-ren-executed`
+- `jiang-hou-abandons → nan-zi-rescues`
+
+Several of these are downstream of v1's event-collapsing, so they don't have a v1 cause to point to.
+
+### Net pattern (drives v2 prompt revision)
+
+1. **Under-segmentation.** Multi-step sequences with distinct narrative beats (chant → council, birth → abandonment, dream → reminder → execution-decision) got fused; golden splits them. **Rule for v2:** when a sequence has a named triggering beat AND a named consequent beat, both are events.
+2. **Role vocabulary too literal.** Each event invented its own role for the king; golden uses 主行 / 主问 / 主将 as canonical "primary actor" tags, reserving semantic roles for non-primary actors (进谏, 奏对, 奏报, 受命, 死, 脱, etc.). **Rule for v2:** canonicalize the primary-actor role; keep semantic role vocab for everyone else.
+3. **Unnamed-person naming lacks `(chXX)` suffix.** **Rule for v2:** unnamed canonical_names follow `<noun>之<role> (ch{N:02d})` exactly.
+4. **Too conservative on inferred facts.** state_capital, royal-couple spouse, killed_by — golden encodes implicit/strong-narrative facts that the chunk supports indirectly. **Rule for v2:** narrative-implicit facts attested across the chunk (not just one sentence) ARE in scope.
+5. **Reign-year over-use.** Subsequent events in the same year should be `relative_to_prior_event`, not re-citing the explicit year. **Rule for v2:** only the first event in a reign-year run gets `explicit_reign_zhou`.
+
+### Articles touched
+
+(None — baseline + analysis only.)
+
 ## [2026-05-21] test(stage7): exercise the >+δ branch in scalar-merge update (Task 36, deferred #10)
 
 Added `test_load_updates_scalar_when_new_confidence_strictly_higher_by_delta` to `tests/unit/test_stage7_load_persons.py`. The test fires both branches of the `confidence > current + _SIMILAR_CONFIDENCE_DELTA` strict-greater check in `_merge_scalar_fields`:
