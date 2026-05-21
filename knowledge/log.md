@@ -1,5 +1,25 @@
 # Build Log
 
+## [2026-05-21] stage7: load_candidate_relations across six relation kinds (Task 19)
+
+Added `pipeline/stage7_load/relations.py::load_candidate_relations`. Dispatches to six kind-specific loaders: event_participants, event_places, event_relations, person_relations, person_states, state_capitals. All six are append-mostly with tuple-key dedup via EXISTS check before INSERT. Citations accumulate via `record_citation` using a synthetic entity_id formed from the composite key elements joined by `:`.
+
+Extended `entity_citations.entity_kind` CHECK constraint to include all six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_state`, `state_capital`) alongside the original four entity kinds — this is a schema change in `pipeline/schemas/canonical_schema.sql`.
+
+`load_candidate_state_capitals` is a no-op stub (returns 0): no `candidate_state_capitals` staging table exists in the current schema.
+
+**person_relation contradiction detection:** for directional kinds (`parent`, `child`, `killed_by`, `ruler`, `minister`, `mentor`), loading `(A, B, kind)` when `(B, A, kind)` already exists in canonical emits a `conflicts` row with `subject_kind='person_relation'`, `field='directionality'`, `resolution_rule='manual_review'`. Both relation rows are retained.
+
+All promoted relation rows receive `confidence=0.9`, `provenance='auto'` — candidate relation tables have no confidence column.
+
+`pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_relations`.
+
+Twelve new tests in `tests/unit/test_stage7_load_relations.py`. Total: 130 tests.
+
+Key adaptations: candidate tables use `candidate_*_id` column names; composite PKs in candidate tables prevented naive multi-run seeding — tests use `INSERT OR REPLACE` in seed helpers so the same tuple key can be re-seeded with a new `pipeline_run_id`. The `entity_citations` CHECK constraint required schema extension rather than a workaround.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (new Relations section covering all six kinds, entity_citations extension, contradiction detection rule; updated `implemented:` and `What would invalidate this article`), `concepts/verification/testing.md` (new Stage 7 load_candidate_relations tests section).
+
 ## [2026-05-21] stage7: load_candidate_events + merge_date_field helper (Task 18)
 
 Added `pipeline/stage7_load/helpers.py::merge_date_field` — a shared date-merge helper implementing spec §7.2. Precision rank: `point > circa > range`. A more-precise date wins over a less-precise one even at slightly lower confidence (within `_SIMILAR_CONFIDENCE_DELTA = 0.1`). On equal precision, higher confidence wins; tie keeps current.

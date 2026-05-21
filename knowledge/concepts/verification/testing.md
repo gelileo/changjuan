@@ -179,6 +179,25 @@ These tests use no fixtures — just direct function calls with hand-constructed
 
 The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the places/states tests pattern.
 
+## Stage 7 load_candidate_relations tests
+
+`tests/unit/test_stage7_load_relations.py` (Phase 2 Task 19) exercises `pipeline.stage7_load.load_candidate_relations` across all six relation kinds. A `_seed_entities` helper inserts minimal canonical persons/events/places/states so FK constraints pass. Per-kind seed helpers use `INSERT OR REPLACE` so the same composite key can be re-seeded with a new `pipeline_run_id` for idempotence tests. Twelve tests:
+
+- `test_event_participant_first_load_creates_row` — seeds one `candidate_event_participants` row, calls `load_candidate_relations`, asserts one `event_participants` row.
+- `test_event_participant_idempotence_accumulates_citations` — same tuple key seeded under `run:1` then `run:2`; asserts one canonical row + two `entity_citations` rows with `entity_kind='event_participant'`.
+- `test_event_place_first_load_creates_row` — same pattern for `event_places`.
+- `test_event_place_idempotence_accumulates_citations` — dedup + citation accumulation for event_places.
+- `test_event_relation_first_load_creates_row` — same pattern for `event_relations`.
+- `test_event_relation_idempotence_accumulates_citations` — dedup + citation accumulation for event_relations.
+- `test_person_relation_first_load_creates_row` — same pattern for `person_relations`.
+- `test_person_relation_idempotence_accumulates_citations` — dedup + citation accumulation for person_relations.
+- `test_person_relation_contradictory_directionality_emits_conflict` — `(per:a, per:b, killed_by)` then `(per:b, per:a, killed_by)`; asserts both rows exist + one `conflicts` row with `subject_kind='person_relation'` and `field='directionality'`.
+- `test_person_state_first_load_creates_row` — same pattern for `person_states`.
+- `test_person_state_idempotence_accumulates_citations` — dedup + citation accumulation for person_states.
+- `test_state_capitals_stub_returns_zero` — `load_candidate_relations` returns 0 and `state_capitals` stays empty (stub; no `candidate_state_capitals` staging table exists).
+
+The `canonical` fixture uses `open_canonical_db` with `tmp_path`. The `entity_citations` CHECK constraint was extended (Task 19) to allow all six relation kinds alongside the four entity kinds.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

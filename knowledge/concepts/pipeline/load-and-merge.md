@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-21
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations)
 status: thin
 load_bearing: true
 references:
@@ -118,6 +118,41 @@ Each argument is `{"value": DateDict, "confidence": float}` or `None`. The funct
 
 This helper is designed to be re-used by any future loader that merges date fields (e.g. states' `founded_date_json`/`ended_date_json`, persons' `birth_date_json`/`death_date_json`).
 
+## Relations
+
+`pipeline/stage7_load/relations.py::load_candidate_relations` dispatches to six kind-specific loaders in order: event_participants, event_places, event_relations, person_relations, person_states, state_capitals. Returns total candidate rows processed.
+
+All six relation kinds are **append-mostly**: the unique tuple key deduplicates canonical rows; citations accumulate across runs via `record_citation`.
+
+### entity_citations extension
+
+`entity_citations.entity_kind` CHECK constraint (schema Task 19) was extended to include all six relation kinds alongside the four entity kinds. Relation rows have composite PKs (no surrogate `id`); citation tracking uses a synthetic `entity_id` string formed by joining the composite key parts with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
+
+### Per-kind unique keys
+
+| Kind | Canonical table | Unique key | Candidate table |
+|---|---|---|---|
+| event_participant | `event_participants` | `(event_id, person_id, role)` | `candidate_event_participants` |
+| event_place | `event_places` | `(event_id, place_id, role)` | `candidate_event_places` |
+| event_relation | `event_relations` | `(from_event_id, to_event_id, kind)` | `candidate_event_relations` |
+| person_relation | `person_relations` | `(from_person_id, to_person_id, kind)` | `candidate_person_relations` |
+| person_state | `person_states` | `(person_id, state_id, role, from_date_json)` | `candidate_person_states` |
+| state_capital | `state_capitals` | — | _no staging table; stub returns 0_ |
+
+### person_relation contradiction detection
+
+For **directional** relation kinds (`parent`, `child`, `killed_by`, `ruler`, `minister`, `mentor`), when the incoming candidate `(A, B, kind)` would create a new canonical row and the inverse `(B, A, kind)` already exists, a `conflicts` row is emitted with `subject_kind='person_relation'`, `field='directionality'`, and `resolution_rule='manual_review'`. Both the existing and new rows are retained; the conflict flags the contradiction for human review.
+
+Non-directional kinds (`spouse`, `sibling`, `ally`, `rival`, `clan_member`) do not trigger contradiction detection.
+
+### Candidate column naming convention
+
+Candidate relation tables use `candidate_*_id` column names (e.g. `candidate_event_id`, `candidate_person_id`) rather than bare `event_id`/`person_id`. The loader treats these values as canonical IDs — upstream linking (stage 5) is responsible for resolving candidate IDs to canonical ones before this stage runs.
+
+### Confidence and provenance
+
+Candidate relation tables do not carry a `confidence` column. All promoted rows receive `confidence=0.9` and `provenance='auto'`.
+
 ## What would invalidate this article
 
 - Changing the confidence-delta threshold.
@@ -126,3 +161,5 @@ This helper is designed to be re-used by any future loader that merges date fiel
 - Adding a place-variants or state-variants table (would require match-by-variant logic like persons).
 - Changing the `_PRECISION_RANK` mapping or adding new uncertainty levels.
 - Wiring `merge_date_field` into states/persons date fields (currently those use plain higher-confidence-wins).
+- Adding a `candidate_state_capitals` staging table (would activate the stub).
+- Adding new directional person_relation kinds to `_DIRECTIONAL_PERSON_RELATION_KINDS`.

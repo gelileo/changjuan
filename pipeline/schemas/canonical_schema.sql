@@ -146,7 +146,11 @@ CREATE TABLE IF NOT EXISTS person_states (
 );
 
 CREATE TABLE IF NOT EXISTS entity_citations (
-    entity_kind     TEXT NOT NULL CHECK (entity_kind IN ('person','state','place','event')),
+    entity_kind     TEXT NOT NULL CHECK (entity_kind IN (
+        'person','state','place','event',
+        'event_participant','event_place','event_relation',
+        'person_relation','person_state','state_capital'
+    )),
     entity_id       TEXT NOT NULL,
     citation_id     TEXT NOT NULL,
     PRIMARY KEY (entity_kind, entity_id, citation_id)

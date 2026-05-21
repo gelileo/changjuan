@@ -21,12 +21,17 @@ The output of `changjuan` is a typed knowledge graph of Eastern-Zhou history, bu
 
 A flat events table would be cheap but useless for the eventual map UI — readers can't traverse "where was 重耳 in 645 BCE?" without a Person-with-trajectory model. A document-oriented store (one JSON per chapter) would make linking across chapters impossible — and almost every interesting fact in this corpus is cross-chapter. The relational schema costs upfront complexity but enables every reader question we want to answer later.
 
+## entity_citations table
+
+`entity_citations(entity_kind, entity_id, citation_id)` is the citation accumulator for all canonical records. The `entity_kind` CHECK constraint (Task 19) covers four entity kinds (`person`, `state`, `place`, `event`) and six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_state`, `state_capital`). For relation rows (which have composite PKs and no surrogate `id`), `entity_id` is a synthetic string formed by joining the composite key elements with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
+
 ## What would invalidate this article
 
 - A class of historical fact in the source that doesn't fit one of {Person, State, Place, Event, person_relation, Citation, Conflict}. (Family entity sits in the promotion-path queue; promotion is not invalidation.)
 - A "fact" in the canonical store without a citation.
 - A date whose uncertainty cannot be represented.
 - Two records that should be the same id but cannot be merged because the model lacks a variant kind, role, or relation `kind`.
+- Adding a new relation kind not covered by the `entity_citations.entity_kind` CHECK constraint.
 
 ## First commitments (true once code lands)
 
