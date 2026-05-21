@@ -18,7 +18,7 @@ import sqlite3
 
 from pipeline.config import Config
 
-_PARA_SEP = re.compile(r"\r?\n\s*\r?\n+")
+_PARA_SEP = re.compile(r"\r?\n+")
 
 
 def _split_paragraphs(raw: str) -> list[str]:

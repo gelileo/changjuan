@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-20
+updated: 2026-05-21
 status: mature
 load_bearing: false
 references:
@@ -49,7 +49,7 @@ Stage tests that require real-looking source files (e.g., ingest stages that rea
 
 Real-corpus smoke tests use `@pytest.mark.skipif` against the `corpora/` symlink so they are silently skipped when the upstream corpus is not present locally.
 
-Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into a `tmp_path`-based database before exercising `chunk_documents`.
+Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into a `tmp_path`-based database before exercising `chunk_documents`. The test `test_chunks_emerge_from_single_newline_separated_paragraphs` is a targeted regression for the `_PARA_SEP` regex: it seeds 4 single-`\n`-separated paragraphs with a `chunk_target_chars` smaller than one paragraph, then asserts more than one chunk is produced — which only passes when the regex correctly splits on single newlines. This guards against re-introducing the blank-line-required regex that silently collapsed each chapter into one chunk.
 
 ## Canonical schema tests
 
