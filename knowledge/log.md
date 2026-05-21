@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-21] feat(skill): .claude/skills/changjuan-verify-sample/ — sampling QA verifier (Task 32)
+
+Created `.claude/skills/changjuan-verify-sample/SKILL.md` (operational shell) and `.claude/skills/changjuan-verify-sample/verifier-prompt.md` (focused yes/no/partial Chinese-leaning verifier prompt).
+
+The skill pairs with Task 31's deterministic sampler (`pipeline/qa_sampling.py`) and Task 33's `qa-sample` / `qa-load` CLI verbs. Workflow: run `changjuan qa-sample <RUN_ID>` to emit the 5% sample as YAML, apply `verifier-prompt.md` to judge each `(quote, field, value)` triple, write verdicts to `data/qa/<RUN_ID>.yaml`, then load with `changjuan qa-load`.
+
+Phase 2 "different prompt only" decorrelation: the verifier prompt is structurally distinct from the extraction prompt (Chinese-first prose, reversed role — judge vs. extractor, explicit "引文沉默" / "不引入外部知识" constraints). Same model but different prompt template — the spec's documented escape hatch for the single-session constraint.
+
+Examples in `verifier-prompt.md` draw from golden Ch.1 entities: 周宣王 (canonical_name yes), 隰叔 (canonical_name yes), 宣王亲征 (social_category partial), 召虎帅师 (social_category partial), 杜伯 (gender no), 老宫人 (canonical_name no — wrong entity).
+
+no knowledge impact: `concepts/verification/confidence-and-invariants.md` already references the sampling QA harness (from Task 11's affects glob); full article extension (mismatch_rate field, threshold wiring, schema for `qa_samples`) lands in Task 34 with the CLI verbs.
+
 ## [2026-05-21] feat(qa): deterministic 5% sampler bounded by floor/ceiling (Task 31)
 
 Created `pipeline/qa_sampling.py` with `select_sample(facts)` — picks ~5% of scalar facts via stable `hash(pipeline_run_id, record_id, field)`; bounded by `config.QA_SAMPLE_FLOOR` (30) and `config.QA_SAMPLE_CEILING` (250). Same inputs always produce the same sample — reproducibility for the sampling QA harness.
