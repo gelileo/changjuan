@@ -1,5 +1,18 @@
 # Build Log
 
+## [2026-05-21] cli: list-unresolved-dates + resolve-relative-date verbs (Task 15)
+
+Added two curator triage verbs to `pipeline/cli.py`:
+
+- `list-unresolved-dates` — queries canonical `events` for rows with `inference_kind = 'relative_to_prior_event'`, `year_bce = null`, and no `relative_anchor_event_id`; prints `event_id\toriginal_text` for each.
+- `resolve-relative-date --event-id ID --anchor-event-id ID [--offset N]` — sets `relative_anchor_event_id`, calls `resolve_relative_dates` to recompute `year_bce`, persists the update, and writes an `audit_log` entry (`change_kind = 'curator_override'`). The `--offset` flag handles tokens not in the `_RELATIVE_OFFSETS` table (e.g. 其后五年).
+
+Also added `open_canonical_db` and `open_corpus_db` convenience functions to `pipeline/db.py`; both open or create the SQLite file, apply the appropriate schema, and return a bare `sqlite3.Connection` (not a context manager) — intended for CLI verbs and tests.
+
+Four new tests in `tests/unit/test_resolve_relative_date_cli.py`. Total: 104 tests.
+
+Articles touched: `concepts/runtime/cli.md` (new Phase-2 subcommands section, updated `affects:` to include test file, updated `updated:` date and `status`).
+
 ## [2026-05-21] dates: resolve_relative_dates wrapper for within- and cross-chunk anchors (Task 14)
 
 Added `pipeline.dates.resolve_relative_dates(records, conn, *, anchor_lookup, offset_override)`.

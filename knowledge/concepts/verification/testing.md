@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-21 (social_category)
+updated: 2026-05-21
 status: mature
 load_bearing: false
 references:
@@ -86,6 +86,17 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 ## CLI tests
 
 `tests/unit/test_cli.py` exercises `pipeline.cli` via `typer.testing.CliRunner`. Two tests: `test_cli_has_ingest_chunk_load_export_commands` (invokes `app --help`, asserts exit 0, asserts all four subcommand names appear in stdout) and `test_cli_ingest_dry_runs` (invokes `ingest --repo-root <empty-tmp-dir>`, asserts exit code in `{0, 1}` and no `Traceback` in stdout — the empty-dir case must exit cleanly with an error message, not crash). These tests use `typer.testing.CliRunner` so no subprocess is spawned and `monkeypatch.chdir` can be used safely.
+
+## list-unresolved-dates / resolve-relative-date CLI tests
+
+`tests/unit/test_resolve_relative_date_cli.py` (Phase 2 Task 15) exercises the two curator triage verbs added to `pipeline.cli`. A `_seed` helper creates a minimal canonical database with one anchored event (`evt:anchor`, `year_bce=771`) and one unresolved relative event (`evt:rel`, `year_bce=null`, `inference_kind='relative_to_prior_event'`, `original='明年'`). Four tests:
+
+- `test_list_unresolved_shows_dangling_relatives` — invokes `list-unresolved-dates`; asserts `evt:rel` appears in stdout and `evt:anchor` does not.
+- `test_resolve_relative_date_sets_anchor_and_recomputes` — invokes `resolve-relative-date` with `evt:anchor` as anchor; asserts `year_bce` updates to 770 (771 − 1), `relative_anchor_event_id` is set, and exactly one `audit_log` row with `actor LIKE 'curator:%'` exists.
+- `test_resolve_with_explicit_offset_unknown_token` — updates `original` to `'其后五年'` (not in `_RELATIVE_OFFSETS`), invokes with `--offset 5`; asserts `year_bce == 766` (771 − 5).
+- `test_resolve_dangling_anchor_errors` — passes `--anchor-event-id evt:nope`; asserts non-zero exit code and "not found" or "dangling" in output.
+
+These tests also exercise `pipeline.db.open_canonical_db` and `open_corpus_db` — the convenience helpers that apply the schema and return a bare `sqlite3.Connection`.
 
 ## LLM cache tests
 
