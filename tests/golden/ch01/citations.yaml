@@ -1,0 +1,318 @@
+# Golden Ch.1 — Citations
+#
+# Every entity/event/relation file references these by id.
+# Stable id format: `cit:ch01-p<paragraph>-<seq>`.
+#
+# Required fields per record (enforced by tests/golden/loader.py):
+#   id        — stable string, unique within ch01
+#   chunk_id  — must match a chunk in data/corpus.sqlite
+#   paragraph — int, 1-based paragraph index inside the chunk
+#   span      — [start, end] char offsets within the chunk text (NFC-normalized)
+#   quote     — verbatim Chinese substring of chunk.text at [start, end]
+#
+# Span offsets are left as [null, null] in this annotation pass — a separate
+# script computes them against data/corpus.sqlite. See README decisions log.
+#
+# Chunk choice: where a passage appears in multiple overlapping chunks
+# (chk:dzl:1:0 vs :9, :9 vs :10, :10 vs :14, :14 vs :17), cite the earliest
+# chunk containing the passage for stability.
+
+# ---------------------------------------------------------------------------
+# Chunk chk:dzl:1:0 (paragraphs 0–9) — opening, 千亩 & 太原, 童谣, ministerial council
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p4-001
+  chunk_id: chk:dzl:1:0
+  paragraph: 4
+  span: [344, 372]
+  quote: "至三十九年，姜戎抗命，宣王御驾亲征，败绩于千亩，车徒大损"
+
+- id: cit:ch01-p4-002
+  chunk_id: chk:dzl:1:0
+  paragraph: 4
+  span: [373, 394]
+  quote: "思为再举之计，又恐军数不充，亲自料民于太原"
+
+- id: cit:ch01-p4-003
+  chunk_id: chk:dzl:1:0
+  paragraph: 4
+  span: [395, 413]
+  quote: "那太原，即今固原州，正是邻近戎狄之地"
+
+- id: cit:ch01-p4-004
+  chunk_id: chk:dzl:1:0
+  paragraph: 4
+  span: [455, 464]
+  quote: "太宰仲山甫进谏不听"
+
+- id: cit:ch01-p6-005
+  chunk_id: chk:dzl:1:0
+  paragraph: 6
+  span: [509, 536]
+  quote: "再说宣王在太原料民回来，离镐京不远，催趱车辇，连夜进城"
+
+- id: cit:ch01-p6-006
+  chunk_id: chk:dzl:1:0
+  paragraph: 6
+  span: [537, 557]
+  quote: "忽见市上小儿数十为群，拍手作歌，其声如一"
+
+- id: cit:ch01-p6-007
+  chunk_id: chk:dzl:1:0
+  paragraph: 6
+  span: [570, 587]
+  quote: "月将升，日将没；壓弧箕焤，几亡周国"
+
+- id: cit:ch01-p6-008
+  chunk_id: chk:dzl:1:0
+  paragraph: 6
+  span: [761, 789]
+  quote: "即召司市官吩咐传谕禁止：“若有小儿再歌此词者，连父兄同罪"
+
+- id: cit:ch01-p7-009
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [800, 814]
+  quote: "次日早朝，三公六卿，齐集殿下"
+
+- id: cit:ch01-p7-010
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [847, 904]
+  quote: "大宗伯召虎对曰：“壓是山桑木名，可以为弓，故曰壓弧。箕，草名，可结之以为箭袋，故曰箕箙。据臣愚见，国家恐有弓矢之变"
+
+- id: cit:ch01-p7-011
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [906, 954]
+  quote: "太宰仲山甫奏曰：“弓矢，乃国家用武之器。王今料民太原，思欲报犬戎之仇，若兵连不解，必有亡国之患矣"
+
+- id: cit:ch01-p7-012
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [993, 1014]
+  quote: "太史伯阳父奏曰：“凡街市无根之语，谓之谣言"
+
+- id: cit:ch01-p7-013
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [1173, 1184]
+  quote: "必主后世有女主乱国之祸"
+
+- id: cit:ch01-p7-014
+  chunk_id: chk:dzl:1:0
+  paragraph: 7
+  span: [1238, 1252]
+  quote: "朕赖姜后主六宫之政，甚有贤德"
+
+# ---------------------------------------------------------------------------
+# Chunk chk:dzl:1:9 (paragraphs 9–10) — 姜后 & 老宫人, abandonment of the infant
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p10-015
+  chunk_id: chk:dzl:1:9
+  paragraph: 10
+  span: [617, 651]
+  quote: "今有先王手内老宫人，年五十余，自先朝怀孕，到今四十余年，昨夜方生一女"
+
+- id: cit:ch01-p10-016
+  chunk_id: chk:dzl:1:9
+  paragraph: 10
+  span: [673, 703]
+  quote: "妾思此乃不祥之物，已令人将草席包裹，抛弃于二十里外清水河中矣"
+
+- id: cit:ch01-p10-017
+  chunk_id: chk:dzl:1:9
+  paragraph: 10
+  span: [1216, 1233]
+  quote: "随唤守宫侍者，往清水河看视女婴下落"
+
+# ---------------------------------------------------------------------------
+# Chunk chk:dzl:1:10 (paragraphs 10–16) — 杜伯 search order, wife executed, man rescues infant
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p11-018
+  chunk_id: chk:dzl:1:10
+  paragraph: 11
+  span: [701, 718]
+  quote: "次日早朝，召太史伯阳父告以龙漦之事"
+
+- id: cit:ch01-p11-019
+  chunk_id: chk:dzl:1:10
+  paragraph: 11
+  span: [931, 941]
+  quote: "命上大夫杜伯专督其事"
+
+- id: cit:ch01-p11-020
+  chunk_id: chk:dzl:1:10
+  paragraph: 11
+  span: [956, 992]
+  quote: "再命下大夫左儒，督令司市官巡行廛肆，不许造卖山桑木弓，箕草箭袋，违者处死"
+
+- id: cit:ch01-p11-021
+  chunk_id: chk:dzl:1:10
+  paragraph: 11
+  span: [1045, 1082]
+  quote: "有一妇人，抱著几个箭袋，正是箕草织成的，一男子背著山桑木弓十来把，跟随于后"
+
+- id: cit:ch01-p11-022
+  chunk_id: chk:dzl:1:10
+  paragraph: 11
+  span: [1245, 1264]
+  quote: "宣王命将此女斩汔；其桑弓箕袋，焚弃于市"
+
+- id: cit:ch01-p13-023
+  chunk_id: chk:dzl:1:10
+  paragraph: 13
+  span: [1448, 1463]
+  quote: "来到清水河边，远远望见百鸟飞鸣"
+
+- id: cit:ch01-p13-024
+  chunk_id: chk:dzl:1:10
+  paragraph: 13
+  span: [1536, 1543]
+  quote: "原来是一个女婴"
+
+- id: cit:ch01-p13-025
+  chunk_id: chk:dzl:1:10
+  paragraph: 13
+  span: [1589, 1624]
+  quote: "遂解下布衫，将此女婴包裹，抱于怀中。思想避难之处，乃望褒城投奔相识而去"
+
+# ---------------------------------------------------------------------------
+# Chunk chk:dzl:1:14 (paragraphs 14–19) — 43-year sacrifice, dream, 杜伯/左儒 deaths, 隰叔 flight
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p17-026
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [402, 419]
+  quote: "到四十三年，时当大祭，宣王宿于斋宫"
+
+- id: cit:ch01-p17-027
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [430, 450]
+  quote: "忽见一美貌女子，自西方冉冉而来，直至宫廷"
+
+- id: cit:ch01-p17-028
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [487, 527]
+  quote: "走入太庙之中，大笑三声，又大哭三声；不慌不忙，将七庙神主，做一束儿捆著，望东而去"
+
+- id: cit:ch01-p17-029
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [597, 610]
+  quote: "三年前童谣之语，王岂忘之耶"
+
+- id: cit:ch01-p17-030
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [708, 737]
+  quote: "忽然想起三年前，曾命上大夫杜伯督率司市，查访妖女，全无下落"
+
+- id: cit:ch01-p17-031
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [822, 848]
+  quote: "宣王大怒曰：“既然如此，何不明白奏闻？分明是怠弃朕命"
+
+- id: cit:ch01-p17-032
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [1173, 1184]
+  quote: "武士将杜伯推出朝门斩了"
+
+- id: cit:ch01-p17-033
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [1185, 1196]
+  quote: "左儒回到家中，自刎而死"
+
+- id: cit:ch01-p17-034
+  chunk_id: chk:dzl:1:14
+  paragraph: 17
+  span: [926, 945]
+  quote: "乃下大夫左儒，是杜伯的好友，举荐同朝的"
+
+- id: cit:ch01-p19-035
+  chunk_id: chk:dzl:1:14
+  paragraph: 19
+  span: [1247, 1256]
+  quote: "杜伯之子隰叔，奔晋"
+
+- id: cit:ch01-p19-036
+  chunk_id: chk:dzl:1:14
+  paragraph: 19
+  span: [1257, 1282]
+  quote: "后仕晋为士师之官，子孙遂为士氏。食邑于范，又为范氏"
+
+- id: cit:ch01-p19-037
+  chunk_id: chk:dzl:1:14
+  paragraph: 19
+  span: [1283, 1313]
+  quote: "后人哀杜伯之忠，立祠于杜陵，号为杜主，又曰右将军庙，至今尚存"
+
+# ---------------------------------------------------------------------------
+# Chunk chk:dzl:1:17 (paragraphs 17–23) — 46-year hunt, ghost vision
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p20-038
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1035, 1060]
+  quote: "至四十六年秋七月，玉体稍豫，意欲出郊游猎，以快心神"
+
+- id: cit:ch01-p20-039
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1090, 1109]
+  quote: "王乘玉略，驾六驺；右有尹吉甫，左有召虎"
+
+- id: cit:ch01-p20-040
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1128, 1147]
+  quote: "那东郊一带，平原旷野，原是从来游猎之地"
+
+- id: cit:ch01-p20-041
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1373, 1406]
+  quote: "忽见远远一辆小车，当面冲突而来。车上站著两个人，臂挂朱弓，手持赤矢"
+
+- id: cit:ch01-p20-042
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1424, 1443]
+  quote: "宣王定睛看时，乃上大夫杜伯，下大夫左儒"
+
+- id: cit:ch01-p20-043
+  chunk_id: chk:dzl:1:17
+  paragraph: 20
+  span: [1589, 1622]
+  quote: "挽起朱弓，搭上赤矢，望宣王心窝内射来。宣王大叫一声，昏倒于玉辇之上"
+
+# ---------------------------------------------------------------------------
+# Background / state-level citations (drawn from the opening narrative)
+# ---------------------------------------------------------------------------
+
+- id: cit:ch01-p3-044
+  chunk_id: chk:dzl:1:0
+  paragraph: 3
+  span: [65, 80]
+  quote: "话说周朝，自武王伐纣，即天子位"
+
+- id: cit:ch01-p3-045
+  chunk_id: chk:dzl:1:0
+  paragraph: 3
+  span: [188, 199]
+  quote: "立太子靖为王，是为宣王"
+
+- id: cit:ch01-p3-046
+  chunk_id: chk:dzl:1:0
+  paragraph: 3
+  span: [213, 234]
+  quote: "任用贤臣方叔、召虎、尹吉甫、申伯、仲山甫等"

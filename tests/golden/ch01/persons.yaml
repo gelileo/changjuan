@@ -1,0 +1,175 @@
+# Golden Ch.1 — Persons
+#
+# Required: id, canonical_name, citations[]  (loader-enforced)
+#
+# Phase 2 convention: variants of the same person stay as SEPARATE records
+# if they would require stage-5 linking to merge. In Ch.1 the only variant
+# folding is 宣王 ↔ 周宣王 (same name, just abbreviated form within the
+# chapter) — these stay as ONE record with variants[].
+#
+# Scope decision (see README): we record named figures who participate in
+# events of this chapter's narrative, plus unnamed-but-acting figures
+# (the executed wife, the man who found 女婴, the 老宫人, the 女婴 herself).
+# Background figures named only in the opening recap (武王, 厉王, 周公 the
+# Western Zhou original, 方叔, 申伯, 桀王, etc.) are NOT recorded here —
+# they belong to chapters where they act, or to a separate "background
+# mentions" pass.
+#
+# Hash IDs for unnamed Persons follow the README convention `per:_<hash>`.
+
+# ---------------------------------------------------------------------------
+# Named agents
+# ---------------------------------------------------------------------------
+
+- id: per:zhou-xuan-wang
+  canonical_name: 周宣王
+  variants:
+    - { variant: 宣王, kind: 谥号 }
+    - { variant: 靖, kind: 本名 }
+  gender: male
+  state_id: sta:zhou
+  citations:
+    - cit:ch01-p3-045
+    - cit:ch01-p4-001
+    - cit:ch01-p6-005
+    - cit:ch01-p17-026
+    - cit:ch01-p20-038
+
+- id: per:zhong-shan-fu
+  canonical_name: 仲山甫
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝太宰
+  citations:
+    - cit:ch01-p4-004
+    - cit:ch01-p7-011
+    - cit:ch01-p3-046
+
+- id: per:shao-hu
+  canonical_name: 召虎
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝大宗伯；46-year hunt侍御左方
+  citations:
+    - cit:ch01-p7-010
+    - cit:ch01-p20-039
+    - cit:ch01-p3-046
+
+- id: per:bo-yang-fu
+  canonical_name: 伯阳父
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝太史
+  citations:
+    - cit:ch01-p7-012
+    - cit:ch01-p11-018
+    - cit:ch01-p17-029
+
+- id: per:yin-ji-fu
+  canonical_name: 尹吉甫
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝贤臣；46-year hunt侍御右方
+  citations:
+    - cit:ch01-p3-046
+    - cit:ch01-p20-039
+
+- id: per:jiang-hou
+  canonical_name: 姜后
+  variants:
+    - { variant: 姜后, kind: 封号 }
+  gender: female
+  state_id: sta:zhou
+  notes: 周宣王王后；主六宫之政
+  citations:
+    - cit:ch01-p7-014
+    - cit:ch01-p10-015
+    - cit:ch01-p10-016
+
+- id: per:du-bo
+  canonical_name: 杜伯
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝上大夫；督访妖女不力被斩
+  death_date:
+    year_bce: 785
+    uncertainty: point
+    original: 宣王四十三年
+    inference_kind: explicit_reign_zhou
+  citations:
+    - cit:ch01-p11-019
+    - cit:ch01-p17-030
+    - cit:ch01-p17-032
+
+- id: per:zuo-ru
+  canonical_name: 左儒
+  gender: male
+  state_id: sta:zhou
+  notes: 周宣王朝下大夫；杜伯之友；杜伯死后自刎
+  death_date:
+    year_bce: 785
+    uncertainty: point
+    original: (与杜伯同年)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:du-bo-executed-785bce
+  citations:
+    - cit:ch01-p11-020
+    - cit:ch01-p17-033
+    - cit:ch01-p17-034
+
+- id: per:xi-shu
+  canonical_name: 隰叔
+  gender: male
+  state_id: sta:zhou
+  notes: 杜伯之子；杜伯死后奔晋；后仕晋为士师，子孙为士氏、范氏
+  citations:
+    - cit:ch01-p19-035
+    - cit:ch01-p19-036
+
+# ---------------------------------------------------------------------------
+# Unnamed but acting figures
+# ---------------------------------------------------------------------------
+# These are agents in events but the text gives them no name. They get
+# hash-disambiguated ids per the README convention. If a later chapter
+# names them, the stage-5 linker (Phase 3+) will merge.
+# Note that these are included only because they are active agents in the narrative, i.e. related to the later named figure 褒姒. Other unnamed background figures (e.g. the "many officials" who attend the court) are not included.
+
+- id: per:_lao-gong-ren-ch01
+  canonical_name: 老宫人 (ch01)
+  gender: female
+  state_id: sta:zhou
+  notes: 先王手内老宫人；年五十余；自先朝怀孕四十余年生女婴
+  citations:
+    - cit:ch01-p10-015
+
+- id: per:_nv-ying-ch01
+  canonical_name: 女婴 (ch01)
+  gender: female
+  notes: 老宫人所生女婴；被姜后弃于清水河；被卖桑弓之男子救起携往褒城。Almost certainly the later 褒姒 (named in subsequent chapters); Phase 2 records here as separate per spec — stage 5 will link.
+  citations:
+    - cit:ch01-p10-015
+    - cit:ch01-p13-024
+    - cit:ch01-p13-025
+
+- id: per:_fu-ren-zhi-mai-jian-dai-ch01
+  canonical_name: 妇人之卖箕袋 (ch01)
+  gender: female
+  notes: 抱箕草箭袋入城卖；被司市官擒拿；以违禁罪处死
+  death_date:
+    year_bce: 789
+    uncertainty: point
+    original: (童谣事件次年内)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:tong-yao-incident-789bce
+  citations:
+    - cit:ch01-p11-021
+    - cit:ch01-p11-022
+
+- id: per:_nan-zi-zhi-mai-sang-gong-ch01
+  canonical_name: 男子之卖桑弓 (ch01)
+  gender: male
+  notes: 背山桑木弓入城；妻被擒后逃走；后于清水河救女婴携往褒城
+  citations:
+    - cit:ch01-p11-021
+    - cit:ch01-p13-024
+    - cit:ch01-p13-025

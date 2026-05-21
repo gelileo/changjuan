@@ -1,0 +1,104 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Find the character-offset span of a quote within a chunk's text.
+
+Usage:
+    scripts/find-span chk:dzl:1:0 "重耳奔狄"           # one-shot lookup
+    scripts/find-span chk:dzl:1:0 --quote-file q.txt   # read quote from file (avoids shell quoting headaches)
+    echo "重耳奔狄" | scripts/find-span chk:dzl:1:0 -    # read quote from stdin
+    scripts/find-span chk:dzl:1:0 "重耳奔狄" --all      # list every occurrence (not just the first)
+
+Output is YAML-ready, e.g.:
+    span: [120, 124]   # quote = "重耳奔狄"
+
+Exits 0 on found, 1 if the quote isn't in the chunk (or chunk_id unknown).
+"""
+
+from __future__ import annotations
+
+import argparse
+import sqlite3
+import sys
+import unicodedata
+from pathlib import Path
+
+DEFAULT_DB = Path("data/corpus.sqlite")
+
+
+def _nfc(s: str) -> str:
+    return unicodedata.normalize("NFC", s)
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description="Find span of a quote in a chunk.")
+    p.add_argument("chunk_id", help="chunk id, e.g. chk:dzl:1:0")
+    p.add_argument(
+        "quote", nargs="?", default=None,
+        help='the quote string; pass "-" to read from stdin, or use --quote-file',
+    )
+    p.add_argument("--quote-file", type=Path, default=None,
+                   help="read the quote from this file (UTF-8)")
+    p.add_argument("--db", type=Path, default=DEFAULT_DB)
+    p.add_argument("--all", action="store_true",
+                   help="list every occurrence, not just the first")
+    args = p.parse_args()
+
+    if args.quote_file:
+        quote_raw = args.quote_file.read_text(encoding="utf-8").rstrip("\n")
+    elif args.quote == "-":
+        quote_raw = sys.stdin.read().rstrip("\n")
+    elif args.quote is None:
+        print("error: provide a quote argument, --quote-file, or pass '-' to read stdin", file=sys.stderr)
+        return 2
+    else:
+        quote_raw = args.quote
+
+    if not quote_raw:
+        print("error: empty quote", file=sys.stderr)
+        return 2
+
+    if not args.db.exists():
+        print(f"error: corpus db not found: {args.db}", file=sys.stderr)
+        return 1
+
+    conn = sqlite3.connect(args.db)
+    row = conn.execute("SELECT text FROM chunks WHERE id = ?", (args.chunk_id,)).fetchone()
+    if row is None:
+        print(f"error: chunk_id '{args.chunk_id}' not in {args.db}", file=sys.stderr)
+        return 1
+
+    text = _nfc(row[0])
+    quote = _nfc(quote_raw)
+
+    matches: list[int] = []
+    start = 0
+    while True:
+        idx = text.find(quote, start)
+        if idx == -1:
+            break
+        matches.append(idx)
+        if not args.all:
+            break
+        start = idx + 1
+
+    if not matches:
+        print(f"✗ quote not found in chunk '{args.chunk_id}'", file=sys.stderr)
+        print(f"  chunk length: {len(text)} chars", file=sys.stderr)
+        print(f"  quote length: {len(quote)} chars", file=sys.stderr)
+        # Show a tiny diagnostic: longest common prefix between quote and any substring of chunk
+        return 1
+
+    if args.all and len(matches) > 1:
+        print(f"# {len(matches)} occurrences of {quote!r} in {args.chunk_id}:")
+        for i, idx in enumerate(matches):
+            print(f"#  [{idx}, {idx + len(quote)}]  (occurrence {i + 1})")
+    else:
+        idx = matches[0]
+        print(f"span: [{idx}, {idx + len(quote)}]   # quote = {quote!r}")
+        if not args.all and len(matches) == 1:
+            # Already done above; no special note.
+            pass
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,282 @@
+# Golden Ch.1 — Events
+#
+# Required: id, type, citations[]  (loader-enforced)
+#
+# Date strategy (see README decisions log):
+#   - 宣王's reign-year anchors (39/43/46) → year_bce 789/785/782, inference_kind: explicit_reign_zhou.
+#   - Within-narrative sequence ("次日"、"自此"、"颁胙之后") → relative_to_prior_event.
+#     Within-chunk anchors do not need relative_anchor_event_id (Stage 4 walkback fills them);
+#     CROSS-chunk anchors are set explicitly here per the spec's curator path.
+#
+# Stable id convention: `evt:<kebab-case-slug>-<year>bce` when dated.
+#
+# Chunk membership (used to decide which relative anchors need
+# relative_anchor_event_id explicitly set):
+#   - chk:dzl:1:0  → 千亩战, 太原料民, 童谣, ministerial council
+#   - chk:dzl:1:9  → 老宫人 reveal + 姜后 abandonment
+#   - chk:dzl:1:10 → 杜伯 search order issued, wife executed, man finds 女婴
+#   - chk:dzl:1:14 → 43-year sacrifice/dream, 杜伯 executed, 左儒 suicide, 隰叔 flight
+#   - chk:dzl:1:17 → 46-year hunt, ghost vision
+
+# ---------------------------------------------------------------------------
+# Year 39 — 789 BCE — chunk chk:dzl:1:0
+# ---------------------------------------------------------------------------
+
+- id: evt:qian-mu-zhi-zhan-789bce
+  type: 战
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: 宣王三十九年
+    inference_kind: explicit_reign_zhou
+  outcome: 败绩
+  summary: 宣王三十九年姜戎抗命，宣王御驾亲征，败绩于千亩，车徒大损
+  primary_place_id: pla:qian-mu
+  citations:
+    - cit:ch01-p4-001
+
+- id: evt:tai-yuan-liao-min-789bce
+  type: 料民
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (千亩之后)
+    inference_kind: relative_to_prior_event
+    # within-chunk anchor; Stage 4 walkback resolves
+  outcome: 仲山甫进谏不听
+  summary: 千亩之败后宣王思再举，亲自料民于太原；仲山甫进谏不听
+  primary_place_id: pla:tai-yuan-gu-yuan
+  citations:
+    - cit:ch01-p4-002
+    - cit:ch01-p4-004
+
+- id: evt:tong-yao-incident-789bce
+  type: 童谣
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (料民回京时)
+    inference_kind: relative_to_prior_event
+    # within-chunk anchor; Stage 4 walkback resolves
+  outcome: 宣王命司市官传谕禁止再歌
+  summary: 宣王料民回京近镐京，闻市童歌"月将升日将没，壓弧箕焤几亡周国"，传谕禁止
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p6-005
+    - cit:ch01-p6-006
+    - cit:ch01-p6-007
+    - cit:ch01-p6-008
+
+- id: evt:tong-yao-council-789bce
+  type: 朝议
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: 次日早朝
+    inference_kind: relative_to_prior_event
+    # within-chunk anchor; Stage 4 walkback resolves to evt:tong-yao-incident-789bce
+  outcome: 召虎、仲山甫、伯阳父释谣；伯阳父言"后世有女主乱国之祸"
+  summary: 童谣次日早朝，宣王问群臣解谣意；召虎言弓矢之变，仲山甫言亡国之患，伯阳父言女主乱国
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p7-009
+    - cit:ch01-p7-010
+    - cit:ch01-p7-011
+    - cit:ch01-p7-012
+    - cit:ch01-p7-013
+
+# ---------------------------------------------------------------------------
+# Year 39 — 789 BCE — chunk chk:dzl:1:9 (the same evening / next morning as council)
+# ---------------------------------------------------------------------------
+
+- id: evt:lao-gong-ren-births-girl-789bce
+  type: 怪诞
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (童谣朝议同时)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:tong-yao-council-789bce
+    # CROSS-chunk: council in chk:dzl:1:0, this in chk:dzl:1:9 — explicit anchor required.
+  outcome: 女婴生
+  summary: 先王手内老宫人怀孕四十余年昨夜生一女
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p10-015
+
+- id: evt:jiang-hou-abandons-girl-789bce
+  type: 弃婴
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (老宫人生女后)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:lao-gong-ren-births-girl-789bce
+    # within-chunk anchor; technically Stage 4 walkback would catch this, but
+    # being explicit keeps the chain readable in the golden.
+  outcome: 女婴弃于清水河
+  summary: 姜后以女婴为不祥之物，令人草席包裹，弃于二十里外清水河中
+  primary_place_id: pla:qing-shui-he
+  citations:
+    - cit:ch01-p10-016
+    - cit:ch01-p10-017
+
+# ---------------------------------------------------------------------------
+# Year 39 — 789 BCE — chunk chk:dzl:1:10 (the wave of decrees + the rescue)
+# ---------------------------------------------------------------------------
+
+- id: evt:du-bo-search-order-789bce
+  type: 诏令
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (女婴弃河次日早朝)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:jiang-hou-abandons-girl-789bce
+    # CROSS-chunk: chk:dzl:1:9 → chk:dzl:1:10
+  outcome: 上大夫杜伯督访妖女；下大夫左儒督禁桑弓箕袋
+  summary: 宣王召伯阳父占龙漦之事，繇词应童谣；遂命杜伯访妖女，命左儒禁卖桑弓箕草箭袋
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p11-018
+    - cit:ch01-p11-019
+    - cit:ch01-p11-020
+
+- id: evt:fu-ren-executed-789bce
+  type: 处死
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (禁令次日)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:du-bo-search-order-789bce
+    # within-chunk anchor
+  outcome: 妇人斩，男子逃
+  summary: 司市官擒抱箕袋之妇人，男子背桑弓逃脱；左儒奏违禁，宣王命斩妇人，焚桑弓箕袋于市
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p11-021
+    - cit:ch01-p11-022
+
+- id: evt:nan-zi-rescues-nv-ying-789bce
+  type: 救婴
+  date:
+    year_bce: 789
+    uncertainty: point
+    original: (妇人死后次日)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:fu-ren-executed-789bce
+    # within-chunk anchor
+  outcome: 男子救女婴往褒城
+  summary: 卖桑弓男子逃至清水河，见百鸟衔草席女婴出水，遂取归，抱往褒城投亲
+  primary_place_id: pla:qing-shui-he
+  citations:
+    - cit:ch01-p13-023
+    - cit:ch01-p13-024
+    - cit:ch01-p13-025
+
+# ---------------------------------------------------------------------------
+# Year 43 — 785 BCE — chunk chk:dzl:1:14
+# ---------------------------------------------------------------------------
+
+- id: evt:zhai-gong-dream-785bce
+  type: 异梦
+  date:
+    year_bce: 785
+    uncertainty: point
+    original: 宣王四十三年
+    inference_kind: explicit_reign_zhou
+  outcome: 伯阳父言梦应童谣之谶
+  summary: 宣王四十三年大祭宿斋宫，夜梦美貌女子自西来，入太庙大笑大哭，捆七庙神主东去；告伯阳父，言女祸应童谣谶
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p17-026
+    - cit:ch01-p17-027
+    - cit:ch01-p17-028
+    - cit:ch01-p17-029
+
+- id: evt:du-bo-executed-785bce
+  type: 处死
+  date:
+    year_bce: 785
+    uncertainty: point
+    original: (颁胙之后)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:zhai-gong-dream-785bce
+    # within-chunk anchor
+  outcome: 杜伯斩
+  summary: 宣王问杜伯访妖女何无回话，杜伯奏中止；宣王怒，斥为不忠，命武士推出朝门斩之
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p17-030
+    - cit:ch01-p17-031
+    - cit:ch01-p17-032
+
+- id: evt:zuo-ru-suicide-785bce
+  type: 自刎
+  date:
+    year_bce: 785
+    uncertainty: point
+    original: (杜伯死同日)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:du-bo-executed-785bce
+    # within-chunk anchor
+  outcome: 左儒自刎
+  summary: 左儒先谏宣王勿杀杜伯不听，杜伯被斩后回家自刎
+  primary_place_id: pla:hao-jing
+  citations:
+    - cit:ch01-p17-033
+    - cit:ch01-p17-034
+
+# Note that this is included because of the later impact in subsequent chapters
+- id: evt:xi-shu-flees-to-jin-785bce
+  type: 出奔
+  date:
+    year_bce: 785
+    uncertainty: circa
+    original: (杜伯死后)
+    inference_kind: relative_to_prior_event
+    relative_anchor_event_id: evt:du-bo-executed-785bce
+    # within-chunk anchor; year not stated explicitly, takes 杜伯's
+  outcome: 隰叔仕晋为士师；子孙为士氏、范氏
+  summary: 杜伯之子隰叔奔晋，后仕晋为士师之官；子孙食邑于范，遂为士氏、范氏
+  primary_place_id: ~
+  citations:
+    - cit:ch01-p19-035
+    - cit:ch01-p19-036
+
+# ---------------------------------------------------------------------------
+# Year 46 — 782 BCE — chunk chk:dzl:1:17
+# ---------------------------------------------------------------------------
+
+# Note that this is not important for the narrative of Ch.1, which ends with the 785 BCE events; but if we were to include it, it would be anchored relative to the 785 BCE events, not the 782 BCE hunt, since the ghost vision happens on the return from the hunt, and the text makes it clear that the vision is what causes the king to fall ill, not the hunt itself. So the anchor would be evt:du-bo-zuo-ru-ghost-vision-782bce, not evt:dong-jiao-hunt-782bce. The latter is included in the file but commented out, since it's not important for Ch.1's narrative and would require a lot of extra citations to justify its inclusion.
+# - id: evt:dong-jiao-hunt-782bce
+#   type: 游猎
+#   date:
+#     year_bce: 782
+#     uncertainty: point
+#     original: 宣王四十六年秋七月
+#     inference_kind: explicit_reign_zhou
+#   outcome: 围毕散归
+#   summary: 宣王四十六年秋七月体稍豫，出东郊游猎；尹吉甫侍右、召虎侍左；获禽多，传令散围而回
+#   primary_place_id: pla:dong-jiao
+#   citations:
+#     - cit:ch01-p20-038
+#     - cit:ch01-p20-039
+#     - cit:ch01-p20-040
+
+- id: evt:du-bo-zuo-ru-ghost-vision-782bce
+  type: 显灵
+  date:
+    year_bce: 782
+    uncertainty: point
+    original: (东郊游猎归途)
+    inference_kind: relative_to_prior_event
+    # within-chunk anchor
+  outcome: 宣王中箭昏倒
+  summary: 游猎散归途中，杜伯、左儒乘小车现身，臂朱弓手赤矢；杜伯射宣王心窝，宣王昏倒于玉辇
+  primary_place_id: pla:dong-jiao
+  citations:
+    - cit:ch01-p20-041
+    - cit:ch01-p20-042
+    - cit:ch01-p20-043

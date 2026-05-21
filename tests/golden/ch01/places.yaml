@@ -1,0 +1,88 @@
+# Golden Ch.1 — Places
+#
+# Required: id, name  (loader-enforced)
+# Place types (free string, but be consistent): 都城 / 战场 / 关 / 河 / 山 / 盟会处 / 国 / 邑 / 城 / 郊 / ...
+#
+# Stable id: `pla:<kebab-case-slug>`.
+#
+# Coordinates left null — geocoding is a separate pass. The novel's gloss
+# "那太原，即今固原州" is captured in太原's modern_equiv as a curator hint;
+# the modern Taiyuan in Shanxi is NOT the right anchor for this 太原.
+
+- id: pla:hao-jing
+  name: 镐京
+  type: 都城
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  modern_equiv: 西安市西南
+  citations:
+    - cit:ch01-p6-005
+
+- id: pla:tai-yuan-gu-yuan
+  name: 太原
+  type: 邑
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  modern_equiv: 固原州 (novel's own gloss; near modern 宁夏固原, not Shanxi 太原)
+  citations:
+    - cit:ch01-p4-002
+    - cit:ch01-p4-003
+
+- id: pla:qian-mu
+  name: 千亩
+  type: 战场
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  citations:
+    - cit:ch01-p4-001
+
+- id: pla:qing-shui-he
+  name: 清水河
+  type: 河
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  citations:
+    - cit:ch01-p10-016
+    - cit:ch01-p13-023
+
+- id: pla:bao-cheng
+  name: 褒城
+  type: 城
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  citations:
+    - cit:ch01-p13-025
+
+- id: pla:dong-jiao
+  name: 东郊
+  type: 郊
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  modern_equiv: 镐京东郊
+  citations:
+    - cit:ch01-p20-038
+    - cit:ch01-p20-040
+
+- id: pla:du-ling
+  name: 杜陵
+  type: 邑
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  citations:
+    - cit:ch01-p19-037
+
+- id: pla:fan
+  name: 范
+  type: 邑
+  lat: ~
+  lon: ~
+  coord_confidence: ~
+  citations:
+    - cit:ch01-p19-036

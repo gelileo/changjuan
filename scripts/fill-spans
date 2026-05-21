@@ -1,0 +1,458 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Fill missing/placeholder span fields by looking up each quote in its chunk.
+
+Supports two YAML shapes (auto-detected):
+
+  1. **citations format** (golden ground truth) — top-level list of citation records,
+     each with chunk_id/paragraph/span/quote at the top level:
+
+         - id: cit:ch01-p2-003
+           chunk_id: chk:dzl:1:0
+           paragraph: 2
+           span: [120, 168]
+           quote: 幽王无道
+
+  2. **extraction format** (stage-3 skill output) — top-level dict with arrays
+     `persons` / `events` / `places` / `states` / `relations`. Each entity has an
+     inline `citation:` block carrying chunk_id/paragraph/span/quote:
+
+         persons:
+           - id: p1
+             canonical_name: 周宣王
+             citation:
+               chunk_id: chk:dzl:1:0
+               paragraph: 4
+               span: [355, 357]
+               quote: 宣王
+             justifications: {canonical_name: 宣王}
+
+Usage:
+    scripts/fill-spans                                  # default: tests/golden/ch01/citations.yaml
+    scripts/fill-spans path/to/file.yaml ...            # one or more files; format auto-detected per file
+    scripts/fill-spans --check                          # dry-run; don't write
+    scripts/fill-spans --check-all                      # also re-verify spans already present
+    scripts/fill-spans --db data/corpus.sqlite          # explicit db path
+
+Semantics:
+  - A citation "needs filling" if its `span` field is missing, null, [], or [0, 0].
+  - For each needs-fill citation: NFC-normalize chunk text + quote, then find quote:
+      0 matches → error, leave alone.
+      1 match   → auto-fill.
+      >1 match  → prompt; show each occurrence with ±20 chars of surrounding context.
+  - "Duplicate" only means same quote in the SAME chunk_id. Same quote in a different
+    chunk_id (e.g., from paragraph overlap) is a separate citation with its own span.
+
+File edits are line-based to preserve YAML comments and formatting. The script only
+modifies the `span:` line of each affected record (or inserts one before `quote:` if absent).
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sqlite3
+import sys
+import unicodedata
+from pathlib import Path
+from typing import Optional
+
+import yaml
+
+DEFAULT_DB = Path("data/corpus.sqlite")
+DEFAULT_FILE = Path("tests/golden/ch01/citations.yaml")
+
+ID_RE = re.compile(r"^(\s*)-\s+id:\s*(\S+)")
+KIND_RE = re.compile(r"^(\s*)-\s+kind:\s*(\S+)")
+SPAN_LINE_RE = re.compile(r"^(\s+)span:.*$")
+QUOTE_LINE_RE = re.compile(r"^(\s+)quote:")
+TOP_KEY_RE = re.compile(r"^([A-Za-z_][\w]*)\s*:\s*$")
+
+EXTRACTION_KINDS_WITH_ID = ("persons", "events", "places", "states")
+EXTRACTION_KIND_RELATIONS = "relations"
+
+
+def _nfc(s: str) -> str:
+    return unicodedata.normalize("NFC", s)
+
+
+def _needs_fill(citation: dict) -> bool:
+    span = citation.get("span")
+    if span is None:
+        return True
+    if not isinstance(span, list) or len(span) != 2:
+        return True
+    if span == [0, 0]:
+        return True
+    # YAML `[~, ~]` parses to `[None, None]`; any non-int values count as placeholder.
+    if not all(isinstance(x, int) for x in span):
+        return True
+    return False
+
+
+def _find_occurrences(text: str, quote: str) -> list[list[int]]:
+    nfc_text = _nfc(text)
+    nfc_quote = _nfc(quote)
+    matches: list[list[int]] = []
+    start = 0
+    while True:
+        idx = nfc_text.find(nfc_quote, start)
+        if idx == -1:
+            break
+        matches.append([idx, idx + len(nfc_quote)])
+        start = idx + 1
+    return matches
+
+
+def _context_snippet(text: str, start: int, end: int, pad: int = 20) -> str:
+    ctx_start = max(0, start - pad)
+    ctx_end = min(len(text), end + pad)
+    prefix = "…" if ctx_start > 0 else ""
+    suffix = "…" if ctx_end < len(text) else ""
+    return (
+        prefix
+        + text[ctx_start:start]
+        + "【" + text[start:end] + "】"
+        + text[end:ctx_end]
+        + suffix
+    ).replace("\n", " ⏎ ")
+
+
+def _prompt_choose(rec_id: str, matches: list[list[int]], chunk_text: str) -> Optional[list[int]]:
+    print(f"\n{rec_id}: {len(matches)} occurrences of the quote in the same chunk:")
+    for i, (s, e) in enumerate(matches):
+        print(f"  [{i + 1}]  span [{s}, {e}]   {_context_snippet(chunk_text, s, e)}")
+    while True:
+        try:
+            choice = input("  → enter number (or 's' to skip, 'a' to abort): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\naborted")
+            sys.exit(130)
+        if choice.lower() == "s":
+            return None
+        if choice.lower() == "a":
+            sys.exit(130)
+        if choice.isdigit() and 1 <= int(choice) <= len(matches):
+            return matches[int(choice) - 1]
+        print("  invalid; try again")
+
+
+# ---------------------------------------------------------------------------
+# Format detection + record iteration
+# ---------------------------------------------------------------------------
+
+
+def _detect_format(payload: object) -> str:
+    """Return 'citations' (top-level list) or 'extraction' (top-level dict with kinds)."""
+    if isinstance(payload, list):
+        return "citations"
+    if isinstance(payload, dict):
+        kinds = set(EXTRACTION_KINDS_WITH_ID) | {EXTRACTION_KIND_RELATIONS}
+        if kinds & set(payload.keys()):
+            return "extraction"
+    return "unknown"
+
+
+def _iter_records(payload: object, fmt: str):
+    """Yield (locator, citation_dict, rec_id_for_display) for each citation in the file.
+
+    `locator` identifies the record for the line-based editor:
+      - citations format: ('id', record_id_string)
+      - extraction format entities: ('id', entity_id_string) where entity_id is "p1"/"e1"/etc.
+      - extraction format relations: ('relation_idx', index_in_relations_array)
+    """
+    if fmt == "citations":
+        for rec in payload:                                          # type: ignore[union-attr]
+            citation = rec  # whole record IS the citation
+            yield ("id", rec.get("id", "<no-id>")), citation, rec.get("id", "<no-id>")
+    elif fmt == "extraction":
+        for kind in EXTRACTION_KINDS_WITH_ID:
+            for rec in payload.get(kind, []) or []:                  # type: ignore[union-attr]
+                citation = rec.get("citation") or {}
+                eid = rec.get("id", "<no-id>")
+                yield ("id", eid), citation, f"{kind[:-1]}/{eid}"
+        rels = payload.get(EXTRACTION_KIND_RELATIONS, []) or []      # type: ignore[union-attr]
+        for i, rec in enumerate(rels):
+            citation = rec.get("citation") or {}
+            display = f"relations[{i}]/{rec.get('kind', '?')}"
+            yield ("relation_idx", i), citation, display
+
+
+# ---------------------------------------------------------------------------
+# Line-based edit
+# ---------------------------------------------------------------------------
+
+
+def _replace_or_insert_span(block: list[str], new_span: list[int]) -> bool:
+    """Within a record's line block, replace or insert the span line. Mutates block."""
+    for j, line in enumerate(block):
+        m = SPAN_LINE_RE.match(line)
+        if m:
+            block[j] = f"{m.group(1)}span: [{new_span[0]}, {new_span[1]}]"
+            return True
+    # No span line; insert before quote: line.
+    for j, line in enumerate(block):
+        m = QUOTE_LINE_RE.match(line)
+        if m:
+            block.insert(j, f"{m.group(1)}span: [{new_span[0]}, {new_span[1]}]")
+            return True
+    # Last resort: append at end with default indent.
+    block.append(f"      span: [{new_span[0]}, {new_span[1]}]")
+    return True
+
+
+def _apply_changes(text: str, fmt: str, changes: list[tuple[tuple, list[int]]]) -> str:
+    """Apply a list of (locator, new_span) edits to the raw YAML text.
+
+    locator is the tuple yielded by _iter_records:
+      ('id', '<id-string>')           — find a `- id: <id>` line (works for citations
+                                          format AND extraction entity records)
+      ('relation_idx', N)             — find the N-th `- kind:` item under `relations:`
+    """
+    if not changes:
+        return text
+    lines = text.split("\n")
+
+    # Pre-compute boundaries for id-based records (citations + entities).
+    id_boundaries: list[tuple[int, str]] = []
+    for i, line in enumerate(lines):
+        m = ID_RE.match(line)
+        if m:
+            id_boundaries.append((i, m.group(2)))
+
+    # Pre-compute boundaries for relations (kind-based items under `relations:`).
+    rel_boundaries: list[int] = []
+    if fmt == "extraction":
+        relations_indent: Optional[int] = None
+        in_relations = False
+        for i, line in enumerate(lines):
+            top_m = TOP_KEY_RE.match(line)
+            if top_m:
+                in_relations = top_m.group(1) == EXTRACTION_KIND_RELATIONS
+                relations_indent = None
+                continue
+            if in_relations:
+                m = KIND_RE.match(line)
+                if m:
+                    if relations_indent is None:
+                        relations_indent = len(m.group(1))
+                    if len(m.group(1)) == relations_indent:
+                        rel_boundaries.append(i)
+
+    def _record_range(start_line: int, all_boundaries: list[int]) -> tuple[int, int]:
+        """Given a record start line, return (start, end_exclusive) using boundaries list."""
+        # End is the next boundary > start_line, or len(lines).
+        for b in all_boundaries:
+            if b > start_line:
+                return start_line, b
+        return start_line, len(lines)
+
+    # Build set of boundary line indices for relations (for end-of-record lookup)
+    rel_boundary_set = list(rel_boundaries) + [len(lines)]
+
+    # Map id → boundary start line; also list of boundary line indices for id-based records.
+    id_starts: dict[str, int] = {rid: ln for ln, rid in id_boundaries}
+    id_boundary_lines = [ln for ln, _ in id_boundaries] + [len(lines)]
+
+    for locator, new_span in changes:
+        kind, key = locator
+        if kind == "id":
+            if key not in id_starts:
+                print(f"  ! could not locate record id={key} for in-place edit", file=sys.stderr)
+                continue
+            start = id_starts[key]
+            # Find end = next id-boundary > start
+            end = next((ln for ln in id_boundary_lines if ln > start), len(lines))
+        elif kind == "relation_idx":
+            idx = int(key)
+            if idx >= len(rel_boundaries):
+                print(f"  ! could not locate relations[{idx}] for in-place edit", file=sys.stderr)
+                continue
+            start = rel_boundaries[idx]
+            end = rel_boundary_set[idx + 1] if idx + 1 < len(rel_boundary_set) else len(lines)
+        else:
+            print(f"  ! unknown locator kind '{kind}'", file=sys.stderr)
+            continue
+
+        block = lines[start:end]
+        _replace_or_insert_span(block, new_span)
+        lines[start:end] = block
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Per-file driver
+# ---------------------------------------------------------------------------
+
+
+def process_file(
+    file_path: Path,
+    db_conn: sqlite3.Connection,
+    *,
+    check_only: bool,
+    check_all: bool,
+) -> tuple[int, int, bool]:
+    """Returns (changes_planned, errors, file_was_modified)."""
+    if not file_path.exists():
+        print(f"  ✗ file not found: {file_path}", file=sys.stderr)
+        return 0, 1, False
+
+    raw = file_path.read_text(encoding="utf-8")
+    payload = yaml.safe_load(raw)
+    if payload is None:
+        payload = []
+    fmt = _detect_format(payload)
+    if fmt == "unknown":
+        print(f"  ✗ {file_path}: top-level shape not recognized "
+              f"(want list of citations OR dict with persons/events/places/states/relations)",
+              file=sys.stderr)
+        return 0, 1, False
+    print(f"  format: {fmt}")
+
+    chunk_cache: dict[str, Optional[str]] = {}
+
+    def get_chunk(chunk_id: str) -> Optional[str]:
+        if chunk_id not in chunk_cache:
+            row = db_conn.execute("SELECT text FROM chunks WHERE id = ?", (chunk_id,)).fetchone()
+            chunk_cache[chunk_id] = row[0] if row else None
+        return chunk_cache[chunk_id]
+
+    plans: list[tuple[str, object, object, str]] = []
+    skipped: list[str] = []
+    errors = 0
+    changes_to_apply: list[tuple[tuple, list[int]]] = []
+
+    for locator, citation, display in _iter_records(payload, fmt):
+        chunk_id = citation.get("chunk_id")
+        quote = citation.get("quote", "")
+        existing_span = citation.get("span")
+
+        need = _needs_fill(citation)
+        if not need and not check_all:
+            continue
+
+        # Empty citation block (e.g., no chunk_id / quote): skip silently if entity has no citation at all
+        if not chunk_id and not quote and existing_span is None:
+            continue
+        if not chunk_id or not quote:
+            print(f"  ✗ {display}: missing chunk_id or quote", file=sys.stderr)
+            errors += 1
+            continue
+
+        chunk_text = get_chunk(chunk_id)
+        if chunk_text is None:
+            print(f"  ✗ {display}: chunk '{chunk_id}' not in corpus", file=sys.stderr)
+            errors += 1
+            continue
+
+        matches = _find_occurrences(chunk_text, quote)
+        if not matches:
+            print(f"  ✗ {display}: quote not in chunk '{chunk_id}'", file=sys.stderr)
+            errors += 1
+            continue
+
+        # --check-all: verify existing span
+        if not need and check_all:
+            if isinstance(existing_span, list) and len(existing_span) == 2:
+                start_e, end_e = existing_span
+                if (
+                    isinstance(start_e, int) and isinstance(end_e, int)
+                    and 0 <= start_e <= end_e <= len(chunk_text)
+                    and _nfc(chunk_text[start_e:end_e]) == _nfc(quote)
+                ):
+                    continue  # existing span verifies
+            # Existing span wrong → treat as needs-fill
+            if len(matches) == 1:
+                plans.append((display, existing_span, matches[0], "EXISTING-SPAN-WRONG"))
+                changes_to_apply.append((locator, matches[0]))
+            else:
+                plans.append((display, existing_span, matches, f"EXISTING-SPAN-WRONG ({len(matches)} candidates)"))
+                if not check_only:
+                    chosen = _prompt_choose(display, matches, chunk_text)
+                    if chosen is None:
+                        skipped.append(display)
+                    else:
+                        changes_to_apply.append((locator, chosen))
+            continue
+
+        # Needs-fill
+        if len(matches) == 1:
+            chosen = matches[0]
+            plans.append((display, existing_span, chosen, "auto-fill"))
+            changes_to_apply.append((locator, chosen))
+        else:
+            if check_only:
+                plans.append((display, existing_span, matches, f"AMBIGUOUS ({len(matches)} matches)"))
+            else:
+                chosen = _prompt_choose(display, matches, chunk_text)
+                if chosen is None:
+                    skipped.append(display)
+                else:
+                    plans.append((display, existing_span, chosen, "chosen"))
+                    changes_to_apply.append((locator, chosen))
+
+    # Report
+    for display, old, new, status in plans:
+        old_repr = repr(old) if old is not None else "<missing>"
+        if isinstance(new, list) and len(new) == 2 and all(isinstance(x, int) for x in new):
+            new_repr = f"[{new[0]}, {new[1]}]"
+        else:
+            new_repr = repr(new)
+        print(f"  {display}: span {old_repr} → {new_repr}  [{status}]")
+    for s in skipped:
+        print(f"  {s}: skipped")
+
+    modified = False
+    if not check_only and changes_to_apply:
+        new_text = _apply_changes(raw, fmt, changes_to_apply)
+        if new_text != raw:
+            file_path.write_text(new_text, encoding="utf-8")
+            modified = True
+
+    return len(plans), errors, modified
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description="Fill missing span fields in citations or extraction YAML.")
+    p.add_argument(
+        "files", nargs="*", default=[str(DEFAULT_FILE)],
+        help="paths to YAML files (default: tests/golden/ch01/citations.yaml)",
+    )
+    p.add_argument("--db", type=Path, default=DEFAULT_DB)
+    p.add_argument("--check", action="store_true", help="dry-run: print proposed edits, don't write")
+    p.add_argument("--check-all", action="store_true",
+                   help="also re-verify spans already present (catches drift)")
+    args = p.parse_args()
+
+    if not args.db.exists():
+        print(f"corpus db not found: {args.db}", file=sys.stderr)
+        return 1
+    conn = sqlite3.connect(args.db)
+
+    total_changes = 0
+    total_errors = 0
+    any_modified = False
+    for f in args.files:
+        path = Path(f)
+        print(f"=== {path} ===")
+        n, errs, modified = process_file(
+            path, conn,
+            check_only=args.check,
+            check_all=args.check_all,
+        )
+        total_changes += n
+        total_errors += errs
+        any_modified = any_modified or modified
+        if modified:
+            print(f"  wrote {path}")
+
+    if total_changes == 0 and total_errors == 0:
+        print("\nnothing to do (no records need filling)")
+    else:
+        verb = "would change" if args.check else ("changed" if any_modified else "planned")
+        print(f"\nsummary: {total_changes} {verb}, {total_errors} error(s)")
+    return 1 if total_errors else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

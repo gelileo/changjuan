@@ -1,0 +1,43 @@
+# Golden Ch.1 — States (诸侯国 / polities)
+#
+# Required: id, name  (loader-enforced)
+#
+# Stable id: `sta:<kebab-case-slug>`.
+# State types (free string but consistent): 王朝 / 诸侯国 / 戎 / 夷 / 蛮 / 部族 / ...
+#
+# Ch.1 attests four polities: 周 (the central王朝), 姜戎 and 犬戎 (戎 tribes
+# named as antagonists), and 晋 (named as 隰叔's flight destination, though
+# the chapter says nothing about 晋's structure or rulers — it's an
+# attested-by-name state only).
+
+- id: sta:zhou
+  name: 周
+  type: 王朝
+  ruling_clan: 姬
+  founded_date:
+    year_bce: 1046
+    uncertainty: circa
+    original: 武王伐纣
+    inference_kind: era_only
+  citations:
+    - cit:ch01-p3-044
+    - cit:ch01-p3-045
+
+- id: sta:jiang-rong
+  name: 姜戎
+  type: 戎
+  citations:
+    - cit:ch01-p4-001
+
+- id: sta:quan-rong
+  name: 犬戎
+  type: 戎
+  citations:
+    - cit:ch01-p7-011
+
+- id: sta:jin
+  name: 晋
+  type: 诸侯国
+  citations:
+    - cit:ch01-p19-035
+    - cit:ch01-p19-036

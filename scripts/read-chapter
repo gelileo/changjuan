@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Dump a chapter's chunks from data/corpus.sqlite as readable Markdown.
+
+Usage:
+    scripts/read-chapter 1                       # writes data/readable/ch01.md
+    scripts/read-chapter 1 --print               # also prints to stdout
+    scripts/read-chapter 1 -o /tmp/foo.md        # custom output path
+
+The output is one chunk per section, with chunk_id + paragraph range as a
+heading. Useful when hand-annotating golden YAML — keep this file open in
+one editor pane and the YAML files in another.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sqlite3
+import sys
+from pathlib import Path
+
+DEFAULT_DB = Path("data/corpus.sqlite")
+
+
+def render_chapter(db_path: Path, chapter: int) -> str:
+    if not db_path.exists():
+        raise SystemExit(f"corpus db not found: {db_path}")
+    conn = sqlite3.connect(db_path)
+    rows = conn.execute(
+        """
+        SELECT c.id, c.paragraph_start, c.paragraph_end, c.text, d.chapter_title
+        FROM chunks c
+        JOIN documents d ON c.document_id = d.id
+        WHERE d.chapter_num = ?
+        ORDER BY c.paragraph_start
+        """,
+        (chapter,),
+    ).fetchall()
+    if not rows:
+        raise SystemExit(f"no chunks found for chapter {chapter} in {db_path}")
+
+    title = rows[0][4]
+    lines: list[str] = [
+        f"# Chapter {chapter} — {title}",
+        "",
+        f"**Source:** `{db_path}` &middot; **Chunks:** {len(rows)}",
+        "",
+        "---",
+        "",
+    ]
+    for chunk_id, ps, pe, text, _ in rows:
+        lines.append(f"## `{chunk_id}` &middot; paragraphs {ps}-{pe}")
+        lines.append("")
+        lines.append("```text")
+        lines.append(text.rstrip("\n"))
+        lines.append("```")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Dump a chapter's chunks as Markdown.")
+    parser.add_argument("chapter", type=int, help="chapter number (e.g., 1)")
+    parser.add_argument(
+        "--db",
+        type=Path,
+        default=DEFAULT_DB,
+        help=f"path to corpus.sqlite (default: {DEFAULT_DB})",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=None,
+        help="output markdown path (default: data/readable/ch<NN>.md)",
+    )
+    parser.add_argument(
+        "--print",
+        dest="also_print",
+        action="store_true",
+        help="also print to stdout",
+    )
+    args = parser.parse_args()
+
+    md = render_chapter(args.db, args.chapter)
+    out_path = args.output or Path(f"data/readable/ch{args.chapter:02d}.md")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(md, encoding="utf-8")
+    print(f"wrote {out_path} ({len(md):,} chars)", file=sys.stderr)
+    if args.also_print:
+        print(md)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

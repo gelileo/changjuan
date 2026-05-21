@@ -298,3 +298,40 @@ Articles touched: `concepts/pipeline/load-and-merge.md` (matching by canonical_n
 Created `pipeline/stage7_load.py` with `load_candidate_persons(conn, pipeline_run_id)`. Task 17 implements the naive create path: every candidate_persons row for the given run becomes a new canonical Person with id `per:<slug>` (slug from `_slugify`, which applies regex `[^\w]+`→`-`). Collision on id gets a uuid hex suffix. Audit log row emitted with `change_kind='create'`, `actor='load@v1'`. Returns count of candidates processed.
 
 Articles created: `concepts/pipeline/load-and-merge.md` (new — describes matching, merge semantics, Conflict emission, variant union, provenance rules). Articles touched: `concepts/verification/testing.md` (added stage 7 load test section).
+
+## [2026-05-21] golden ch01: hand-annotated YAML for Western Zhou collapse + annotation helpers
+
+Hand-annotated `tests/golden/ch01/*.yaml` over the now-correctly-chunked Chapter 1
+of 东周列国志. Final counts:
+
+- persons: 13 (9 named + 4 unnamed-but-acting via `per:_<descriptor>-ch01` ids)
+- events: 14 (excluding the commented-out 东郊游猎 — see README rationale)
+- places: 8
+- states: 4 (周 + 姜戎 + 犬戎 + 晋)
+- citations: 46 (all span-verified against `data/corpus.sqlite` via NFC substring match)
+- relations: 63 (event_participant + event_place + person_relation + person_state + state_capital)
+
+Annotation conventions + 14 substantive judgment-call entries (scope rules,
+date strategy, chunk-choice rule, span workflow, variant folding, place
+geocoding, quote selection, relation coverage strategy) recorded in
+`tests/golden/ch01/README.md`'s decisions log. These will be harvested into
+`changjuan-extract`'s system prompt during Task 27.
+
+Phase 2 reality: variants of the same person (e.g., 女婴 ↔ later-named 褒姒,
+重耳 ↔ 晋文公 etc.) stay as separate `per:*` ids; stage-5 linker (Phase 3)
+will merge.
+
+Also committed: four annotation-helper scripts used during this pass:
+
+- `scripts/read-chapter` — dumps a chapter's chunks as readable Markdown.
+- `scripts/find-span` — one-shot (chunk_id, quote) → `[start, end]` lookup.
+- `scripts/fill-spans` — bulk fills missing span fields in citations YAML
+  (or extraction YAML, auto-detected); prompts on in-chunk ambiguity.
+- `scripts/validate-golden` — runs the structural loader + corpus-side
+  chunk_id / span / quote alignment checks.
+
+These will be reused for future chapters' golden annotation passes and (the
+extract-format mode of fill-spans) by the `changjuan-extract` skill at runtime.
+
+Articles touched: none (annotation data + helper scripts; conventions
+documented in tests/golden/ch01/README.md).

@@ -1,0 +1,485 @@
+# Golden Ch.1 — Relations
+#
+# Typed-envelope format: every record has a `kind:` field discriminating which
+# relation table it maps to.
+#
+# Coverage strategy: every event in events.yaml gets at least one
+# event_participant entry; every place where a non-primary place is meaningful
+# gets an event_place entry; person→person lineage/friendship/rivalry facts
+# go in person_relation; state-capital facts go in state_capital;
+# person→state role facts (ruler, minister, exile-to) go in person_state.
+
+# ===========================================================================
+# state_capital — 周's capital is 镐京 in this period
+# ===========================================================================
+
+- kind: state_capital
+  state_id: sta:zhou
+  place_id: pla:hao-jing
+  from_date:
+    year_bce: 1046
+    uncertainty: circa
+    original: (西周开国)
+    inference_kind: era_only
+  citation_id: cit:ch01-p6-005
+
+# ===========================================================================
+# person_state — rulers, ministers, defectors-out
+# ===========================================================================
+
+- kind: person_state
+  person_id: per:zhou-xuan-wang
+  state_id: sta:zhou
+  role: ruler
+  from_date:
+    year_bce: 827
+    uncertainty: circa
+    original: (立太子靖为王)
+    inference_kind: era_only
+  to_date:
+    year_bce: 782
+    uncertainty: point
+    original: (chapter implies death after 46-year hunt; year given explicitly)
+    inference_kind: explicit_reign_zhou
+  citation_id: cit:ch01-p3-045
+
+- kind: person_state
+  person_id: per:zhong-shan-fu
+  state_id: sta:zhou
+  role: minister
+  citation_id: cit:ch01-p3-046
+
+- kind: person_state
+  person_id: per:shao-hu
+  state_id: sta:zhou
+  role: minister
+  citation_id: cit:ch01-p3-046
+
+- kind: person_state
+  person_id: per:bo-yang-fu
+  state_id: sta:zhou
+  role: minister
+  citation_id: cit:ch01-p7-012
+
+- kind: person_state
+  person_id: per:yin-ji-fu
+  state_id: sta:zhou
+  role: minister
+  citation_id: cit:ch01-p3-046
+
+- kind: person_state
+  person_id: per:du-bo
+  state_id: sta:zhou
+  role: minister
+  to_date:
+    year_bce: 785
+    uncertainty: point
+    original: 宣王四十三年
+    inference_kind: explicit_reign_zhou
+  citation_id: cit:ch01-p11-019
+
+- kind: person_state
+  person_id: per:zuo-ru
+  state_id: sta:zhou
+  role: minister
+  to_date:
+    year_bce: 785
+    uncertainty: point
+    original: (杜伯死同日)
+    inference_kind: relative_to_prior_event
+  citation_id: cit:ch01-p11-020
+
+- kind: person_state
+  person_id: per:xi-shu
+  state_id: sta:zhou
+  role: defector
+  to_date:
+    year_bce: 785
+    uncertainty: circa
+    original: (杜伯死后)
+    inference_kind: relative_to_prior_event
+  citation_id: cit:ch01-p19-035
+
+- kind: person_state
+  person_id: per:xi-shu
+  state_id: sta:jin
+  role: minister
+  from_date:
+    year_bce: 785
+    uncertainty: circa
+    original: (奔晋后)
+    inference_kind: relative_to_prior_event
+  citation_id: cit:ch01-p19-036
+
+# ===========================================================================
+# person_relation — kinship, friendship, recommender
+# ===========================================================================
+
+- kind: person_relation
+  from_person_id: per:du-bo
+  to_person_id: per:xi-shu
+  kind_detail: parent
+  citation_id: cit:ch01-p19-035
+
+- kind: person_relation
+  from_person_id: per:zuo-ru
+  to_person_id: per:du-bo
+  kind_detail: ally
+  citation_id: cit:ch01-p17-034
+
+- kind: person_relation
+  from_person_id: per:du-bo
+  to_person_id: per:zuo-ru
+  kind_detail: mentor
+  # 左儒是杜伯"举荐同朝的" — 杜伯举荐了左儒
+  citation_id: cit:ch01-p17-034
+
+- kind: person_relation
+  from_person_id: per:zhou-xuan-wang
+  to_person_id: per:jiang-hou
+  kind_detail: spouse
+  citation_id: cit:ch01-p7-014
+
+- kind: person_relation
+  from_person_id: per:_lao-gong-ren-ch01
+  to_person_id: per:_nv-ying-ch01
+  kind_detail: parent
+  citation_id: cit:ch01-p10-015
+
+- kind: person_relation
+  from_person_id: per:zhou-xuan-wang
+  to_person_id: per:du-bo
+  kind_detail: killed_by
+  # 宣王 caused 杜伯's death (interpreting "from killed_by to" as "from-killed-by"
+  # — the canonical name is in the spec; semantics here: 宣王 killed 杜伯)
+  date:
+    year_bce: 785
+    uncertainty: point
+    inference_kind: explicit_reign_zhou
+  citation_id: cit:ch01-p17-032
+
+# ===========================================================================
+# event_participant — one entry per (event, person, role)
+# ===========================================================================
+
+# --- evt:qian-mu-zhi-zhan-789bce
+- kind: event_participant
+  event_id: evt:qian-mu-zhi-zhan-789bce
+  person_id: per:zhou-xuan-wang
+  role: 主将
+  citation_id: cit:ch01-p4-001
+
+# --- evt:tai-yuan-liao-min-789bce
+- kind: event_participant
+  event_id: evt:tai-yuan-liao-min-789bce
+  person_id: per:zhou-xuan-wang
+  role: 主行
+  citation_id: cit:ch01-p4-002
+
+- kind: event_participant
+  event_id: evt:tai-yuan-liao-min-789bce
+  person_id: per:zhong-shan-fu
+  role: 进谏
+  citation_id: cit:ch01-p4-004
+
+# --- evt:tong-yao-incident-789bce
+- kind: event_participant
+  event_id: evt:tong-yao-incident-789bce
+  person_id: per:zhou-xuan-wang
+  role: 主行
+  citation_id: cit:ch01-p6-008
+
+# --- evt:tong-yao-council-789bce
+- kind: event_participant
+  event_id: evt:tong-yao-council-789bce
+  person_id: per:zhou-xuan-wang
+  role: 主问
+  citation_id: cit:ch01-p7-009
+
+- kind: event_participant
+  event_id: evt:tong-yao-council-789bce
+  person_id: per:shao-hu
+  role: 奏对
+  citation_id: cit:ch01-p7-010
+
+- kind: event_participant
+  event_id: evt:tong-yao-council-789bce
+  person_id: per:zhong-shan-fu
+  role: 奏对
+  citation_id: cit:ch01-p7-011
+
+- kind: event_participant
+  event_id: evt:tong-yao-council-789bce
+  person_id: per:bo-yang-fu
+  role: 奏对
+  citation_id: cit:ch01-p7-012
+
+# --- evt:lao-gong-ren-births-girl-789bce
+- kind: event_participant
+  event_id: evt:lao-gong-ren-births-girl-789bce
+  person_id: per:_lao-gong-ren-ch01
+  role: 主行
+  citation_id: cit:ch01-p10-015
+
+- kind: event_participant
+  event_id: evt:lao-gong-ren-births-girl-789bce
+  person_id: per:_nv-ying-ch01
+  role: 生
+  citation_id: cit:ch01-p10-015
+
+# --- evt:jiang-hou-abandons-girl-789bce
+- kind: event_participant
+  event_id: evt:jiang-hou-abandons-girl-789bce
+  person_id: per:jiang-hou
+  role: 主行
+  citation_id: cit:ch01-p10-016
+
+- kind: event_participant
+  event_id: evt:jiang-hou-abandons-girl-789bce
+  person_id: per:_nv-ying-ch01
+  role: 弃
+  citation_id: cit:ch01-p10-016
+
+- kind: event_participant
+  event_id: evt:jiang-hou-abandons-girl-789bce
+  person_id: per:zhou-xuan-wang
+  role: 后命复察
+  citation_id: cit:ch01-p10-017
+
+# --- evt:du-bo-search-order-789bce
+- kind: event_participant
+  event_id: evt:du-bo-search-order-789bce
+  person_id: per:zhou-xuan-wang
+  role: 颁令
+  citation_id: cit:ch01-p11-018
+
+- kind: event_participant
+  event_id: evt:du-bo-search-order-789bce
+  person_id: per:bo-yang-fu
+  role: 奏对
+  citation_id: cit:ch01-p11-018
+
+- kind: event_participant
+  event_id: evt:du-bo-search-order-789bce
+  person_id: per:du-bo
+  role: 受命
+  citation_id: cit:ch01-p11-019
+
+- kind: event_participant
+  event_id: evt:du-bo-search-order-789bce
+  person_id: per:zuo-ru
+  role: 受命
+  citation_id: cit:ch01-p11-020
+
+# --- evt:fu-ren-executed-789bce
+- kind: event_participant
+  event_id: evt:fu-ren-executed-789bce
+  person_id: per:_fu-ren-zhi-mai-jian-dai-ch01
+  role: 死
+  citation_id: cit:ch01-p11-022
+
+- kind: event_participant
+  event_id: evt:fu-ren-executed-789bce
+  person_id: per:_nan-zi-zhi-mai-sang-gong-ch01
+  role: 脱
+  citation_id: cit:ch01-p11-021
+
+- kind: event_participant
+  event_id: evt:fu-ren-executed-789bce
+  person_id: per:zuo-ru
+  role: 奏报
+  citation_id: cit:ch01-p11-022
+
+- kind: event_participant
+  event_id: evt:fu-ren-executed-789bce
+  person_id: per:zhou-xuan-wang
+  role: 命斩
+  citation_id: cit:ch01-p11-022
+
+# --- evt:nan-zi-rescues-nv-ying-789bce
+- kind: event_participant
+  event_id: evt:nan-zi-rescues-nv-ying-789bce
+  person_id: per:_nan-zi-zhi-mai-sang-gong-ch01
+  role: 主行
+  citation_id: cit:ch01-p13-025
+
+- kind: event_participant
+  event_id: evt:nan-zi-rescues-nv-ying-789bce
+  person_id: per:_nv-ying-ch01
+  role: 被救
+  citation_id: cit:ch01-p13-024
+
+# --- evt:zhai-gong-dream-785bce
+- kind: event_participant
+  event_id: evt:zhai-gong-dream-785bce
+  person_id: per:zhou-xuan-wang
+  role: 梦者
+  citation_id: cit:ch01-p17-026
+
+- kind: event_participant
+  event_id: evt:zhai-gong-dream-785bce
+  person_id: per:bo-yang-fu
+  role: 奏对
+  citation_id: cit:ch01-p17-029
+
+# --- evt:du-bo-executed-785bce
+- kind: event_participant
+  event_id: evt:du-bo-executed-785bce
+  person_id: per:zhou-xuan-wang
+  role: 命斩
+  citation_id: cit:ch01-p17-031
+
+- kind: event_participant
+  event_id: evt:du-bo-executed-785bce
+  person_id: per:du-bo
+  role: 死
+  citation_id: cit:ch01-p17-032
+
+- kind: event_participant
+  event_id: evt:du-bo-executed-785bce
+  person_id: per:zuo-ru
+  role: 进谏
+  citation_id: cit:ch01-p17-034
+
+# --- evt:zuo-ru-suicide-785bce
+- kind: event_participant
+  event_id: evt:zuo-ru-suicide-785bce
+  person_id: per:zuo-ru
+  role: 自刎
+  citation_id: cit:ch01-p17-033
+
+# --- evt:xi-shu-flees-to-jin-785bce
+- kind: event_participant
+  event_id: evt:xi-shu-flees-to-jin-785bce
+  person_id: per:xi-shu
+  role: 出奔
+  citation_id: cit:ch01-p19-035
+
+# --- evt:dong-jiao-hunt-782bce
+- kind: event_participant
+  event_id: evt:dong-jiao-hunt-782bce
+  person_id: per:zhou-xuan-wang
+  role: 主行
+  citation_id: cit:ch01-p20-038
+
+- kind: event_participant
+  event_id: evt:dong-jiao-hunt-782bce
+  person_id: per:yin-ji-fu
+  role: 侍御
+  role_detail: 右
+  citation_id: cit:ch01-p20-039
+
+- kind: event_participant
+  event_id: evt:dong-jiao-hunt-782bce
+  person_id: per:shao-hu
+  role: 侍御
+  role_detail: 左
+  citation_id: cit:ch01-p20-039
+
+# --- evt:du-bo-zuo-ru-ghost-vision-782bce
+- kind: event_participant
+  event_id: evt:du-bo-zuo-ru-ghost-vision-782bce
+  person_id: per:du-bo
+  role: 显灵
+  citation_id: cit:ch01-p20-042
+
+- kind: event_participant
+  event_id: evt:du-bo-zuo-ru-ghost-vision-782bce
+  person_id: per:zuo-ru
+  role: 显灵
+  citation_id: cit:ch01-p20-042
+
+- kind: event_participant
+  event_id: evt:du-bo-zuo-ru-ghost-vision-782bce
+  person_id: per:zhou-xuan-wang
+  role: 中箭
+  citation_id: cit:ch01-p20-043
+
+# ===========================================================================
+# event_place — places attested with role in addition to primary_place_id
+# ===========================================================================
+
+# 千亩 already primary on its event — no secondary place
+# 太原 already primary
+# 童谣 happened on the road back from 太原 to 镐京 — 镐京 is primary, road implied
+# 童谣 council in 镐京 — primary
+# 老宫人 birth in 镐京 (palace) — primary
+# 弃婴 — 镐京 (where 姜后 ordered it) AND 清水河 (where it ended up). Primary chosen as 清水河; record 镐京 as secondary
+- kind: event_place
+  event_id: evt:jiang-hou-abandons-girl-789bce
+  place_id: pla:hao-jing
+  role: 起点
+  citation_id: cit:ch01-p10-016
+
+# 男子救女婴 — primary 清水河; destination 褒城 is secondary
+- kind: event_place
+  event_id: evt:nan-zi-rescues-nv-ying-789bce
+  place_id: pla:bao-cheng
+  role: 终点
+  citation_id: cit:ch01-p13-025
+
+# 隰叔奔晋 — no primary place set on event; 晋 is destination
+# (we represent 晋 via person_state above; not adding an event_place because
+# 晋 here is a polity, not a typed place. Decision noted in README.)
+
+# ===========================================================================
+# event_relation — narrative causation between events
+# ===========================================================================
+
+- kind: event_relation
+  from_event_id: evt:qian-mu-zhi-zhan-789bce
+  to_event_id: evt:tai-yuan-liao-min-789bce
+  kind_detail: causes
+  # 千亩败 → 思再举 → 太原料民
+  citation_id: cit:ch01-p4-002
+
+- kind: event_relation
+  from_event_id: evt:tong-yao-incident-789bce
+  to_event_id: evt:tong-yao-council-789bce
+  kind_detail: causes
+  citation_id: cit:ch01-p7-009
+
+- kind: event_relation
+  from_event_id: evt:tong-yao-council-789bce
+  to_event_id: evt:du-bo-search-order-789bce
+  kind_detail: causes
+  # 伯阳父言女主乱国 → 宣王命杜伯访妖女
+  citation_id: cit:ch01-p11-019
+
+- kind: event_relation
+  from_event_id: evt:zhai-gong-dream-785bce
+  to_event_id: evt:du-bo-executed-785bce
+  kind_detail: causes
+  # 梦应童谣 → 想起三年前命杜伯访妖女无回 → 杜伯被斩
+  citation_id: cit:ch01-p17-030
+
+- kind: event_relation
+  from_event_id: evt:du-bo-executed-785bce
+  to_event_id: evt:zuo-ru-suicide-785bce
+  kind_detail: causes
+  citation_id: cit:ch01-p17-033
+
+- kind: event_relation
+  from_event_id: evt:du-bo-executed-785bce
+  to_event_id: evt:xi-shu-flees-to-jin-785bce
+  kind_detail: causes
+  citation_id: cit:ch01-p19-035
+
+- kind: event_relation
+  from_event_id: evt:du-bo-executed-785bce
+  to_event_id: evt:du-bo-zuo-ru-ghost-vision-782bce
+  kind_detail: causes
+  # 杜伯左儒冤 → 显灵报冤. The chapter is explicit: "无道昏君！...今日大数已尽，吾等专来报冤".
+  citation_id: cit:ch01-p20-042
+
+- kind: event_relation
+  from_event_id: evt:du-bo-search-order-789bce
+  to_event_id: evt:fu-ren-executed-789bce
+  kind_detail: causes
+  citation_id: cit:ch01-p11-021
+
+- kind: event_relation
+  from_event_id: evt:jiang-hou-abandons-girl-789bce
+  to_event_id: evt:nan-zi-rescues-nv-ying-789bce
+  kind_detail: causes
+  citation_id: cit:ch01-p13-023
