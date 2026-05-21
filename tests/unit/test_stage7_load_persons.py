@@ -79,6 +79,73 @@ def test_load_updates_scalar_when_new_confidence_higher(tmp_path: Path) -> None:
     assert row["gender"] == "M"
 
 
+def test_load_updates_scalar_when_new_confidence_strictly_higher_by_delta(
+    tmp_path: Path,
+) -> None:
+    """Exercise the > current + _SIMILAR_CONFIDENCE_DELTA branch specifically:
+
+    Scenario 1: new confidence (0.85) > current (0.70) + delta (0.10) → UPDATE
+    Scenario 2: new confidence (0.75) ≤ current (0.70) + delta (0.10) → NO UPDATE (Conflict)
+    """
+
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+
+        # Scenario 1: Seed canonical Person with gender=male, confidence=0.70
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, gender, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:1', '重耳', 'M', 0.70, 'run:1', 'chk:1', 'q1');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+
+        # Verify initial state: gender='M', confidence=0.70
+        row = conn.execute(
+            "SELECT gender, confidence FROM persons WHERE canonical_name='重耳';"
+        ).fetchone()
+        assert row["gender"] == "M"
+        assert row["confidence"] == 0.70
+
+        # Load a candidate with gender='F', confidence=0.85
+        # 0.85 > 0.70 + 0.10 (0.80) → should UPDATE to 'F'
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, gender, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:2', '重耳', 'F', 0.85, 'run:2', 'chk:2', 'q2');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:2")
+
+        row = conn.execute("SELECT gender FROM persons WHERE canonical_name='重耳';").fetchone()
+        assert row["gender"] == "F", "confidence 0.85 > 0.70 + 0.10 should update"
+
+        # Scenario 2: Load a candidate with gender='M', confidence=0.75
+        # 0.75 ≤ 0.85 + 0.10 (0.95) → should NOT update, should create Conflict
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, gender, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:3', '重耳', 'M', 0.75, 'run:3', 'chk:3', 'q3');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:3")
+
+        row = conn.execute("SELECT gender FROM persons WHERE canonical_name='重耳';").fetchone()
+        assert row["gender"] == "F", "confidence 0.75 is not > 0.85 + 0.10, should NOT update"
+
+        # Verify a conflict was emitted
+        conflicts = list(
+            conn.execute("SELECT field, variants_json FROM conflicts WHERE field='gender';")
+        )
+        assert len(conflicts) == 1, f"expected 1 Conflict for gender, got {len(conflicts)}"
+
+        import json as _json
+
+        variants = _json.loads(conflicts[0]["variants_json"])
+        variant_values = {v["value"] for v in variants}
+        assert variant_values == {
+            "F",
+            "M",
+        }, f"expected {{F, M}} in variants, got {variant_values}"
+
+
 def test_load_does_not_overwrite_curated(tmp_path: Path) -> None:
     """Curated Person: re-extraction must not silently overwrite any field."""
     with connect(tmp_path / "changjuan.sqlite") as conn:

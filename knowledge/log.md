@@ -1,5 +1,16 @@
 # Build Log
 
+## [2026-05-21] test(stage7): exercise the >+δ branch in scalar-merge update (Task 36, deferred #10)
+
+Added `test_load_updates_scalar_when_new_confidence_strictly_higher_by_delta` to `tests/unit/test_stage7_load_persons.py`. The test fires both branches of the `confidence > current + _SIMILAR_CONFIDENCE_DELTA` strict-greater check in `_merge_scalar_fields`:
+
+1. **Scenario 1 (update):** current=0.70, new=0.85 → 0.85 > 0.70 + 0.10 → gender updates to 'F'
+2. **Scenario 2 (no update, Conflict):** current=0.85, new=0.75 → 0.75 ≤ 0.85 + 0.10 → gender stays 'F', Conflict emitted
+
+no knowledge impact: tests existing behavior; no concept article touch.
+
+Total tests: 162 (161 + 1 new). All green.
+
 ## [2026-05-21] fix(golden-eval): resolve cross-entity IDs to names before P/R comparison (Task 29 bug)
 
 Surfaced during Task 29's first golden-eval against the v1 extraction. The skill correctly emits chunk-local IDs (`s1`, `pl1`, etc.) per the extraction schema; the golden uses canonical IDs (`sta:zhou`, `pla:qian-mu`, etc.). Direct string comparison rejected all person/event/relation matches whose record had any cross-entity ID set, even when entities were semantically identical.
