@@ -1,5 +1,20 @@
 # Build Log
 
+## [2026-05-21] feat(qa): deterministic 5% sampler bounded by floor/ceiling (Task 31)
+
+Created `pipeline/qa_sampling.py` with `select_sample(facts)` — picks ~5% of scalar facts via stable `hash(pipeline_run_id, record_id, field)`; bounded by `config.QA_SAMPLE_FLOOR` (30) and `config.QA_SAMPLE_CEILING` (250). Same inputs always produce the same sample — reproducibility for the sampling QA harness.
+
+Five new tests in `tests/unit/test_qa_sampling.py`:
+- `test_sample_is_deterministic_across_runs` — identical input yields identical output.
+- `test_sample_size_approx_five_percent` — 1000-fact run → 30–70 sample size (5% ± jitter).
+- `test_sample_floor_kicks_in_for_small_runs` — 100-fact run hits floor=30.
+- `test_sample_ceiling_kicks_in_for_huge_runs` — 10000-fact run capped at ceiling=250.
+- `test_sample_floor_caps_at_input_size` — 10-fact input → whole sample returned (floor < len(facts)).
+
+Article updated: `concepts/verification/testing.md` (new "QA sampling tests" section documenting `test_qa_sampling.py`; all five tests listed with rationale).
+
+Total: 152 tests.
+
 ## [2026-05-21] feat(cli): golden-eval verb — P/R gate on GOLDEN_PR_THRESHOLDS (Task 29)
 
 Added `golden-eval` subcommand to `pipeline/cli.py`. The verb:

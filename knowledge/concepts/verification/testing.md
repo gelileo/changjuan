@@ -246,6 +246,18 @@ Tests use `corpus = 'dongzhoulieguozhi'` to satisfy the `documents.corpus` CHECK
 
 These tests verify the verb's end-to-end path: `pipeline_runs` lookup → candidate-table queries → `compute_pr` → threshold gate → exit code.
 
+## QA sampling tests
+
+`tests/unit/test_qa_sampling.py` (Phase 2 Task 31) exercises `pipeline.qa_sampling.select_sample` — the deterministic 5% sampler for sampling QA. Five tests:
+
+- `test_sample_is_deterministic_across_runs` — same input list produces identical output across two calls (hash-based membership is stable).
+- `test_sample_size_approx_five_percent` — 1000-fact input yields 30–70 samples (5% ± jitter from hash distribution).
+- `test_sample_floor_kicks_in_for_small_runs` — 100-fact input yields at least 30 samples (floor applies).
+- `test_sample_ceiling_kicks_in_for_huge_runs` — 10000-fact input yields at most 250 samples (ceiling applies).
+- `test_sample_floor_caps_at_input_size` — 10-fact input (below floor) yields all 10 samples (no padding).
+
+A `_facts` helper builds minimal synthetic fact dicts with `pipeline_run_id`, `record_id`, and `field` keys. No fixtures or database are needed; tests call `select_sample` directly with hand-constructed inputs.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
