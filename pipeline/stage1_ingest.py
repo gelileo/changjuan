@@ -17,7 +17,11 @@ from pipeline.config import Config
 
 
 def ingest_dongzhoulieguozhi(conn: sqlite3.Connection, cfg: Config) -> int:
-    """Ingest 东周列国志. Returns the number of rows inserted (or already present)."""
+    """Ingest 东周列国志. Returns the number of actual inserts.
+
+    Idempotent: re-ingesting existing chapters is a no-op (ON CONFLICT DO NOTHING
+    on the unique (corpus, chapter_num) constraint).
+    """
     src = cfg.corpora_dir / "dongzhoulieguozhi" / "json" / "东周列国志.json"
     data = json.loads(src.read_text(encoding="utf-8"))
     chapters = data["chapters"]
@@ -33,14 +37,19 @@ def ingest_dongzhoulieguozhi(conn: sqlite3.Connection, cfg: Config) -> int:
         }
         for i, ch in enumerate(chapters)
     ]
-    conn.executemany(
-        """
-        INSERT INTO documents
-            (id, corpus, title, chapter_num, chapter_title, raw_text, source_edition)
-        VALUES
-            (:id, :corpus, :title, :chapter_num, :chapter_title, :raw_text, :source_edition)
-        ON CONFLICT (corpus, chapter_num) DO NOTHING;
-        """,
-        rows,
-    )
-    return len(rows)
+    inserted = 0
+    cur = conn.cursor()
+    for row in rows:
+        cur.execute(
+            """
+            INSERT INTO documents
+                (id, corpus, title, chapter_num, chapter_title, raw_text, source_edition)
+            VALUES
+                (:id, :corpus, :title, :chapter_num, :chapter_title, :raw_text, :source_edition)
+            ON CONFLICT (corpus, chapter_num) DO NOTHING;
+            """,
+            row,
+        )
+        inserted += cur.rowcount  # 1 on insert, 0 on conflict-ignored
+    conn.commit()
+    return inserted

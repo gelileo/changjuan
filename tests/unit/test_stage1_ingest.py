@@ -56,6 +56,20 @@ def test_ingest_is_idempotent(tmp_path: Path) -> None:
     assert count == 2
 
 
+def test_ingest_returns_actual_insert_count_not_input_length(tmp_path: Path) -> None:
+    """If the same row is ingested twice, the second call's return value should be 0,
+    not len(rows). Phase 1 returned len(rows) regardless of whether anything was inserted.
+    """
+    cfg = Config(repo_root=tmp_path)
+    _make_fake_corpus(cfg.corpora_dir)
+    with connect(cfg.corpus_db) as conn:
+        apply_schema(conn, CORPUS_SCHEMA)
+        n1 = ingest_dongzhoulieguozhi(conn, cfg)
+        n2 = ingest_dongzhoulieguozhi(conn, cfg)
+    assert n1 == 2, f"first ingest should report 2 inserts, got {n1}"
+    assert n2 == 0, f"re-ingest of same rows should report 0 inserts, got {n2}"
+
+
 @pytest.mark.skipif(
     not Path("corpora/dongzhoulieguozhi/json/东周列国志.json").exists(),
     reason="real corpus not present (symlink missing?)",
