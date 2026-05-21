@@ -27,7 +27,7 @@ Tests live under `tests/` in two layers:
 
 ## Golden chapters
 
-A "golden chapter" is a small, representative excerpt of the primary corpus used to validate extraction and linking stages end-to-end. The recommended chapters are Ch. 1 (ingest baseline) and Ch. ~40 (mid-corpus with multiple states and persons). Fixtures are stored under `tests/fixtures/` and are committed; they are never regenerated automatically.
+A "golden chapter" is a small, representative excerpt of the primary corpus used to validate extraction and linking stages end-to-end. The recommended chapters are Ch. 1 (ingest baseline) and Ch. ~40 (mid-corpus with multiple states and persons). Fixtures are stored under `tests/golden/` and are committed; they are never regenerated automatically. Each chapter gets a subdirectory with a `README.md` documenting the annotation conventions (stable IDs, variant formats, date structure, event criteria) and decisions made during hand annotation.
 
 ## Shared fixtures
 
