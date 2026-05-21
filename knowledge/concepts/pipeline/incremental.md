@@ -84,6 +84,10 @@ This rule is enforced by `pipeline/stage7_load/` for every entity kind and every
 
 The invariant is tested implicitly by the stage 7 scalar merge tests; the `re-extract` CLI path is tested in `tests/unit/test_re_extract.py`.
 
+## `golden-eval` and `pipeline_runs`
+
+`changjuan golden-eval --chapter N` uses `pipeline_runs` to find the most-recent `stage='extract-load'` run for the given chapter (matched via `json_extract(scope_json, '$.chapter')`). It then reads all `candidate_*` rows tagged with that `pipeline_run_id` to build the candidate set for P/R scoring. This means `golden-eval` is always scoped to the outputs of a single extraction batch — it does not aggregate across runs. When multiple runs exist for a chapter, only the latest is evaluated unless `--pipeline-run-id` is passed explicitly.
+
 ## What would invalidate this article
 
 - Changing the YAML output path convention (`data/extractions/ch{N:02d}/extract-{v}.yaml`) in the skill or the CLI.

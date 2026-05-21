@@ -300,6 +300,164 @@ def extract(
         raise typer.Exit(code=1)
 
 
+@app.command(name="golden-eval")
+def golden_eval_cmd(
+    chapter: int = typer.Option(..., "--chapter"),
+    pipeline_run_id: str | None = typer.Option(
+        None,
+        "--pipeline-run-id",
+        help="Defaults to latest extract-load run for this chapter",
+    ),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Run golden P/R against the latest extraction in candidate_* tables and gate
+    on pipeline.config.GOLDEN_PR_THRESHOLDS."""
+    import json as _json_inner
+    import sys
+
+    sys.path.insert(0, str(repo_root))  # ensure tests/golden is importable
+    from pipeline import config
+    from tests.golden.loader import load_golden
+    from tests.golden.precision_recall import compute_pr
+
+    golden_dir = repo_root / "tests" / "golden" / f"ch{chapter:02d}"
+    golden = load_golden(golden_dir)
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+
+    if pipeline_run_id is None:
+        row = canonical.execute(
+            "SELECT id FROM pipeline_runs "
+            "WHERE stage='extract-load' AND json_extract(scope_json, '$.chapter') = ? "
+            "ORDER BY started_at DESC LIMIT 1",
+            (chapter,),
+        ).fetchone()
+        if row is None:
+            typer.echo(
+                f"no extract-load run found for chapter {chapter}; "
+                f"run `changjuan extract-load --chapter {chapter} ...` first",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+        pipeline_run_id = row[0]
+
+    # ===== persons =====
+    persons = []
+    for row in canonical.execute(
+        "SELECT canonical_name, state_id, social_category FROM candidate_persons "
+        "WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        persons.append(
+            {
+                "canonical_name": row[0],
+                "state_id": row[1],
+                "social_category": row[2],
+                "variants": [],  # candidate_person_variants is a Phase-3 expansion
+            }
+        )
+
+    # ===== events =====
+    events = []
+    for row in canonical.execute(
+        "SELECT type, date_json, primary_place_id FROM candidate_events "
+        "WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        date = _json_inner.loads(row[1]) if row[1] else {}
+        events.append(
+            {
+                "type": row[0],
+                "date": {"year_bce": date.get("year_bce")} if date else {},
+                "primary_place_id": row[2],
+            }
+        )
+
+    # ===== places =====
+    places = []
+    for row in canonical.execute(
+        "SELECT name FROM candidate_places WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        places.append({"name": row[0]})
+
+    # ===== states =====
+    states = []
+    for row in canonical.execute(
+        "SELECT name FROM candidate_states WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        states.append({"name": row[0]})
+
+    # ===== relations =====
+    # candidate_event_participants: event_id + person_id + role
+    relations: list[dict[str, object]] = []
+    for row in canonical.execute(
+        "SELECT candidate_event_id, candidate_person_id, role FROM candidate_event_participants "
+        "WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        relations.append(
+            {"kind": "event_participant", "event_id": row[0], "person_id": row[1], "role": row[2]}
+        )
+    # candidate_event_places: event_id + place_id + role
+    for row in canonical.execute(
+        "SELECT candidate_event_id, candidate_place_id, role FROM candidate_event_places "
+        "WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        relations.append(
+            {"kind": "event_place", "event_id": row[0], "place_id": row[1], "role": row[2]}
+        )
+    # candidate_event_relations: from + to + kind
+    for row in canonical.execute(
+        "SELECT from_candidate_event_id, to_candidate_event_id, kind "
+        "FROM candidate_event_relations WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        relations.append({"kind": row[2], "from_event_id": row[0], "to_event_id": row[1]})
+    # candidate_person_relations: from + to + kind
+    for row in canonical.execute(
+        "SELECT from_candidate_person_id, to_candidate_person_id, kind "
+        "FROM candidate_person_relations WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        relations.append({"kind": row[2], "from_person_id": row[0], "to_person_id": row[1]})
+    # candidate_person_states: person_id + state_id + role
+    for row in canonical.execute(
+        "SELECT candidate_person_id, candidate_state_id, role FROM candidate_person_states "
+        "WHERE pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ):
+        relations.append(
+            {"kind": "person_state", "person_id": row[0], "state_id": row[1], "role": row[2]}
+        )
+    # state_capital has no candidate_* table (Task 19 stub — omitted)
+
+    candidates = {
+        "persons": persons,
+        "events": events,
+        "places": places,
+        "states": states,
+        "relations": relations,
+    }
+
+    report = compute_pr(golden, candidates)
+    failed = 0
+    for kind, scores in report["per_entity_type"].items():
+        target = config.GOLDEN_PR_THRESHOLDS.get(kind, {})
+        p_ok = scores["precision"] >= target.get("precision", 0)
+        r_ok = scores["recall"] >= target.get("recall", 0)
+        if not (p_ok and r_ok):
+            failed += 1
+        typer.echo(
+            f"{kind:10s}  precision={scores['precision']:.2f}{' ✓' if p_ok else ' ✗'}"
+            f"  recall={scores['recall']:.2f}{' ✓' if r_ok else ' ✗'}"
+            f"  (tp={scores['tp']} fp={scores['fp']} fn={scores['fn']})"
+        )
+    if failed:
+        raise typer.Exit(code=1)
+
+
 @app.command(name="extract-load")
 def extract_load_cmd(
     chapter: int = typer.Option(..., "--chapter"),

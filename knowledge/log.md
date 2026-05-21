@@ -1,5 +1,28 @@
 # Build Log
 
+## [2026-05-21] feat(cli): golden-eval verb — P/R gate on GOLDEN_PR_THRESHOLDS (Task 29)
+
+Added `golden-eval` subcommand to `pipeline/cli.py`. The verb:
+
+1. **Loads** the golden YAML for chapter N via `tests/golden/loader.load_golden`.
+2. **Resolves** the pipeline run: queries `pipeline_runs` for the most recent `stage='extract-load'` row with `scope_json.chapter = N`; accepts `--pipeline-run-id` override.
+3. **Builds** the candidate dict from `candidate_persons`, `candidate_events`, `candidate_places`, `candidate_states`, `candidate_event_participants`, `candidate_event_places`, `candidate_event_relations`, `candidate_person_relations`, `candidate_person_states`.
+4. **Runs** `tests/golden/precision_recall.compute_pr(golden, candidates)`.
+5. **Prints** per-entity-type `precision`/`recall` with ✓/✗ vs `GOLDEN_PR_THRESHOLDS`.
+6. **Exits** non-zero if any kind falls below threshold.
+
+Schema adaptations: `social_category` confirmed present on `candidate_persons` (Task 22). Variants deferred to Phase 3 (`candidate_person_variants` table does not exist yet). `state_capital` has no candidate table (Task 19 stub).
+
+Named `golden-eval` not `eval` to avoid Python builtin collision.
+
+Two new tests in `tests/unit/test_golden_eval_cli.py`:
+- `test_golden_eval_with_no_candidates_reports_recall_zero` — seeded run with no candidates → person recall=0 → exit!=0, ✗ in output.
+- `test_golden_eval_with_matching_candidate_passes` — one candidate_persons row matching the single golden person → all kinds pass → exit=0.
+
+Articles updated: `concepts/runtime/cli.md` (new Evaluation verbs section; golden-eval verb docs; naming rationale added to why-this-shape section; test file added to affects frontmatter).
+
+Total: 147 tests.
+
 ## [2026-05-21] feat(cli): re-extract verb + concepts/pipeline/incremental.md (Task 28)
 
 Added `re-extract` subcommand to `pipeline/cli.py`. The verb:

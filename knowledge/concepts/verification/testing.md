@@ -237,6 +237,15 @@ Helper functions `_chunk` and `_person_record` produce minimal dicts; no fixture
 
 Tests use `corpus = 'dongzhoulieguozhi'` to satisfy the `documents.corpus` CHECK constraint, matching the pattern established in `test_extract_load.py`.
 
+## golden-eval CLI tests
+
+`tests/unit/test_golden_eval_cli.py` (Phase 2 Task 29) exercises the `golden-eval` subcommand via `typer.testing.CliRunner`. A `_seed_minimal` helper creates minimal `corpus.sqlite` and `changjuan.sqlite` under `tmp_path/data/` and inserts one `pipeline_runs` row with `stage='extract-load'` and `scope_json.chapter=1`. A `_write_golden` helper writes a one-person golden set (one person `重耳`, one citation) into `tmp_path/tests/golden/ch01/`. Two tests:
+
+- `test_golden_eval_with_no_candidates_reports_recall_zero` — invokes `golden-eval --chapter 1` with no candidate rows present; asserts non-zero exit and `✗` in stdout (person recall=0 below threshold).
+- `test_golden_eval_with_matching_candidate_passes` — seeds a `candidate_persons` row with `canonical_name='重耳'` and `pipeline_run_id='run:test'`; invokes `golden-eval --chapter 1`; asserts exit 0 and `✓` in stdout (1/1 match; all other kinds empty→1.0).
+
+These tests verify the verb's end-to-end path: `pipeline_runs` lookup → candidate-table queries → `compute_pr` → threshold gate → exit code.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

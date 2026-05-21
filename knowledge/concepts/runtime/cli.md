@@ -13,6 +13,7 @@ affects:
   - tests/unit/test_resolve_relative_date_cli.py
   - tests/unit/test_extract_preflight.py
   - tests/unit/test_re_extract.py
+  - tests/unit/test_golden_eval_cli.py
 ---
 
 ## What this is
@@ -29,6 +30,17 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 - **`changjuan extract-load --chapter N --extraction-file PATH --prompt-version V [--pipeline-run-id ID] [--repo-root PATH]`** — Stage 3: validates a skill-produced extraction YAML file, runs all extraction invariants per record, and writes passing records to `candidate_persons`, `candidate_events`, `candidate_places`, `candidate_states`, and `candidate_relations`. Auto-generates a `pipeline_run_id` (format: `run:extract-ch<chapter>-<prompt_version>-<timestamp>`) if `--pipeline-run-id` not supplied. Returns per-entity-kind counts and lists up to 10 invariant violations (or count if >10). Invariant failures prevent a record from being written but do not cause the command to exit non-zero.
 - **`changjuan load <pipeline_run_id> [--repo-root PATH]`** — Stage 7: promotes all five entity-kind candidates matching the given `pipeline_run_id` into canonical entities with field-level merge semantics (curated-never-overwritten, higher-confidence-wins, Conflict on disagreement). Load order: places + states first (other entity types reference them via foreign keys), then persons, events, and finally all six relation kinds. Returns counts for each entity kind loaded.
 - **`changjuan export <version> [--repo-root PATH]`** — Stage 9: freezes a versioned export bundle at `data/exports/changjuan-export-<version>/`, containing `manifest.json` and a `candidate_*`-stripped SQLite snapshot.
+
+### Evaluation verbs (Phase 2)
+
+- **`changjuan golden-eval --chapter N [--pipeline-run-id ID] [--repo-root PATH]`** — Loads the golden YAML set for chapter N from `tests/golden/ch{N:02d}/`, queries `pipeline_runs` for the most recent `stage='extract-load'` run whose `scope_json.chapter = N`, fetches all candidate rows (persons, events, places, states, and all five candidate relation tables), runs `tests/golden/precision_recall.compute_pr`, and prints per-entity-type P/R lines with ✓/✗ vs `GOLDEN_PR_THRESHOLDS`. Exits non-zero if any kind falls below threshold. `--pipeline-run-id` overrides the auto-lookup.
+
+  Candidate-to-dict mapping:
+  - **persons** — `canonical_name`, `state_id`, `social_category`, `variants=[]` (candidate_person_variants is Phase-3 only).
+  - **events** — `type`, `date.year_bce` (parsed from `date_json`), `primary_place_id`.
+  - **places** — `name`.
+  - **states** — `name`.
+  - **relations** — union of `candidate_event_participants` (kind=event_participant), `candidate_event_places` (kind=event_place), `candidate_event_relations` (kind=<relation kind>), `candidate_person_relations` (kind=<relation kind>), `candidate_person_states` (kind=person_state). `candidate_state_capitals` has no candidate table (Task 19 stub).
 
 ### Curator triage verbs (Phase 2)
 
@@ -51,6 +63,8 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 A single `changjuan run` mega-command was considered and rejected — it would hide the cost profile of each stage and make resumption harder. Separate subcommands match the stage-checkpointed pipeline model directly: each stage runs independently, each can be re-run without re-executing earlier stages, and the user can inspect intermediate outputs between stages.
 
 The `list-unresolved-dates` / `resolve-relative-date` pair is deliberately not automatic: the skill explicitly does not attempt cross-chunk anchoring because the correct anchor requires curator judgment. The CLI surfaces the triage work; `audit_log` entries make every resolution reversible and attributable.
+
+`golden-eval` is named with a hyphen (not `eval`) to avoid colliding with Python's `eval` builtin; the spec's `eval` shorthand is interchangeable with `golden-eval` everywhere.
 
 ## Design commitments
 
