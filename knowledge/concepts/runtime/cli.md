@@ -43,11 +43,13 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 - **`changjuan golden-eval --chapter N [--pipeline-run-id ID] [--repo-root PATH]`** — Loads the golden YAML set for chapter N from `tests/golden/ch{N:02d}/`, queries `pipeline_runs` for the most recent `stage='extract-load'` run whose `scope_json.chapter = N`, fetches all candidate rows (persons, events, places, states, and all five candidate relation tables), runs `tests/golden/precision_recall.compute_pr`, and prints per-entity-type P/R lines with ✓/✗ vs `GOLDEN_PR_THRESHOLDS`. Exits non-zero if any kind falls below threshold. `--pipeline-run-id` overrides the auto-lookup.
 
   Candidate-to-dict mapping:
-  - **persons** — `canonical_name`, `state_id`, `social_category`, `variants=[]` (candidate_person_variants is Phase-3 only).
-  - **events** — `type`, `date.year_bce` (parsed from `date_json`), `primary_place_id`.
-  - **places** — `name`.
-  - **states** — `name`.
-  - **relations** — union of `candidate_event_participants` (kind=event_participant), `candidate_event_places` (kind=event_place), `candidate_event_relations` (kind=<relation kind>), `candidate_person_relations` (kind=<relation kind>), `candidate_person_states` (kind=person_state). `candidate_state_capitals` has no candidate table (Task 19 stub).
+  - **persons** — `id` (chunk-local suffix, e.g. `p1`), `canonical_name`, `state_id`, `social_category`, `variants=[]` (candidate_person_variants is Phase-3 only).
+  - **events** — `id` (chunk-local suffix, e.g. `e1`), `type`, `date.year_bce` (parsed from `date_json`), `primary_place_id`.
+  - **places** — `id` (chunk-local suffix, e.g. `pl1`), `name`.
+  - **states** — `id` (chunk-local suffix, e.g. `s1`), `name`.
+  - **relations** — union of `candidate_event_participants` (kind=event_participant), `candidate_event_places` (kind=event_place), `candidate_event_relations` (kind=<relation kind>), `candidate_person_relations` (kind=<relation kind>), `candidate_person_states` (kind=person_state). `candidate_state_capitals` has no candidate table (Task 19 stub). All FK columns (`candidate_event_id`, `candidate_person_id`, etc.) are stripped to chunk-local suffix (last `:` segment) before insertion into the relation dict.
+
+  The `id` field (chunk-local suffix) is required so that `precision_recall.compute_pr` can build per-side name-lookup maps. The golden uses canonical-style ids (`sta:zhou`, `pla:qian-mu`); the skill emits chunk-local ids (`s1`, `pl1`). Matching via name (not raw id) bridges the two id-spaces. The chunk-local suffix is extracted via `row_id.split(":")[-1]` — e.g. `cand:per:run:extract-ch1-v1-20260521T204317:p1` → `p1`.
 
 ### Curator triage verbs (Phase 2)
 

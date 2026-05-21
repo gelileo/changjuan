@@ -116,3 +116,64 @@ def test_event_year_within_one_year_counts_as_match() -> None:
     )
     report = compute_pr(golden, cands)
     assert report["per_entity_type"]["event"]["tp"] == 1
+
+
+def test_person_match_with_chunk_local_state_id_resolves_via_lookup() -> None:
+    """Person matcher resolves state_id to name via the lookup; chunk-local
+    's1' (candidate) and canonical 'sta:zhou' (golden) both resolve to '周'."""
+    golden = _g(
+        persons=[{"id": "per:a", "canonical_name": "周宣王", "state_id": "sta:zhou"}],
+        states=[{"id": "sta:zhou", "name": "周"}],
+    )
+    cands = _g(
+        persons=[{"id": "p1", "canonical_name": "周宣王", "state_id": "s1"}],
+        states=[{"id": "s1", "name": "周"}],
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["person"]["tp"] == 1
+
+
+def test_event_match_with_chunk_local_primary_place_id_resolves_via_lookup() -> None:
+    golden = _g(
+        events=[
+            {
+                "id": "evt:a",
+                "type": "战",
+                "date": {"year_bce": 789},
+                "primary_place_id": "pla:qian-mu",
+            }
+        ],
+        places=[{"id": "pla:qian-mu", "name": "千亩"}],
+    )
+    cands = _g(
+        events=[
+            {
+                "id": "e1",
+                "type": "战",
+                "date": {"year_bce": 789},
+                "primary_place_id": "pl1",
+            }
+        ],
+        places=[{"id": "pl1", "name": "千亩"}],
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["event"]["tp"] == 1
+
+
+def test_relation_match_with_id_resolution() -> None:
+    golden = _g(
+        persons=[{"id": "per:a", "canonical_name": "周宣王"}],
+        events=[{"id": "evt:a", "type": "战"}],
+        relations=[
+            {"kind": "event_participant", "event_id": "evt:a", "person_id": "per:a", "role": "主将"}
+        ],
+    )
+    cands = _g(
+        persons=[{"id": "p1", "canonical_name": "周宣王"}],
+        events=[{"id": "e1", "type": "战"}],
+        relations=[
+            {"kind": "event_participant", "event_id": "e1", "person_id": "p1", "role": "主将"}
+        ],
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["relation"]["tp"] == 1

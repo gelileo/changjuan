@@ -341,17 +341,22 @@ def golden_eval_cmd(
         pipeline_run_id = row[0]
 
     # ===== persons =====
+    # id column carries the full candidate id (e.g. 'cand:per:run:xxx:p1').
+    # Extract the chunk-local suffix so name-lookup keys align with the
+    # cross-entity id values stored in state_id / relation fields ('p1', 's1', etc.).
     persons = []
     for row in canonical.execute(
-        "SELECT canonical_name, state_id, social_category FROM candidate_persons "
+        "SELECT id, canonical_name, state_id, social_category FROM candidate_persons "
         "WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
+        chunk_local_id = row[0].split(":")[-1]  # 'cand:per:run:xxx:p1' → 'p1'
         persons.append(
             {
-                "canonical_name": row[0],
-                "state_id": row[1],
-                "social_category": row[2],
+                "id": chunk_local_id,
+                "canonical_name": row[1],
+                "state_id": row[2],
+                "social_category": row[3],
                 "variants": [],  # candidate_person_variants is a Phase-3 expansion
             }
         )
@@ -359,37 +364,47 @@ def golden_eval_cmd(
     # ===== events =====
     events = []
     for row in canonical.execute(
-        "SELECT type, date_json, primary_place_id FROM candidate_events "
+        "SELECT id, type, date_json, primary_place_id FROM candidate_events "
         "WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        date = _json_inner.loads(row[1]) if row[1] else {}
+        chunk_local_id = row[0].split(":")[-1]  # 'cand:evt:run:xxx:e1' → 'e1'
+        date = _json_inner.loads(row[2]) if row[2] else {}
         events.append(
             {
-                "type": row[0],
+                "id": chunk_local_id,
+                "type": row[1],
                 "date": {"year_bce": date.get("year_bce")} if date else {},
-                "primary_place_id": row[2],
+                "primary_place_id": row[3],
             }
         )
 
     # ===== places =====
     places = []
     for row in canonical.execute(
-        "SELECT name FROM candidate_places WHERE pipeline_run_id = ?",
+        "SELECT id, name FROM candidate_places WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        places.append({"name": row[0]})
+        chunk_local_id = row[0].split(":")[-1]  # 'cand:pla:run:xxx:pl1' → 'pl1'
+        places.append({"id": chunk_local_id, "name": row[1]})
 
     # ===== states =====
     states = []
     for row in canonical.execute(
-        "SELECT name FROM candidate_states WHERE pipeline_run_id = ?",
+        "SELECT id, name FROM candidate_states WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        states.append({"name": row[0]})
+        chunk_local_id = row[0].split(":")[-1]  # 'cand:sta:run:xxx:s1' → 's1'
+        states.append({"id": chunk_local_id, "name": row[1]})
 
     # ===== relations =====
-    # candidate_event_participants: event_id + person_id + role
+    # Relation tables store full 'cand:*' ids in their FK columns.
+    # Extract the chunk-local suffix so they align with the id keys in the
+    # persons/events/places/states lookup maps built above.
+    def _cl(full_id: str | None) -> str | None:
+        """chunk-local id: 'cand:per:run:xxx:p1' → 'p1'; None → None."""
+        return full_id.split(":")[-1] if full_id else None
+
     relations: list[dict[str, object]] = []
     for row in canonical.execute(
         "SELECT candidate_event_id, candidate_person_id, role FROM candidate_event_participants "
@@ -397,7 +412,12 @@ def golden_eval_cmd(
         (pipeline_run_id,),
     ):
         relations.append(
-            {"kind": "event_participant", "event_id": row[0], "person_id": row[1], "role": row[2]}
+            {
+                "kind": "event_participant",
+                "event_id": _cl(row[0]),
+                "person_id": _cl(row[1]),
+                "role": row[2],
+            }
         )
     # candidate_event_places: event_id + place_id + role
     for row in canonical.execute(
@@ -406,7 +426,12 @@ def golden_eval_cmd(
         (pipeline_run_id,),
     ):
         relations.append(
-            {"kind": "event_place", "event_id": row[0], "place_id": row[1], "role": row[2]}
+            {
+                "kind": "event_place",
+                "event_id": _cl(row[0]),
+                "place_id": _cl(row[1]),
+                "role": row[2],
+            }
         )
     # candidate_event_relations: from + to + kind
     for row in canonical.execute(
@@ -414,14 +439,16 @@ def golden_eval_cmd(
         "FROM candidate_event_relations WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        relations.append({"kind": row[2], "from_event_id": row[0], "to_event_id": row[1]})
+        relations.append({"kind": row[2], "from_event_id": _cl(row[0]), "to_event_id": _cl(row[1])})
     # candidate_person_relations: from + to + kind
     for row in canonical.execute(
         "SELECT from_candidate_person_id, to_candidate_person_id, kind "
         "FROM candidate_person_relations WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        relations.append({"kind": row[2], "from_person_id": row[0], "to_person_id": row[1]})
+        relations.append(
+            {"kind": row[2], "from_person_id": _cl(row[0]), "to_person_id": _cl(row[1])}
+        )
     # candidate_person_states: person_id + state_id + role
     for row in canonical.execute(
         "SELECT candidate_person_id, candidate_state_id, role FROM candidate_person_states "
@@ -429,7 +456,12 @@ def golden_eval_cmd(
         (pipeline_run_id,),
     ):
         relations.append(
-            {"kind": "person_state", "person_id": row[0], "state_id": row[1], "role": row[2]}
+            {
+                "kind": "person_state",
+                "person_id": _cl(row[0]),
+                "state_id": _cl(row[1]),
+                "role": row[2],
+            }
         )
     # state_capital has no candidate_* table (Task 19 stub — omitted)
 

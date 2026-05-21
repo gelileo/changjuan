@@ -1,5 +1,24 @@
 # Build Log
 
+## [2026-05-21] fix(golden-eval): resolve cross-entity IDs to names before P/R comparison (Task 29 bug)
+
+Surfaced during Task 29's first golden-eval against the v1 extraction. The skill correctly emits chunk-local IDs (`s1`, `pl1`, etc.) per the extraction schema; the golden uses canonical IDs (`sta:zhou`, `pla:qian-mu`, etc.). Direct string comparison rejected all person/event/relation matches whose record had any cross-entity ID set, even when entities were semantically identical.
+
+Fix: `tests/golden/precision_recall.py` matchers now resolve cross-entity ID refs to names via per-side lookup maps before comparing. Empty-side tolerance preserved. `golden_eval_cmd` candidate SELECTs now include the `id` column and extract the chunk-local suffix (last `:` segment) as the lookup key for persons, events, places, states. Relation FK columns similarly stripped to chunk-local suffix.
+
+Three new unit tests added to `tests/unit/test_precision_recall.py`: `test_person_match_with_chunk_local_state_id_resolves_via_lookup`, `test_event_match_with_chunk_local_primary_place_id_resolves_via_lookup`, `test_relation_match_with_id_resolution`.
+
+Post-fix Chapter 1 baseline (v1 extraction, first run):
+- person: precision=0.69 ✗  recall=0.69 ✗  (tp=9 fp=4 fn=4)
+- event: precision=0.23 ✗  recall=0.21 ✗  (tp=3 fp=10 fn=11)
+- place: precision=1.00 ✓  recall=1.00 ✓  (tp=8 fp=0 fn=0)
+- state: precision=1.00 ✓  recall=0.75 ✗  (tp=3 fp=0 fn=1)
+- relation: precision=0.51 ✗  recall=0.40 ✗  (tp=25 fp=24 fn=38)
+
+Total tests: 161 (158 + 3 new). All green.
+
+Articles touched: `concepts/verification/testing.md` (updated Precision/Recall harness section), `concepts/runtime/cli.md` (updated golden-eval candidate-to-dict mapping), `concepts/pipeline/extraction.md` (added chunk-local ids and P/R harness section), `concepts/pipeline/incremental.md` (added note on id suffix extraction in golden-eval).
+
 ## [2026-05-21] test(dates): reign-year boundary tests for 鲁僖公33/鲁文公1/鲁庄公32 (deferred #2)
 
 Added three boundary regression tests to `tests/unit/test_dates.py`. The tests assert canonical conversions: 鲁僖公33年→627 BCE, 鲁文公元年→626 BCE, 鲁庄公32年→662 BCE. All tests passed against existing `pipeline/reign_table.json` with no data or parser fixes required.

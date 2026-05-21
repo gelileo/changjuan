@@ -88,6 +88,8 @@ The invariant is tested implicitly by the stage 7 scalar merge tests; the `re-ex
 
 `changjuan golden-eval --chapter N` uses `pipeline_runs` to find the most-recent `stage='extract-load'` run for the given chapter (matched via `json_extract(scope_json, '$.chapter')`). It then reads all `candidate_*` rows tagged with that `pipeline_run_id` to build the candidate set for P/R scoring. This means `golden-eval` is always scoped to the outputs of a single extraction batch — it does not aggregate across runs. When multiple runs exist for a chapter, only the latest is evaluated unless `--pipeline-run-id` is passed explicitly.
 
+The candidate SELECT statements include the `id` column (full format: `cand:per:run:extract-ch1-v1-<ts>:p1`). The chunk-local suffix (`p1`, `s1`, `pl1`, `e1`) is extracted via `split(":")[-1]` and stored as the `id` field in the candidate dict. This is required for the P/R harness's name-lookup maps to resolve cross-entity id refs. See `concepts/pipeline/extraction.md` for the full chunk-local id explanation.
+
 ## `qa-sample` / `qa-load` and `pipeline_runs`
 
 The `qa-sample <pipeline_run_id>` verb enumerates scalar facts for a given run (falling back from `candidate_facts` to direct `candidate_*` table scanning) and emits a deterministic 5% sample for the `changjuan-verify-sample` skill. `qa-load` ingests the returned verdicts into `qa_samples` and patches `pipeline_runs.stats_json.claim_defensible_sample`. These verbs are post-extraction QA tools — they operate on an already-loaded run and do not re-trigger extraction or affect the `curated`-never-overwritten contract. See `concepts/runtime/cli.md` for the full verb documentation.

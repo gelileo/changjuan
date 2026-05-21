@@ -120,6 +120,10 @@ The system prompt is the primary iteration surface for Phase 2. Edit
 `system-prompt.md` and re-invoke the skill; the Python validator and its invariants
 do not change between prompt iterations.
 
+## Chunk-local ids and the P/R harness
+
+The chunk-local id scheme creates a cross-id-space mismatch when comparing extraction output against the golden chapter annotations. Golden files use canonical-style ids (`sta:zhou`, `pla:qian-mu`, `per:zhou-xuan-wang`); the skill output uses chunk-local ids (`s1`, `pl1`, `p1`). The `tests/golden/precision_recall.py` harness resolves this by building per-side name-lookup maps (`{id → name}` for places/states, `{id → canonical_name}` for persons, `{id → type}` for events) and comparing resolved names rather than raw ids. The `golden_eval_cmd` in `pipeline/cli.py` includes the chunk-local suffix (extracted via `full_id.split(":")[-1]`) as the `id` field in each candidate dict so the lookup maps have the correct keys.
+
 ## What would invalidate this article
 
 - Adding an `ANTHROPIC_API_KEY` to the project and wiring a direct SDK call (would eliminate the two-actor split).
