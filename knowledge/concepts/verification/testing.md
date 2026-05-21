@@ -198,6 +198,18 @@ The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to t
 
 The `canonical` fixture uses `open_canonical_db` with `tmp_path`. The `entity_citations` CHECK constraint was extended (Task 19) to allow all six relation kinds alongside the four entity kinds.
 
+## Stage 3 invariant validator tests
+
+`tests/unit/test_stage3_validator.py` (Phase 2 Task 21) exercises `pipeline.stage3_extract.validate_record` and `InvariantError`. Five tests cover the four static invariants:
+
+- `test_verbatim_quote_passes_when_substring` — happy path; NFC-normalized `citation.quote` is a substring of `chunk.text`.
+- `test_verbatim_quote_fails_when_not_substring` — quote not in chunk text → `InvariantError` matching `"verbatim"`.
+- `test_justification_must_be_non_empty` — empty string in `justifications` dict → `InvariantError` matching `"justification"`.
+- `test_justification_must_be_substring_of_quote` — justification present but not a substring of the quote → `InvariantError` matching `"justification"`.
+- `test_chunk_id_mismatch_fails` — `citation.chunk_id` does not match the target chunk's `id` → `InvariantError` matching `"chunk_id"`.
+
+Helper functions `_chunk` and `_person_record` produce minimal dicts; no fixtures or database are needed.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-21] stage3: invariant validator — verbatim-quote, justification, chunk_id, inference_kind (Task 21)
+
+Created `pipeline/stage3_extract.py` with `validate_record()` and `InvariantError`. The validator enforces four static invariants on every LLM-produced extraction record before the candidate write:
+
+1. **chunk_id FK**: `citation.chunk_id` must equal the target chunk's `id`.
+2. **Verbatim-quote**: `citation.quote` must be an NFC-normalized substring of `chunk.text`.
+3. **Per-field justification**: every value in `record.justifications` must be non-empty and a substring of `citation.quote`.
+4. **inference_kind allowlist**: date fields' `inference_kind` must be one of the five Phase 2 kinds (`explicit_reign_lu`, `explicit_reign_zhou`, `relative_to_prior_event`, `era_only`, `unknown`); `explicit_reign_other` is deferred to Phase 3 (#4).
+5. **Chunk-local id resolution**: `primary_place_id` / `state_id` values that lack a `:` (i.e., chunk-local refs) must appear in `declared_local_ids`.
+
+Five unit tests in `tests/unit/test_stage3_validator.py` cover each invariant (pass + fail paths).
+
+Articles touched: `concepts/verification/testing.md` (added Stage 3 invariant validator tests section). `concepts/pipeline/extraction.md` lands in Task 25 where the full stage-3 picture (validator + loader) comes together.
+
 ## [2026-05-21] cli: extend `load` command to all five entity-kind loaders (Task 20)
 
 Extended `changjuan load <pipeline_run_id>` to wire all five loader functions from `pipeline.stage7_load` instead of only `load_candidate_persons`. Load order observed: places + states first (FK targets), then persons, events, relations. CLI output now reports counts for each kind: `loaded: places=N states=N persons=N events=N relations=N (run=ID)`.
