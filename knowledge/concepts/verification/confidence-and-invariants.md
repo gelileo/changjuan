@@ -5,6 +5,8 @@ area: verification
 updated: 2026-05-20
 status: thin
 load_bearing: true
+affects:
+  - pipeline/confidence.py
 references:
   - concepts/data-model/knowledge-graph.md
   - concepts/pipeline/architecture.md
@@ -22,6 +24,18 @@ Two intertwined load-bearing decisions about how `changjuan` knows what it knows
 2. **Claim-defensible-from-quote.** Layered:
    - **Per-field justification** — stage 3 prompts the model for a substring of the quote that supports each field's value. Treat this layer as a *generation-time nudge that produces a verifiable artifact*; the artifact itself is gameable (the model can quote a substring that mentions the right entity rather than one that supports the specific value). The static check catches the trivially-empty case, not the trivially-bad case.
    - **Sampling QA — the actual backstop.** A deterministic 5% sample per chapter is re-evaluated by a different model answering "does this quote support this field?" Verdict distributions land in `pipeline_runs.stats_json.claim_defensible_sample`; threshold breach blocks the stage-9 freeze. Sample size set by a binomial power calculation: detect a 5pp regression with α=0.05, β=0.2 (~180 verifications corpus-wide).
+
+## Stage-3 confidence stub (Phase 2)
+
+`pipeline/confidence.py::score_extraction_record` is the registered entry point
+for stage-3 confidence scoring. v1 stub: base 0.70 + citation-quote-length
+bonus (max +0.15) + justification-completeness bonus (+0.10 when every scalar
+field has a non-empty justification_quote). Ceiling 0.95 — 1.0 is reserved
+for curated records.
+
+Future phases tune the weights against sampling-QA reliability diagrams
+(see `pipeline_runs.stats_json.confidence_calibration`). The function signature
+is stable so callers don't change when scoring gets smarter.
 
 ## Why this shape, not the alternatives
 

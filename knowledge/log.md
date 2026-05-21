@@ -1,5 +1,20 @@
 # Build Log
 
+## [2026-05-21] confidence: deterministic stage-3 score stub (Task 11)
+
+Created `pipeline/confidence.py::score_extraction_record` — the entry point for
+stage-3 confidence scoring. v1 stub: base 0.70 + citation-quote-length bonus
+(max +0.15 at 15+ chars) + justification-completeness bonus (+0.10 when all
+scalar fields have non-empty justifications). Score capped at 0.95 to reserve
+1.0 for curated records. Future phases will tune weights against sampling-QA
+reliability diagrams. Added 4 new unit tests in `tests/unit/test_confidence.py`
+exercising base score, ceiling enforcement, quote-length monotonicity, and
+justification completeness.
+
+Articles touched: concepts/verification/confidence-and-invariants.md (stage-3
+confidence stub section + affects glob), concepts/verification/testing.md
+(confidence scorer stub tests section).
+
 ## [2026-05-21] schemas: canonical extraction-output schema (Task 10)
 
 Created `pipeline/schemas/extract_output.py::EXTRACT_OUTPUT_SCHEMA` —
