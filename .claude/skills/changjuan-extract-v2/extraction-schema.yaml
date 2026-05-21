@@ -1,0 +1,257 @@
+# Generated from pipeline/schemas/extract_output.py — do not edit by hand.
+# PROMPT_TEMPLATE_VERSION = v1
+# Regenerate with: scripts/regen-extraction-schema
+
+additionalProperties: false
+properties:
+  events:
+    items:
+      additionalProperties: false
+      properties:
+        citation: &id002
+          additionalProperties: false
+          properties:
+            chunk_id:
+              type: string
+            paragraph:
+              minimum: 1
+              type: integer
+            quote:
+              minLength: 1
+              type: string
+            span:
+              items:
+                type: integer
+              maxItems: 2
+              minItems: 2
+              type: array
+          required:
+          - chunk_id
+          - paragraph
+          - span
+          - quote
+          type: object
+        date: &id001
+          additionalProperties: false
+          properties:
+            era:
+              type:
+              - string
+              - 'null'
+            inference_kind:
+              enum:
+              - explicit_reign_lu
+              - explicit_reign_zhou
+              - explicit_reign_other
+              - relative_to_prior_event
+              - era_only
+              - unknown
+            original:
+              type: string
+            relative_anchor_event_id:
+              type:
+              - string
+              - 'null'
+            uncertainty:
+              enum:
+              - point
+              - range
+              - circa
+            year_bce:
+              type:
+              - integer
+              - 'null'
+            year_bce_end:
+              type:
+              - integer
+              - 'null'
+          required:
+          - inference_kind
+          type: object
+        id:
+          pattern: ^e\d+$
+          type: string
+        justifications:
+          additionalProperties:
+            type: string
+          type: object
+        outcome:
+          type: string
+        primary_place_id:
+          pattern: ^(pl\d+|pla:[\w\-]+)$
+          type:
+          - string
+          - 'null'
+        summary:
+          type: string
+        type:
+          minLength: 1
+          type: string
+      required:
+      - id
+      - type
+      - citation
+      - justifications
+      type: object
+    type: array
+  persons:
+    items:
+      additionalProperties: false
+      properties:
+        birth_date: *id001
+        canonical_name:
+          minLength: 1
+          type: string
+        citation: *id002
+        clan_name:
+          type:
+          - string
+          - 'null'
+        death_date: *id001
+        gender:
+          enum:
+          - male
+          - female
+          - unknown
+        id:
+          pattern: ^p\d+$
+          type: string
+        justifications:
+          additionalProperties:
+            type: string
+          type: object
+        social_category:
+          enum:
+          - royalty
+          - noble
+          - official
+          - military
+          - religious
+          - clergy
+          - commoner
+          - servant
+          - foreign
+          - mythic
+          - unknown
+        state_id:
+          pattern: ^(s\d+|sta:[\w\-]+)$
+          type:
+          - string
+          - 'null'
+        variants:
+          items:
+            additionalProperties: false
+            properties:
+              kind:
+                type: string
+              variant:
+                type: string
+            required:
+            - variant
+            - kind
+            type: object
+          type: array
+      required:
+      - id
+      - canonical_name
+      - citation
+      - justifications
+      type: object
+    type: array
+  places:
+    items:
+      additionalProperties: false
+      properties:
+        citation: *id002
+        coord_confidence:
+          maximum: 1
+          minimum: 0
+          type:
+          - number
+          - 'null'
+        id:
+          pattern: ^pl\d+$
+          type: string
+        justifications:
+          additionalProperties:
+            type: string
+          type: object
+        lat:
+          type:
+          - number
+          - 'null'
+        lon:
+          type:
+          - number
+          - 'null'
+        modern_equiv:
+          type:
+          - string
+          - 'null'
+        name:
+          minLength: 1
+          type: string
+        type:
+          type: string
+      required:
+      - id
+      - name
+      - citation
+      - justifications
+      type: object
+    type: array
+  relations:
+    items:
+      additionalProperties: true
+      properties:
+        citation: *id002
+        kind:
+          enum:
+          - event_participant
+          - event_place
+          - event_relation
+          - person_relation
+          - person_state
+          - state_capital
+      required:
+      - kind
+      - citation
+      type: object
+    type: array
+  states:
+    items:
+      additionalProperties: false
+      properties:
+        citation: *id002
+        ended_date: *id001
+        founded_date: *id001
+        id:
+          pattern: ^s\d+$
+          type: string
+        justifications:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          minLength: 1
+          type: string
+        ruling_clan:
+          type:
+          - string
+          - 'null'
+        type:
+          type: string
+      required:
+      - id
+      - name
+      - citation
+      - justifications
+      type: object
+    type: array
+required:
+- persons
+- events
+- places
+- states
+- relations
+type: object

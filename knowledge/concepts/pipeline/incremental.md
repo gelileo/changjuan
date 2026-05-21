@@ -94,6 +94,15 @@ The candidate SELECT statements include the `id` column (full format: `cand:per:
 
 The `qa-sample <pipeline_run_id>` verb enumerates scalar facts for a given run (falling back from `candidate_facts` to direct `candidate_*` table scanning) and emits a deterministic 5% sample for the `changjuan-verify-sample` skill. `qa-load` ingests the returned verdicts into `qa_samples` and patches `pipeline_runs.stats_json.claim_defensible_sample`. These verbs are post-extraction QA tools — they operate on an already-loaded run and do not re-trigger extraction or affect the `curated`-never-overwritten contract. See `concepts/runtime/cli.md` for the full verb documentation.
 
+## Iteration history
+
+Each v{N} skill directory under `.claude/skills/changjuan-extract*/` represents a discrete prompt-iteration step. The `system-prompt.md` content evolves between versions; the directory structure, the SKILL.md operational shell, and the regenerated `extraction-schema.yaml` stay mechanically equivalent (the canonical schema is the Python source in `pipeline/schemas/extract_output.py`).
+
+- **v1** (`changjuan-extract`) — initial draft drawing from the golden Ch.1 README's decisions log (committed in Task 27).
+- **v2** (`changjuan-extract-v2`) — adds a top-level `§⓪ v2 修订要点` section to `system-prompt.md` with 7 revision rules grounded in the v1 baseline analysis (see `knowledge/log.md`, 2026-05-21). Targets the systematic deviations v1 showed against golden Ch.1: event under-segmentation, role-vocabulary literalness, unnamed-person naming-suffix convention, over-conservative inferred facts, reign-year over-use, missing `variants[]` annotations on封号-form canonical_names, and missing `event_relation: causes` chains.
+
+The pre-flight `changjuan extract --chapter N` always points at the *latest* version (alphabetical sort over the `changjuan-extract*` glob) — so as new vN directories land, the user's slash-command updates automatically. Older versions remain available for `re-extract --prompt-version v1` to reload prior YAMLs from `data/extractions/`.
+
 ## What would invalidate this article
 
 - Changing the YAML output path convention (`data/extractions/ch{N:02d}/extract-{v}.yaml`) in the skill or the CLI.

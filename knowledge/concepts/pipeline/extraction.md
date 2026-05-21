@@ -134,6 +134,10 @@ to `person_variants` rows via `_write_variants`. This closes the loop: variants 
 the skill are persisted and accumulated across re-extract runs, not discarded at the staging
 boundary.
 
+## Prompt iteration
+
+The skill's `system-prompt.md` evolves between versions; each prompt revision is a new directory under `.claude/skills/changjuan-extract*/`. The Python-side validator + extraction schema do not change between prompt versions — they're the stable contract the prompt iterates against. See `concepts/pipeline/incremental.md` for the iteration-history log (v1, v2, …) and the per-version goals.
+
 ## What would invalidate this article
 
 - Adding an `ANTHROPIC_API_KEY` to the project and wiring a direct SDK call (would eliminate the two-actor split).
