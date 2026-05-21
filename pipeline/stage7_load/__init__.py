@@ -11,8 +11,14 @@ Package layout:
   citations.py  — entity_citations accumulator (Phase 2)
 """
 
+from pipeline.stage7_load.events import load_candidate_events
 from pipeline.stage7_load.persons import load_candidate_persons
 from pipeline.stage7_load.places import load_candidate_places
 from pipeline.stage7_load.states import load_candidate_states
 
-__all__ = ["load_candidate_persons", "load_candidate_places", "load_candidate_states"]
+__all__ = [
+    "load_candidate_events",
+    "load_candidate_persons",
+    "load_candidate_places",
+    "load_candidate_states",
+]

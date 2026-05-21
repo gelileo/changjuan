@@ -157,6 +157,28 @@ These tests guard the name-match, null-fill, and higher-confidence-override path
 
 These tests guard the name-match, null-fill, and higher-confidence-override paths for places. The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the persons tests pattern.
 
+## Stage 7 helpers tests
+
+`tests/unit/test_stage7_helpers.py` (Phase 2 Task 18) exercises `pipeline.stage7_load.helpers.merge_date_field` in isolation. Four tests:
+
+- `test_merge_date_field_point_beats_range_at_lower_confidence` — a range-precision date at confidence 0.9 vs a point-precision date at confidence 0.85; asserts the point date wins (spec §7.2 more-precise-wins rule).
+- `test_merge_date_field_higher_confidence_wins_when_precision_same` — two point dates at confidence 0.7 vs 0.85; asserts the higher-confidence entry wins.
+- `test_merge_date_field_returns_other_when_one_is_none` — one `None` argument; asserts the non-None entry is returned regardless of which side is None.
+- `test_merge_date_field_tie_keeps_current` — same precision, same confidence; asserts current is returned (tie → keep existing).
+
+These tests use no fixtures — just direct function calls with hand-constructed dicts.
+
+## Stage 7 load_candidate_events tests
+
+`tests/unit/test_stage7_load_events.py` (Phase 2 Task 18) exercises `pipeline.stage7_load.load_candidate_events`. A `_seed_candidate_event` helper inserts a minimal `candidate_events` row (using `chunk_id`/`quote` matching the canonical schema). `primary_place_id` defaults to `None` to avoid FK constraint failures (the events table references `places(id)`). Four tests:
+
+- `test_creates_canonical_event_on_first_load` — seeds one candidate, calls `load_candidate_events`, asserts one `events` row and the correct `type`.
+- `test_same_match_key_collapses` — two runs with the same `(type, year_bce, primary_place_id)` key, second adds `outcome='晋胜'`; asserts exactly one `events` row with `outcome` filled in via null-fill merge.
+- `test_date_merge_point_beats_range` — first run seeds `uncertainty='range'` at confidence 0.9; second run seeds `uncertainty='point'` at confidence 0.85; asserts the canonical `date_json` has `uncertainty='point'` (more-precise wins).
+- `test_conflict_emitted_on_scalar_disagreement` — `outcome='晋胜'` at confidence 0.9 vs `outcome='楚胜'` at confidence 0.88 (delta 0.02 < threshold 0.1); asserts at least one `conflicts` row with `subject_kind='event'` and `field='outcome'`.
+
+The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the places/states tests pattern.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

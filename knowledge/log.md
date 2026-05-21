@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-21] stage7: load_candidate_events + merge_date_field helper (Task 18)
+
+Added `pipeline/stage7_load/helpers.py::merge_date_field` — a shared date-merge helper implementing spec §7.2. Precision rank: `point > circa > range`. A more-precise date wins over a less-precise one even at slightly lower confidence (within `_SIMILAR_CONFIDENCE_DELTA = 0.1`). On equal precision, higher confidence wins; tie keeps current.
+
+Added `pipeline/stage7_load/events.py::load_candidate_events`. Composite match key: `(type, year_bce, primary_place_id)` — year extracted from candidate's `date_json` via Python JSON parsing; matched in the canonical table via SQLite `json_extract`. ID format: `evt:<slug>-<year>bce` (or `evt:<slug>` when no year). SHA-256 6-char suffix collision guard. Scalar fields merged: `type`, `outcome`, `summary`, `primary_place_id` — same higher-confidence-wins + Conflict emission semantics as persons.py. `date_json` merged via `merge_date_field`. Citation accumulation via `record_citation`. Provenance `'auto'` on create. `pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_events`.
+
+Four new helper tests in `tests/unit/test_stage7_helpers.py`. Four new events loader tests in `tests/unit/test_stage7_load_events.py`. Total: 118 tests.
+
+Key adaptation from spec: `primary_place_id` defaults to `None` in tests to avoid FK constraint failures (events.primary_place_id references places.id, no place pre-seeded). Events loader uses positional tuple indexing (not `sqlite3.Row`) matching the pattern of places.py/states.py — `open_canonical_db` does not set `row_factory`, only `connect()` does.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (new Events section + `merge_date_field` section; updated `implemented:` and `What would invalidate this article`), `concepts/verification/testing.md` (new Stage 7 helpers tests section + Stage 7 load_candidate_events tests section).
+
 ## [2026-05-21] stage7: load_candidate_states with field-level scalar merge (Task 17)
 
 Added `pipeline/stage7_load/states.py::load_candidate_states`. Mirrors `places.py` shape: match by `name`; scalar merge (`type`, `ruling_clan`, `founded_date_json`, `ended_date_json`) with higher-confidence-wins (delta threshold 0.1); citation accumulation via `record_citation`; `audit_log` uses `change_kind='create'/'set'`. No variants table — name-only match. Slug collision guard uses SHA-256 hex suffix (`sta:<slug>-<hash6>`). Date JSON fields treated as opaque strings for now; Task 18 will add `merge_date_field` for semantic date merging. `state_capitals` relation rows are NOT handled here — they land in Task 19 (`load_candidate_relations`). `pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_states`.

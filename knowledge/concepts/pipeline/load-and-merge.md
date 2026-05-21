@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-21
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field)
 status: thin
 load_bearing: true
 references:
@@ -86,11 +86,43 @@ Every create emits `audit_log` with `change_kind='create'` and `after_json={"val
 
 Scalar fields merged: `type`, `ruling_clan`, `founded_date_json`, `ended_date_json`. For the date JSON fields (`founded_date_json`, `ended_date_json`), the same opaque-string merge rule applies as for other scalars: skip if `None`; set unconditionally if existing value is `None`; otherwise apply the `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold using per-field confidence from `audit_log`. A dedicated `merge_date_field` helper (Task 18) will later provide semantic date-aware merging; for now the simple higher-confidence-wins rule is used. The `state_capitals` relation table (a separate join table between states and places) is not populated here — that is handled in Task 19 (`load_candidate_relations`). Citation accumulation works identically: `record_citation(conn, "state", state_id, chunk_id)` is called for every candidate. Every create emits `audit_log` with `change_kind='create'`; every field update emits `change_kind='set'`.
 
+## Events
+
+`pipeline/stage7_load/events.py::load_candidate_events` introduces a **composite match key**: `(type, year_bce, primary_place_id)`. Two candidates with the same event type, year extracted from `date_json`, and primary place collapse into one canonical event.
+
+`year_bce` is extracted from the candidate's `date_json` column via Python JSON parsing (`_year_bce_from_date_json`). SQLite `json_extract` is used in the match query to locate an existing event by composite key.
+
+**ID format:** `evt:<slug>-<year>bce` when a year is present (e.g. `evt:战-632bce`); `evt:<slug>` when no year. Slug is derived from `type` via `_slugify`. SHA-256 6-char suffix collision guard applies as with persons/places/states.
+
+**Scalar fields merged:** `type`, `outcome`, `summary`, `primary_place_id`. These use the same merge rule as persons: skip if None; set unconditionally if existing is None; emit Conflict if curated; apply `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold for auto provenance — emit Conflict if new confidence is not clearly higher.
+
+**date_json is merged via `merge_date_field` (spec §7.2)**: a more-precise date (point > circa > range per `_PRECISION_RANK`) wins over a less-precise one, even if it arrives at slightly lower confidence (within `_SIMILAR_CONFIDENCE_DELTA`). On equal precision, higher confidence wins; on tie, the current value is kept.
+
+## `merge_date_field` helper
+
+`pipeline/stage7_load/helpers.py::merge_date_field` is the shared date-merge helper introduced in Task 18. Signature:
+
+```python
+def merge_date_field(
+    current: dict[str, Any] | None,
+    new: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+```
+
+Each argument is `{"value": DateDict, "confidence": float}` or `None`. The function returns the winner dict (or None if both are None).
+
+`_PRECISION_RANK = {"point": 3, "circa": 2, "range": 1}`. A higher rank = more precise. The rule:
+1. If `new_prec > cur_prec` AND `new_conf >= cur_conf - _SIMILAR_CONFIDENCE_DELTA` → new wins.
+2. If `cur_prec > new_prec` AND `cur_conf >= new_conf - _SIMILAR_CONFIDENCE_DELTA` → current wins.
+3. Otherwise: higher confidence wins; tie → current wins.
+
+This helper is designed to be re-used by any future loader that merges date fields (e.g. states' `founded_date_json`/`ended_date_json`, persons' `birth_date_json`/`death_date_json`).
+
 ## What would invalidate this article
 
-- Adding a new entity kind to the load stage (events).
 - Changing the confidence-delta threshold.
 - Curated records becoming mergeable under any condition.
 - Citation accumulation being added to this stage.
 - Adding a place-variants or state-variants table (would require match-by-variant logic like persons).
-- Task 18 landing `merge_date_field` and wiring it into the states loader for date fields.
+- Changing the `_PRECISION_RANK` mapping or adding new uncertainty levels.
+- Wiring `merge_date_field` into states/persons date fields (currently those use plain higher-confidence-wins).
