@@ -2,15 +2,16 @@
 title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
-updated: 2026-05-20
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes
+updated: 2026-05-21
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation)
 status: thin
 load_bearing: true
 references:
   - concepts/pipeline/architecture.md
   - concepts/data-model/knowledge-graph.md
 affects:
-  - pipeline/stage7_load.py
+  - pipeline/stage7_load/**
+  - pipeline/stage7_load/citations.py
 ---
 
 ## What this is
@@ -49,7 +50,9 @@ A `Conflict` row records both variants with their confidence and source, and set
 
 ## Citation accumulation
 
-Each candidate row carries a `chunk_id` and `quote`. Citation accumulation (linking `entity_citations` rows for every chunk that mentions the canonical record) is deferred to Phase 2 alongside the full extraction stage. The load stage does not yet write to `entity_citations`.
+`pipeline/stage7_load/citations.py::record_citation` is called from every Person create/update path. The function is idempotent on the unique `(entity_kind, entity_id, citation_id)` tuple — re-loading the same candidate twice writes one `entity_citations` row, not two. Every appearance of an entity in a new chunk accumulates a citation; nothing overwrites. The `field_history` view (Phase 1) joins on `entity_citations` to render "how do we know this?" in the future curation UI.
+
+Each `candidate_persons` row carries a `chunk_id`; `record_citation` stores this as the `citation_id` in `entity_citations`. The `entity_citations` PRIMARY KEY `(entity_kind, entity_id, citation_id)` doubles as the unique constraint that `INSERT OR IGNORE` exploits for idempotence.
 
 ## Variant union
 

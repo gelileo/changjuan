@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-21] stage 7: entity_citations accumulator on every create/update (deferred #7)
+
+Added `pipeline/stage7_load/citations.py::record_citation`. Called from every Person create/update path in `persons.py` (single call site at the end of the `load_candidate_persons` loop covers both branches). Idempotent on the unique `(entity_kind, entity_id, citation_id)` tuple via `INSERT OR IGNORE`; the PRIMARY KEY on `entity_citations` serves as the constraint. Re-loading the same candidate twice writes one `entity_citations` row, not two. Each candidate's `chunk_id` is used as the `citation_id` value.
+
+Three new tests in `tests/unit/test_stage7_citations.py` cover: first-load writes one row, second load with different chunk_id accumulates a second row (one Person), same candidate loaded twice stays idempotent.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (citation accumulation section updated from "deferred" to implemented; `affects` glob updated to `pipeline/stage7_load/**`).
+
 ## [2026-05-21] stage 7: split monolith into package (deferred #5)
 
 `pipeline/stage7_load.py` → `pipeline/stage7_load/` package. Public API (`load_candidate_persons`) preserved via `__init__.py` re-export. Moved helpers to `helpers.py`, audit helper to `audit.py`, person loader to `persons.py`. Prerequisite for Phase 2's per-kind loaders (events, places, states, relations).

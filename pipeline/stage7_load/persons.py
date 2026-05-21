@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 
 from pipeline.stage7_load.audit import _audit
+from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.helpers import (
     _PERSON_SCALAR_FIELDS,
     _SIMILAR_CONFIDENCE_DELTA,
@@ -251,5 +252,6 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         else:
             person_id = existing_id
             _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
+        record_citation(conn, "person", person_id, c["chunk_id"])
         affected += 1
     return affected
