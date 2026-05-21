@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] tests/golden: loader.py validates YAML structure + cross-references
+
+Created `tests/golden/loader.py::load_golden`. Validates: required fields per
+entity kind, citation FK integrity (all citations referenced by other entities
+exist in citations.yaml), date inference_kind allowlist, relative-anchor cycle
+detection + dangling-anchor rejection. Raises `GoldenLoadError` on any
+violation. Five tests in `tests/unit/test_golden_loader.py`.
+
+Articles touched: `concepts/verification/testing.md` (golden YAML loader tests section added). Also added `[mypy-yaml]` override to `mypy.ini` to suppress `import-untyped` for pyyaml (no stubs installed).
+
 ## [2026-05-21] deps + golden skeleton: pyyaml, jsonschema, tests/golden/
 
 Added pyyaml and jsonschema to dependencies. Created tests/golden/ch01/README.md
