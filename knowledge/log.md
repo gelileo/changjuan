@@ -1,5 +1,28 @@
 # Build Log
 
+## [2026-05-21] stage3: load_extraction — YAML → candidate_* with invariant gating (Task 22)
+
+Added `load_extraction` to `pipeline/stage3_extract.py`. The function:
+
+1. **Schema-validates** the YAML payload against `EXTRACT_OUTPUT_SCHEMA` (jsonschema).
+2. **Builds a chunk lookup** for the chapter from `corpus.sqlite` (chapter_num → chunks).
+3. **Runs per-record invariants** via `validate_record` for all four entity kinds; records that fail are skipped and their violation messages collected in `stats["invariant_violations"]`.
+4. **Resolves within-chunk relative dates** on events via `resolve_relative_dates` before writing.
+5. **Writes candidate_* rows** for persons, events, places, and states — column sets matched exactly to the canonical schema (no `prompt_version` column; `notes`, `birth_date_json`, `death_date_json` for persons; `founded_date_json`/`ended_date_json` for states).
+6. **Writes all six relation kinds** to `candidate_event_participants`, `candidate_event_places`, `candidate_event_relations`, `candidate_person_relations`, `candidate_person_states` using `INSERT OR IGNORE`; `state_capital` is a no-op stub matching the existing `load_candidate_state_capitals` stub.
+7. Resolves chunk-local ids (e.g. `p1`, `e1`, `pl1`) to their canonical candidate db ids via a `local_to_cand` dict built during entity writes.
+8. **Records a `pipeline_runs` row** and commits.
+
+Key adaptation vs. spec sketch: no `prompt_version` column exists on any `candidate_*` table; `candidate_event_participants` uses `candidate_event_id`/`candidate_person_id` (not `event_id`/`person_id`). The `citations` table lives in corpus, not canonical — citation strings are not separately inserted; citation data flows only through the `chunk_id`/`quote` columns on candidate entity rows.
+
+Fixture adaptation: `documents.corpus` CHECK constraint requires `'dongzhoulieguozhi'` (not `'test'`) in the test setup.
+
+New tests in `tests/unit/test_extract_load.py` (3 tests): happy-path person write, invariant-violation skip, and all-five-kinds round-trip.
+
+Articles touched: `concepts/verification/testing.md` (new extract-load tests section).
+
+Total: 139 tests.
+
 ## [2026-05-21] stage3: invariant validator — verbatim-quote, justification, chunk_id, inference_kind (Task 21)
 
 Created `pipeline/stage3_extract.py` with `validate_record()` and `InvariantError`. The validator enforces four static invariants on every LLM-produced extraction record before the candidate write:

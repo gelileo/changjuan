@@ -198,6 +198,16 @@ The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to t
 
 The `canonical` fixture uses `open_canonical_db` with `tmp_path`. The `entity_citations` CHECK constraint was extended (Task 19) to allow all six relation kinds alongside the four entity kinds.
 
+## Stage 3 extract-load tests
+
+`tests/unit/test_extract_load.py` (Phase 2 Task 22) exercises `pipeline.stage3_extract.load_extraction` end-to-end. A shared `setup` fixture builds a minimal `corpus.sqlite` (one document, one chunk with text `'重耳奔狄'`) and an empty `changjuan.sqlite` using `open_corpus_db` / `open_canonical_db` with `tmp_path`. Three tests:
+
+- `test_valid_extraction_loads_to_candidates` — minimal YAML with one person (`重耳`); asserts `persons_written == 1`, no violations, and a `candidate_persons` row with the correct `canonical_name`.
+- `test_invalid_record_skipped` — person whose `citation.quote` (`不存在`) is not a substring of the chunk text; asserts `persons_written == 0` and `len(invariant_violations) == 1`.
+- `test_loads_event_place_state_relation` — all five entity kinds plus one `event_participant` relation; asserts written counts are each ≥ 1 and `relations_written ≥ 1`.
+
+The fixture uses corpus `'dongzhoulieguozhi'` (the CHECK constraint on `documents.corpus` prohibits the generic `'test'` value used in the spec sketch).
+
 ## Stage 3 invariant validator tests
 
 `tests/unit/test_stage3_validator.py` (Phase 2 Task 21) exercises `pipeline.stage3_extract.validate_record` and `InvariantError`. Five tests cover the four static invariants:
