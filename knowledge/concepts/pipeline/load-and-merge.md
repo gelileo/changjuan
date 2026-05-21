@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-21
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places)
 status: thin
 load_bearing: true
 references:
@@ -72,9 +72,18 @@ The `field_history` view reconstructs per-field history from these rows.
 
 `_last_field_confidence(conn, entity_kind, entity_id, field)` queries `audit_log` for the most recent `set`-event for a given field and returns the `confidence` extracted from `after_json`. This prevents a stale row-level confidence (set at Person creation time) from being used as the comparison baseline in multi-run scenarios where a high-confidence update has already occurred.
 
+## Places
+
+`pipeline/stage7_load/places.py::load_candidate_places` mirrors the persons loader but is simpler — there is no variants table for places. Candidates are matched against existing canonical `places` rows by `name` equality only. If no match exists, a new Place is created with id `pla:<slug>`, with the same SHA-256 hex-suffix collision guard as persons.
+
+Scalar fields merged: `type`, `lat`, `lon`, `coord_confidence`, `modern_equiv`. The merge rules are identical to persons: skip if candidate value is `None`; set unconditionally if existing value is `None`; otherwise apply the `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold using per-field confidence from `audit_log` (via `_last_field_confidence`). Conflict emission is not implemented for places in this phase (places are auto-only at this stage and have no curation path yet). Citation accumulation works identically — `record_citation(conn, "place", place_id, chunk_id)` is called for every candidate, whether it created or merged.
+
+Every create emits `audit_log` with `change_kind='create'` and `after_json={"value": name, "confidence": ...}`. Every scalar field update emits `change_kind='set'` with the new value and confidence.
+
 ## What would invalidate this article
 
-- Adding a new entity kind to the load stage (events, places, states).
+- Adding a new entity kind to the load stage (events, states).
 - Changing the confidence-delta threshold.
 - Curated records becoming mergeable under any condition.
 - Citation accumulation being added to this stage.
+- Adding a place-variants table (would require match-by-variant logic like persons).

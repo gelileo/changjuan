@@ -137,6 +137,16 @@ to a fake_lookup returning year 600 — result is 599, not the walkback target 7
 matching "cycle"). A private `_date()` helper extracts and asserts-isinstance the nested
 `date` sub-dict to satisfy mypy strict without cluttering every assertion.
 
+## Stage 7 load_candidate_places tests
+
+`tests/unit/test_stage7_load_places.py` (Phase 2 Task 16) exercises `pipeline.stage7_load.load_candidate_places`. A `_seed_candidate_place` helper inserts a minimal `candidate_places` row (using `chunk_id`/`quote` columns matching the canonical schema). Three tests:
+
+- `test_creates_canonical_place_on_first_load` — seeds one candidate, calls `load_candidate_places`, asserts one `places` row with the correct name.
+- `test_second_load_with_same_name_merges_not_creates` — two runs with the same name, second adds `lat=34.5`; asserts exactly one `places` row and two `entity_citations` rows (citation accumulation from both chunk_ids).
+- `test_higher_confidence_lat_overrides_lower` — first run sets `lat=34.0` at confidence 0.7; second run proposes `lat=34.5` at confidence 0.9 (delta 0.2 > threshold 0.1); asserts `lat` updates to 34.5.
+
+These tests guard the name-match, null-fill, and higher-confidence-override paths for places. The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the persons tests pattern.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

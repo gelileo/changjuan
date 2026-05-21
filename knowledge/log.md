@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] stage7: load_candidate_places with field-level scalar merge (Task 16)
+
+Added `pipeline/stage7_load/places.py::load_candidate_places`. Mirrors `load_candidate_persons` shape: match by `name`; scalar merge (`type`, `lat`, `lon`, `coord_confidence`, `modern_equiv`) with higher-confidence-wins (delta threshold 0.1); citation accumulation via `record_citation`; `audit_log` uses `change_kind='create'/'set'`. No variants table — name-only match. Slug collision guard uses SHA-256 hex suffix (same as persons). `pipeline/stage7_load/__init__.py` updated to re-export `load_candidate_places`.
+
+Three new tests in `tests/unit/test_stage7_load_places.py`. Total: 107 tests.
+
+Key adaptation from spec: `candidate_places` uses `chunk_id`/`quote` columns (not `citation_id`), matching the canonical schema. Spec template's `_suffix_if_collision` helper does not exist; inline hash-suffix logic used instead (matching persons.py). `_audit` positional signature differs from spec guess — matched actual signature.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (new Places section; updated `implemented:` and `What would invalidate this article`).
+
 ## [2026-05-21] cli: list-unresolved-dates + resolve-relative-date verbs (Task 15)
 
 Added two curator triage verbs to `pipeline/cli.py`:
