@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] tests/golden: precision_recall.py harness
+
+Created `tests/golden/precision_recall.py::compute_pr`. Per-entity-type
+matching rules: Persons match on variant-set overlap + state_id agreement;
+Events on type + ±1y date + primary_place_id; Places/States on name;
+Relations on full tuple. Returns dict matching `stats_json.extraction.per_entity_type`
+shape. Five tests in `tests/unit/test_precision_recall.py`.
+
+Articles touched: none (test infrastructure).
+
 ## [2026-05-21] tests/golden: loader.py validates YAML structure + cross-references
 
 Created `tests/golden/loader.py::load_golden`. Validates: required fields per
