@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] stage 1: ingest_documents returns actual insert count (deferred #3)
+
+`pipeline/stage1_ingest.py::ingest_dongzhoulieguozhi` now sums `cursor.rowcount` per row instead of returning `len(rows)`. Changed from `executemany` to per-row `execute` to count inserts properly. Re-ingesting an existing chapter now correctly reports 0 inserts. Test `test_ingest_returns_actual_insert_count_not_input_length` added.
+
+`no knowledge impact: clarifies return-value semantics; behavior is preserved for first-run callers (count matches len(rows)) but now correctly reports 0 on re-ingest of existing rows.`
+
 ## [2026-05-21] stage 2: chunking edge-case tests (deferred #9)
 
 Added two regression tests in `tests/unit/test_stage2_chunk.py`:
