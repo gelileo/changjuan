@@ -458,6 +458,209 @@ def golden_eval_cmd(
         raise typer.Exit(code=1)
 
 
+@app.command(name="qa-sample")
+def qa_sample_cmd(
+    pipeline_run_id: str = typer.Argument(..., help="Pipeline run id to sample."),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Print the deterministic 5% sample of scalar facts for pipeline_run_id as YAML."""
+    import yaml as _yaml
+
+    from pipeline.qa_sampling import select_sample
+
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+
+    facts: list[dict[str, object]] = []
+
+    # Try candidate_facts first; if not populated, fall back to candidate_* tables.
+    candidate_facts_exists = canonical.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='candidate_facts'"
+    ).fetchone()
+
+    if candidate_facts_exists:
+        for row in canonical.execute(
+            "SELECT subject_kind, subject_candidate_id, field, value_json, justification_quote "
+            "FROM candidate_facts WHERE pipeline_run_id = ?",
+            (pipeline_run_id,),
+        ):
+            facts.append(
+                {
+                    "pipeline_run_id": pipeline_run_id,
+                    "record_kind": row[0],
+                    "record_id": row[1],
+                    "field": row[2],
+                    "value": row[3],
+                    "quote": row[4],
+                }
+            )
+
+    if not facts:
+        # Fallback: enumerate scalar facts directly from candidate_* tables.
+        for row in canonical.execute(
+            "SELECT id, canonical_name, gender, social_category, quote "
+            "FROM candidate_persons WHERE pipeline_run_id = ?",
+            (pipeline_run_id,),
+        ):
+            cand_id, canonical_name, gender, social_category, quote = row
+            for field, value in [
+                ("canonical_name", canonical_name),
+                ("gender", gender),
+                ("social_category", social_category),
+            ]:
+                if value is not None:
+                    facts.append(
+                        {
+                            "pipeline_run_id": pipeline_run_id,
+                            "record_kind": "person",
+                            "record_id": cand_id,
+                            "field": field,
+                            "value": value,
+                            "quote": quote,
+                        }
+                    )
+
+        for row in canonical.execute(
+            "SELECT id, type, outcome, summary, quote "
+            "FROM candidate_events WHERE pipeline_run_id = ?",
+            (pipeline_run_id,),
+        ):
+            cand_id, etype, outcome, summary, quote = row
+            for field, value in [
+                ("type", etype),
+                ("outcome", outcome),
+                ("summary", summary),
+            ]:
+                if value is not None:
+                    facts.append(
+                        {
+                            "pipeline_run_id": pipeline_run_id,
+                            "record_kind": "event",
+                            "record_id": cand_id,
+                            "field": field,
+                            "value": value,
+                            "quote": quote,
+                        }
+                    )
+
+        for row in canonical.execute(
+            "SELECT id, name, type, modern_equiv, quote "
+            "FROM candidate_places WHERE pipeline_run_id = ?",
+            (pipeline_run_id,),
+        ):
+            cand_id, name, ptype, modern_equiv, quote = row
+            for field, value in [
+                ("name", name),
+                ("type", ptype),
+                ("modern_equiv", modern_equiv),
+            ]:
+                if value is not None:
+                    facts.append(
+                        {
+                            "pipeline_run_id": pipeline_run_id,
+                            "record_kind": "place",
+                            "record_id": cand_id,
+                            "field": field,
+                            "value": value,
+                            "quote": quote,
+                        }
+                    )
+
+        for row in canonical.execute(
+            "SELECT id, name, type, ruling_clan, quote "
+            "FROM candidate_states WHERE pipeline_run_id = ?",
+            (pipeline_run_id,),
+        ):
+            cand_id, name, stype, ruling_clan, quote = row
+            for field, value in [
+                ("name", name),
+                ("type", stype),
+                ("ruling_clan", ruling_clan),
+            ]:
+                if value is not None:
+                    facts.append(
+                        {
+                            "pipeline_run_id": pipeline_run_id,
+                            "record_kind": "state",
+                            "record_id": cand_id,
+                            "field": field,
+                            "value": value,
+                            "quote": quote,
+                        }
+                    )
+
+    sample = select_sample(facts)
+    typer.echo(_yaml.safe_dump(sample, allow_unicode=True, sort_keys=False))
+
+
+@app.command(name="qa-load")
+def qa_load_cmd(
+    run_id: str = typer.Option(..., "--run-id"),
+    qa_file: Path = typer.Option(..., "--qa-file", exists=True),
+    verifier_model: str = typer.Option("claude-opus-4-7", "--verifier-model"),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Load verifier verdicts into qa_samples; update pipeline_runs.stats_json."""
+    import json as _json_inner
+    import uuid as _uuid3
+
+    import yaml as _yaml
+
+    from pipeline import config
+
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    verdicts: list[dict[str, object]] = _yaml.safe_load(qa_file.read_text(encoding="utf-8"))
+    yes = no = partial = 0
+    for v in verdicts:
+        canonical.execute(
+            "INSERT INTO qa_samples (id, pipeline_run_id, record_kind, record_id, field, "
+            "verdict, verifier_model, at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+            (
+                str(_uuid3.uuid4()),
+                run_id,
+                v["record_kind"],
+                v["record_id"],
+                v["field"],
+                v["verdict"],
+                verifier_model,
+            ),
+        )
+        if v["verdict"] == "yes":
+            yes += 1
+        elif v["verdict"] == "no":
+            no += 1
+        elif v["verdict"] == "partial":
+            partial += 1
+
+    total = yes + no + partial
+    mismatch_rate = (no + 0.5 * partial) / total if total else 0.0
+
+    row = canonical.execute(
+        "SELECT stats_json FROM pipeline_runs WHERE id = ?", (run_id,)
+    ).fetchone()
+    stats: dict[str, object] = _json_inner.loads(row[0]) if row and row[0] else {}
+    stats["claim_defensible_sample"] = {
+        "sample_size": total,
+        "yes": yes,
+        "partial": partial,
+        "no": no,
+        "mismatch_rate": mismatch_rate,
+    }
+    if mismatch_rate > config.QA_MISMATCH_THRESHOLD:
+        breached: list[str] = stats.setdefault("thresholds_breached", [])  # type: ignore[assignment]
+        if "claim_defensible_mismatch_rate" not in breached:
+            breached.append("claim_defensible_mismatch_rate")
+    canonical.execute(
+        "UPDATE pipeline_runs SET stats_json = ? WHERE id = ?",
+        (_json_inner.dumps(stats), run_id),
+    )
+    canonical.commit()
+    typer.echo(
+        f"qa-load: sampled={total} yes={yes} partial={partial} no={no} "
+        f"mismatch_rate={mismatch_rate:.3f}"
+    )
+
+
 @app.command(name="extract-load")
 def extract_load_cmd(
     chapter: int = typer.Option(..., "--chapter"),

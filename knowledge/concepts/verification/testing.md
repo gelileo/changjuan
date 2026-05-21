@@ -258,6 +258,16 @@ These tests verify the verb's end-to-end path: `pipeline_runs` lookup → candid
 
 A `_facts` helper builds minimal synthetic fact dicts with `pipeline_run_id`, `record_id`, and `field` keys. No fixtures or database are needed; tests call `select_sample` directly with hand-constructed inputs.
 
+## QA CLI tests
+
+`tests/unit/test_qa_cli.py` (Phase 2 Task 33) exercises the `qa-sample` and `qa-load` CLI verbs via `typer.testing.CliRunner`. A `_seed_corpus` helper creates minimal `corpus.sqlite` and `changjuan.sqlite` under `tmp_path/data/`. Three tests:
+
+- `test_qa_sample_emits_yaml_with_triples` — seeds one `candidate_persons` row; invokes `qa-sample run:1`; asserts exit 0, stdout is valid YAML, and the list has at least one entry. Exercises the fallback path (candidate_facts unpopulated).
+- `test_qa_load_writes_qa_samples_and_updates_stats` — seeds a `pipeline_runs` row; writes a 2-verdict YAML (`yes` + `no`); invokes `qa-load --run-id run:1 --qa-file <path>`; asserts exit 0, both `qa_samples` rows present, and `stats_json.claim_defensible_sample` has `sample_size=2`, `yes=1`, `no=1`.
+- `test_qa_load_breaches_threshold_when_mismatch_high` — 4 `no` verdicts (mismatch_rate=1.0 > 0.10 threshold); asserts `stats_json.thresholds_breached` contains `"claim_defensible_mismatch_rate"`.
+
+These tests confirm the full `qa-sample` → `qa-load` round-trip path: fact enumeration, YAML output, verdict ingestion, stats patching, and threshold breach detection.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

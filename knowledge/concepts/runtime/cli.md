@@ -14,6 +14,7 @@ affects:
   - tests/unit/test_extract_preflight.py
   - tests/unit/test_re_extract.py
   - tests/unit/test_golden_eval_cli.py
+  - tests/unit/test_qa_cli.py
 ---
 
 ## What this is
@@ -30,6 +31,12 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 - **`changjuan extract-load --chapter N --extraction-file PATH --prompt-version V [--pipeline-run-id ID] [--repo-root PATH]`** — Stage 3: validates a skill-produced extraction YAML file, runs all extraction invariants per record, and writes passing records to `candidate_persons`, `candidate_events`, `candidate_places`, `candidate_states`, and `candidate_relations`. Auto-generates a `pipeline_run_id` (format: `run:extract-ch<chapter>-<prompt_version>-<timestamp>`) if `--pipeline-run-id` not supplied. Returns per-entity-kind counts and lists up to 10 invariant violations (or count if >10). Invariant failures prevent a record from being written but do not cause the command to exit non-zero.
 - **`changjuan load <pipeline_run_id> [--repo-root PATH]`** — Stage 7: promotes all five entity-kind candidates matching the given `pipeline_run_id` into canonical entities with field-level merge semantics (curated-never-overwritten, higher-confidence-wins, Conflict on disagreement). Load order: places + states first (other entity types reference them via foreign keys), then persons, events, and finally all six relation kinds. Returns counts for each entity kind loaded.
 - **`changjuan export <version> [--repo-root PATH]`** — Stage 9: freezes a versioned export bundle at `data/exports/changjuan-export-<version>/`, containing `manifest.json` and a `candidate_*`-stripped SQLite snapshot.
+
+### Sampling QA verbs (Phase 2)
+
+- **`changjuan qa-sample <pipeline_run_id> [--repo-root PATH]`** — Emits the deterministic 5% sample of scalar facts for the given `pipeline_run_id` as YAML on stdout. The `changjuan-verify-sample` skill consumes this output. The verb first checks `candidate_facts` (stage 3 per-field justifications); if that table is empty for the run, it falls back to enumerating scalar fields directly from `candidate_persons`, `candidate_events`, `candidate_places`, and `candidate_states` (any non-null scalar field becomes one fact). Sampling is bounded by `config.QA_SAMPLE_FLOOR` (30) and `config.QA_SAMPLE_CEILING` (250) and is fully deterministic — same `pipeline_run_id` always produces the same sample.
+
+- **`changjuan qa-load --run-id ID --qa-file PATH [--verifier-model MODEL] [--repo-root PATH]`** — Loads a verifier-verdict YAML (produced by the `changjuan-verify-sample` skill) into `qa_samples`. For each verdict, inserts a row with a UUID `id`, the `pipeline_run_id`, `record_kind`, `record_id`, `field`, `verdict`, and `verifier_model` (default: `claude-opus-4-7`). After loading, computes `mismatch_rate = (no + 0.5 * partial) / total` and patches `pipeline_runs.stats_json.claim_defensible_sample` with `{sample_size, yes, partial, no, mismatch_rate}`. If `mismatch_rate > config.QA_MISMATCH_THRESHOLD` (0.10), appends `"claim_defensible_mismatch_rate"` to `stats_json.thresholds_breached` (idempotent — no duplicate appends). Prints a summary line on success.
 
 ### Evaluation verbs (Phase 2)
 

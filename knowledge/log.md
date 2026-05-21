@@ -1,5 +1,27 @@
 # Build Log
 
+## [2026-05-21] feat(cli): qa-sample + qa-load — sampling QA harness CLIs (Task 33)
+
+Added two CLI verbs to `pipeline/cli.py`:
+
+- **`changjuan qa-sample <pipeline_run_id>`** — emits the deterministic 5% sample of scalar facts as YAML for the `changjuan-verify-sample` skill to consume. Checks `candidate_facts` first; falls back to enumerating scalar fields from `candidate_persons`, `candidate_events`, `candidate_places`, `candidate_states` when `candidate_facts` is unpopulated for the run (which is the current state — stage 3 does not write to `candidate_facts`). Delegates to `pipeline.qa_sampling.select_sample`.
+
+- **`changjuan qa-load --run-id --qa-file`** — ingests verifier verdicts into `qa_samples` (UUID `id` per row; the table has a `NOT NULL PRIMARY KEY id` column). Computes `mismatch_rate = (no + 0.5 * partial) / total`; patches `pipeline_runs.stats_json.claim_defensible_sample`; appends `"claim_defensible_mismatch_rate"` to `stats_json.thresholds_breached` when `mismatch_rate > config.QA_MISMATCH_THRESHOLD` (0.10).
+
+Schema findings:
+- `candidate_facts` table **exists** in `canonical_schema.sql` (columns: `id, subject_kind, subject_candidate_id, field, value_json, justification_quote, justification_span, pipeline_run_id`) but is not populated by stage 3 in the current codebase. Fallback path is active.
+- `qa_samples` table has `id TEXT PRIMARY KEY` — explicit UUID required on insert.
+- `pipeline_runs` has `prompt_version` column (confirmed present in schema).
+
+Three new tests in `tests/unit/test_qa_cli.py`:
+- `test_qa_sample_emits_yaml_with_triples` — seeds one `candidate_persons` row; verifies stdout is valid YAML list with ≥1 entry.
+- `test_qa_load_writes_qa_samples_and_updates_stats` — loads 2-verdict YAML; asserts rows in `qa_samples` and `stats_json.claim_defensible_sample` values.
+- `test_qa_load_breaches_threshold_when_mismatch_high` — 4 `no` verdicts → mismatch_rate 1.0 > 0.10 threshold → `thresholds_breached` contains `"claim_defensible_mismatch_rate"`.
+
+Article updated: `concepts/runtime/cli.md` (new "Sampling QA verbs" section; `test_qa_cli.py` added to `affects` frontmatter).
+
+Total: 155 tests.
+
 ## [2026-05-21] feat(skill): .claude/skills/changjuan-verify-sample/ — sampling QA verifier (Task 32)
 
 Created `.claude/skills/changjuan-verify-sample/SKILL.md` (operational shell) and `.claude/skills/changjuan-verify-sample/verifier-prompt.md` (focused yes/no/partial Chinese-leaning verifier prompt).
