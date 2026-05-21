@@ -222,15 +222,51 @@ def _find_existing_person(conn: sqlite3.Connection, name: str) -> str | None:
     return str(row["person_id"])
 
 
+def _write_variants(
+    conn: sqlite3.Connection,
+    person_id: str,
+    variants_json: str | None,
+) -> None:
+    """Write person_variants rows from a JSON-encoded variants list.
+
+    Each entry in the list is ``{"variant": str, "kind": str}``.
+    Uses INSERT OR IGNORE so duplicate (person_id, variant, kind) tuples are silently
+    dropped — idempotent across re-extract runs. The surrogate id is derived as a
+    6-char SHA-256 hex digest of ``person_id + variant + kind`` to avoid slug collisions.
+    """
+    if not variants_json:
+        return
+    import json as _json_local
+
+    try:
+        entries = _json_local.loads(variants_json)
+    except (_json_local.JSONDecodeError, TypeError):
+        return
+    for entry in entries:
+        variant = entry.get("variant", "")
+        kind = entry.get("kind", "别名")
+        if not variant:
+            continue
+        h = hashlib.sha256(f"{person_id}:{variant}:{kind}".encode()).hexdigest()[:8]
+        variant_id = f"pv:{h}"
+        conn.execute(
+            "INSERT OR IGNORE INTO person_variants (id, person_id, variant, kind) "
+            "VALUES (?, ?, ?, ?);",
+            (variant_id, person_id, variant, kind),
+        )
+
+
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
     Matches candidates against existing Persons by canonical_name first, then
     by person_variants.variant. Creates a new Person if no match found.
+    Variants from the extraction (variants_json) are written to person_variants
+    idempotently so that successive runs accumulate without duplicating.
     """
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-        "state_id, clan_name, confidence, chunk_id, quote "
+        "state_id, clan_name, confidence, chunk_id, quote, variants_json "
         "FROM candidate_persons WHERE pipeline_run_id = ?;",
         (pipeline_run_id,),
     )
@@ -252,6 +288,7 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         else:
             person_id = existing_id
             _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
+        _write_variants(conn, person_id, c["variants_json"])
         record_citation(conn, "person", person_id, c["chunk_id"])
         affected += 1
     return affected

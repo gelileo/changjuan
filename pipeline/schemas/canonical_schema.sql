@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS candidate_persons (
     state_id        TEXT,
     clan_name       TEXT,
     social_category TEXT,
+    variants_json   TEXT,
     confidence      REAL NOT NULL,
     pipeline_run_id TEXT NOT NULL,
     chunk_id        TEXT NOT NULL,

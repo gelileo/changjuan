@@ -763,3 +763,42 @@ extract-format mode of fill-spans) by the `changjuan-extract` skill at runtime.
 
 Articles touched: none (annotation data + helper scripts; conventions
 documented in tests/golden/ch01/README.md).
+
+## [2026-05-21] integration: re-extract accumulates variants, emits Conflicts, preserves curated (Task 38)
+
+Created `tests/integration/test_re_extract_accumulates.py` exercising the
+end-to-end v1 → v2 re-extract flow synthetically (no LLM). Four assertions:
+variant accumulation, scalar-disagreement Conflict emission, citation
+accumulation in entity_citations, curated-field preservation under re-extract.
+Marked `@pytest.mark.integration`.
+
+Supporting changes required to make the tests green:
+
+1. `pipeline/db.py` — added `conn.row_factory = sqlite3.Row` to both
+   `open_canonical_db` and `open_corpus_db`. These functions were missing the
+   assignment that `connect()` already had, causing dict-style column access
+   (`c["clan_name"]`) to fail when callers used these helpers directly.
+
+2. `pipeline/schemas/canonical_schema.sql` — added `variants_json TEXT` column
+   to `candidate_persons` staging table to carry extracted variant entries
+   through the pipeline.
+
+3. `pipeline/stage3_extract.py` — serialises `p["variants"]` (list of
+   `{variant, kind}` dicts) to `variants_json` when writing `candidate_persons`
+   rows. Column is `NULL` when the extraction record has no variants.
+
+4. `pipeline/stage7_load/persons.py` — added `_write_variants` helper that
+   reads `variants_json` and inserts `person_variants` rows via `INSERT OR IGNORE`
+   (idempotent on the `UNIQUE (person_id, variant, kind)` constraint). Surrogate
+   `id` is an 8-char SHA-256 hex digest of `person_id:variant:kind` to avoid
+   slug collisions. Called from `load_candidate_persons` after create/merge.
+
+Result: 3 assertions (conflict emission, curated preservation, citation
+accumulation) passed against existing code; only the variant-accumulation path
+required new infrastructure. Total tests: 166 (162 → 166).
+
+pytest markers `integration` and `golden` registered in `pyproject.toml`
+`[tool.pytest.ini_options].markers`.
+
+Articles touched: concepts/pipeline/load-and-merge.md,
+concepts/data-model/knowledge-graph.md, concepts/verification/testing.md.

@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-21
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions)
 status: thin
 load_bearing: true
 references:
@@ -56,7 +56,11 @@ Each `candidate_persons` row carries a `chunk_id`; `record_citation` stores this
 
 ## Variant union
 
-When a candidate's `canonical_name` is already a `variant` of an existing Person, the loader maps to that Person and calls `_merge_scalar_fields`. No duplicate variant rows are created. New variant proposals from Phase 2 linking (stage 5) will extend `person_variants` separately.
+When a candidate's `canonical_name` is already a `variant` of an existing Person, the loader maps to that Person and calls `_merge_scalar_fields`. No duplicate variant rows are created.
+
+Extracted variants from `candidate_persons.variants_json` are written to `person_variants` by `_write_variants` (Task 38). Each entry in the JSON list is `{"variant": str, "kind": str}`. The insert uses `INSERT OR IGNORE` against both the `id` PRIMARY KEY and the `UNIQUE (person_id, variant, kind)` constraint — so re-running the same extraction twice produces exactly one `person_variants` row per (person, variant, kind) tuple. The surrogate `id` is a 8-char SHA-256 hex digest of the composite `person_id:variant:kind` string to avoid slug collisions when two variants of the same person have the same romanized slug.
+
+This means successive re-extract runs accumulate variants rather than overwriting: v1 adding `公子重耳` and v2 adding `晋公子` for the same canonical Person `重耳` will result in both rows in `person_variants`.
 
 ## Audit log
 

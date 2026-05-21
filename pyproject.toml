@@ -32,3 +32,7 @@ packages = ["pipeline", "curation"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "integration: integration tests (slower; need corpus.sqlite)",
+    "golden: golden-fixture comparison tests (slowest)",
+]

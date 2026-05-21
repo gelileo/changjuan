@@ -100,7 +100,7 @@ Phase 2 Task 35 adds three boundary regression tests for reign-year transitions 
 - `test_resolve_with_explicit_offset_unknown_token` — updates `original` to `'其后五年'` (not in `_RELATIVE_OFFSETS`), invokes with `--offset 5`; asserts `year_bce == 766` (771 − 5).
 - `test_resolve_dangling_anchor_errors` — passes `--anchor-event-id evt:nope`; asserts non-zero exit code and "not found" or "dangling" in output.
 
-These tests also exercise `pipeline.db.open_canonical_db` and `open_corpus_db` — the convenience helpers that apply the schema and return a bare `sqlite3.Connection`.
+These tests also exercise `pipeline.db.open_canonical_db` and `open_corpus_db` — the convenience helpers that apply the schema and return a `sqlite3.Connection` with `row_factory = sqlite3.Row` set (Task 38 fixed a missing `row_factory` assignment that caused dict-style column access to fail when using these helpers directly).
 
 ## LLM cache tests
 
@@ -119,6 +119,17 @@ The harness matchers are factory functions (not bare functions) that capture per
 The `golden_eval_cmd` in `pipeline/cli.py` builds candidate dicts that include an `id` field carrying the chunk-local suffix extracted from the row's full candidate id (`cand:per:run:xxx:p1` → `p1`). Relation FK columns (`candidate_event_id`, `candidate_person_id`, etc.) are similarly stripped to chunk-local suffix before being stored in the relation dict. This aligns the lookup keys across both sides.
 
 The harness lives in `tests/golden/precision_recall.py`; it is test infrastructure, not part of the pipeline package.
+
+## Re-extract accumulation integration tests
+
+`tests/integration/test_re_extract_accumulates.py` (Phase 2 Task 38) exercises the full v1 → v2 re-extract flow synthetically (no LLM). Uses `open_corpus_db` / `open_canonical_db` with `tmp_path`. Four tests marked `@pytest.mark.integration`:
+
+- `test_re_extract_accumulates_variants` — v1 adds variant `公子重耳`; v2 adds `晋公子`; asserts both appear in `person_variants` for the single canonical Person (exercises the variant-accumulation path added in Task 38).
+- `test_re_extract_emits_conflict_on_scalar_disagreement` — v1 sets `clan_name='姬'`; v2 proposes `clan_name='姚'` at similar confidence; asserts at least one `conflicts` row with `field='clan_name'`.
+- `test_re_extract_accumulates_citations` — two runs citing different chunks (`chk:1` / `chk:2`); asserts one canonical Person and `entity_citations` count ≥ 2. Uses a two-chunk corpus helper (`_seed_corpus_two_chunks`) because `entity_citations` is keyed on `(entity_kind, entity_id, citation_id)` — the same chunk cited twice is idempotent.
+- `test_curated_field_not_silently_overwritten` — v1 creates Person with `clan_name='姬'`; curator sets `provenance='curated'`; v2 proposes `clan_name='姚'`; asserts `clan_name` remains `'姬'` (curated-never-overwritten invariant).
+
+All four assertions passed without modifying stage 7 merge logic; only the variant-writing path (`_write_variants` in `persons.py`) and schema change (`candidate_persons.variants_json`) were new additions.
 
 ## Phase 1 round-trip integration test
 

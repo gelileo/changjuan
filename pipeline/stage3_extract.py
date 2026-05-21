@@ -196,12 +196,13 @@ def load_extraction(
         conf = score_extraction_record(scoring)
         birth_json = json.dumps(p["birth_date"]) if p.get("birth_date") else None
         death_json = json.dumps(p["death_date"]) if p.get("death_date") else None
+        variants_json = json.dumps(p["variants"], ensure_ascii=False) if p.get("variants") else None
         canonical_conn.execute(
             "INSERT INTO candidate_persons "
             "(id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-            " state_id, clan_name, social_category, "
+            " state_id, clan_name, social_category, variants_json, "
             " confidence, pipeline_run_id, chunk_id, quote) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 cand_id,
                 p["canonical_name"],
@@ -212,6 +213,7 @@ def load_extraction(
                 p.get("state_id"),
                 p.get("clan_name"),
                 p.get("social_category"),
+                variants_json,
                 conf,
                 pipeline_run_id,
                 p["citation"]["chunk_id"],
