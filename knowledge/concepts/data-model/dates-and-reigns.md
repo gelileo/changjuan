@@ -14,7 +14,7 @@ affects:
 
 ## What this is
 
-Every Date in changjuan is structured: `{year_bce, uncertainty, year_bce_end?, original, era, inference_kind}`. The `inference_kind` records *how* a BCE year was derived — not all dates in 东周列国志 are equally trustworthy. The bundled `pipeline/reign_table.json` provides the canonical 鲁公 and 周王 chronologies (722 BCE – 468 BCE for 鲁, 770 – 476 BCE for 周) so explicit-reign citations like 鲁僖公二十八年 dereference deterministically to 632 BCE.
+Every Date in changjuan is structured: `{year_bce, uncertainty, year_bce_end?, original, era, inference_kind, relative_anchor_event_id?}`. The `inference_kind` records *how* a BCE year was derived — not all dates in 东周列国志 are equally trustworthy. The bundled `pipeline/reign_table.json` provides the canonical 鲁公 and 周王 chronologies (722 BCE – 468 BCE for 鲁, 770 – 476 BCE for 周) so explicit-reign citations like 鲁僖公二十八年 dereference deterministically to 632 BCE.
 
 ## Why this shape, not the alternatives
 

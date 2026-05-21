@@ -93,3 +93,18 @@ def test_relative_前年_with_anchor() -> None:
 def test_relative_without_anchor_returns_unknown() -> None:
     d = parse_date("明年")
     assert d["inference_kind"] == "unknown"
+
+
+def test_datedict_accepts_relative_anchor_event_id() -> None:
+    """The schema-level Date dict accepts an optional relative_anchor_event_id field."""
+    from pipeline.dates import DateDict
+
+    d: DateDict = {
+        "year_bce": None,
+        "uncertainty": "point",
+        "original": "其后五年",
+        "era": None,
+        "inference_kind": "relative_to_prior_event",
+        "relative_anchor_event_id": "evt:zhou-you-wang-killed-771bce",
+    }
+    assert d["relative_anchor_event_id"] == "evt:zhou-you-wang-killed-771bce"

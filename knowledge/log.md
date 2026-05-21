@@ -1,5 +1,14 @@
 # Build Log
 
+## [2026-05-21] dates: DateDict accepts optional relative_anchor_event_id
+
+Added `relative_anchor_event_id: NotRequired[str | None]` to `DateDict`.
+Cross-chunk anchor field is the manual escape hatch for the curator path;
+within-chunk dereferencing remains the automatic default. Existing date_json
+values without the field continue to work.
+
+Articles touched: concepts/data-model/dates-and-reigns.md (will be updated in Task 14).
+
 ## [2026-05-21] config: Phase 2 constants for extraction, QA, golden thresholds (Task 12)
 
 Added Phase 2 configuration constants to `pipeline/config.py`: EXTRACTION_DIR,

@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 _REIGN_TABLE: dict[str, object] | None = None
 
@@ -32,6 +32,7 @@ class DateDict(TypedDict, total=False):
     original: str
     era: str | None
     inference_kind: str
+    relative_anchor_event_id: NotRequired[str | None]
 
 
 # 一二三...十 mapping for reign-year parsing
