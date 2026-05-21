@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Regenerate .claude/skills/changjuan-extract/extraction-schema.yaml from the
+# canonical Python EXTRACT_OUTPUT_SCHEMA. The pre-commit hook asserts no diff
+# remains after this runs.
+
+SKILL_DIR=".claude/skills/changjuan-extract"
+TARGET="${SKILL_DIR}/extraction-schema.yaml"
+
+mkdir -p "${SKILL_DIR}"
+
+uv run python -c "
+import yaml
+from pipeline.schemas.extract_output import EXTRACT_OUTPUT_SCHEMA, PROMPT_TEMPLATE_VERSION
+
+target_path = '${TARGET}'
+with open(target_path, 'w', encoding='utf-8') as f:
+    f.write('# Generated from pipeline/schemas/extract_output.py — do not edit by hand.\n')
+    f.write(f'# PROMPT_TEMPLATE_VERSION = {PROMPT_TEMPLATE_VERSION}\n')
+    f.write('# Regenerate with: scripts/regen-extraction-schema\n\n')
+    yaml.safe_dump(EXTRACT_OUTPUT_SCHEMA, f, allow_unicode=True, sort_keys=True)
+"

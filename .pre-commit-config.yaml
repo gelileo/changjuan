@@ -16,6 +16,12 @@ repos:
         # Diff working tree against last commit — matches what we're
         # about to commit.
         args: [--base-ref, HEAD]
+      - id: regen-extraction-schema
+        name: extraction-schema.yaml in sync with Python schema
+        entry: bash -c 'scripts/regen-extraction-schema && git diff --exit-code --no-color -- .claude/skills/changjuan-extract/extraction-schema.yaml'
+        language: system
+        pass_filenames: false
+        files: '^(pipeline/schemas/extract_output\.py|\.claude/skills/changjuan-extract/extraction-schema\.yaml)$'
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.0
     hooks:

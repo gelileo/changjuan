@@ -83,7 +83,7 @@ The `--prompt-version` flag on `extract-load` matches the directory suffix (empt
 
 ## Single source of truth for the extraction schema
 
-`pipeline/schemas/extract_output.py::EXTRACT_OUTPUT_SCHEMA` is the canonical Python dict. A pre-commit hook regenerates `.claude/skills/changjuan-extract/extraction-schema.yaml` from it and asserts no diff — the skill and the Python validator can never drift. The `changjuan extract` pre-flight verb also compares the two and fails if they diverge.
+`pipeline/schemas/extract_output.py::EXTRACT_OUTPUT_SCHEMA` is the canonical Python dict. `scripts/regen-extraction-schema` materializes it into `.claude/skills/changjuan-extract/extraction-schema.yaml`. A local pre-commit hook runs the regenerator on every commit that touches either file and asserts no diff — the skill and the Python validator can never drift. The `changjuan extract` pre-flight verb also compares the two and fails if they diverge. (Regenerator and hook implemented in Task 26; YAML seeded alongside that commit.)
 
 ## Confidence scoring
 

@@ -1,5 +1,16 @@
 # Build Log
 
+## [2026-05-21] hooks: regen-extraction-schema keeps skill YAML in sync with Python source
+
+Added scripts/regen-extraction-schema which materializes
+pipeline/schemas/extract_output.py::EXTRACT_OUTPUT_SCHEMA into
+.claude/skills/changjuan-extract/extraction-schema.yaml. Added a local
+pre-commit hook that runs the regenerator and asserts no diff remains —
+if the YAML drifts from the Python source (or vice versa), the commit fails.
+
+Articles touched: concepts/pipeline/extraction.md (schema-mirror paragraph
+updated to confirm regenerator and hook are now live, not just planned).
+
 ## [2026-05-21] docs(knowledge): concepts/pipeline/extraction.md — stage 3 architecture (Task 25)
 
 Created `knowledge/concepts/pipeline/extraction.md`. Covers the full stage-3 picture:
