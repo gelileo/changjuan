@@ -1,5 +1,26 @@
 # Build Log
 
+## [2026-05-21] feat(skill): .claude/skills/changjuan-extract/ — stage 3 extraction skill (Task 27)
+
+Created the full changjuan-extract skill directory (first-draft pass):
+
+- `SKILL.md` — operational instructions for the Claude Code agent: how to query
+  chunks, chunk-local id conventions, citation/justification mechanics, fill-spans
+  chaining, extract-load chaining, and the hard constraints list.
+- `system-prompt.md` — comprehensive Chinese-language extraction rules (~1000 words).
+  Sections: 任务概述, 实体定义, 范围规则, 变体折叠, 变体种类, social_category 枚举,
+  日期处理, 引用规则, 逐字段 justification 规则, 关系覆盖策略, 禁止字段值, 最小示例.
+  Draws directly from the Ch.1 golden README decisions log.
+- `examples/ch01-excerpt.md` — fully worked few-shot example using chunk chk:dzl:1:14
+  (paragraphs 14–19, 785 BCE events: 宣王梦 / 杜伯被斩 / 左儒自刎 / 隰叔奔晋).
+  Entity and relation values drawn verbatim from the golden YAMLs.
+
+`extraction-schema.yaml` already existed from Task 26 and was not modified.
+
+Articles touched: `concepts/pipeline/extraction.md` — no content change needed;
+the `affects:` glob `.claude/skills/changjuan-extract*/**` already covers this
+directory and the article accurately describes the skill mechanism.
+
 ## [2026-05-21] hooks: regen-extraction-schema keeps skill YAML in sync with Python source
 
 Added scripts/regen-extraction-schema which materializes

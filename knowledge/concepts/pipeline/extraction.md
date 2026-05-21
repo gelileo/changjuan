@@ -102,6 +102,24 @@ The 0.95 ceiling reserves 1.0 for curated records. Stage 3 never claims 1.0. Fut
 
 The spec's ideal decorrelation for sampling QA is Opus 4.7 verifier vs. Sonnet 4.6 extractor — different models reduce correlated errors. A Claude Code session has one active model at a time, so Phase 2's sampling QA harness (`.claude/skills/changjuan-verify-sample/`) uses the same model as the extractor, decorrelated by prompt only. The spec's escape hatch ("a different model **or** a different prompt template") makes this acceptable. This is a documented Phase 2 limitation; it can be promoted to full model-level decorrelation if Claude Code gains per-skill model configuration.
 
+## Skill files (Task 27)
+
+The v1 skill directory is now fully populated at `.claude/skills/changjuan-extract/`:
+
+- `SKILL.md` — operational instructions for the Claude Code agent (how to query chunks,
+  emit chunk-local ids, chain `fill-spans` and `extract-load`, hard constraint list).
+- `system-prompt.md` — comprehensive Chinese-language extraction rules (~1000 words).
+  Covers entity definitions, scope rules, variant folding, `social_category` enum,
+  date handling (`inference_kind` allowlist), citation and justification mechanics,
+  relation coverage strategy, and a minimum-valid YAML inline example.
+- `extraction-schema.yaml` — generated YAML mirror of `EXTRACT_OUTPUT_SCHEMA` (Task 26).
+- `examples/ch01-excerpt.md` — fully worked few-shot example from chunk `chk:dzl:1:14`
+  (Ch.1 paragraphs 14–19: 785 BCE events — 宣王梦 / 杜伯被斩 / 左儒自刎 / 隰叔奔晋).
+
+The system prompt is the primary iteration surface for Phase 2. Edit
+`system-prompt.md` and re-invoke the skill; the Python validator and its invariants
+do not change between prompt iterations.
+
 ## What would invalidate this article
 
 - Adding an `ANTHROPIC_API_KEY` to the project and wiring a direct SDK call (would eliminate the two-actor split).
