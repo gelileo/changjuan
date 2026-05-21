@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-21] stage 2: chunking edge-case tests (deferred #9)
+
+Added two regression tests in `tests/unit/test_stage2_chunk.py`:
+- `test_empty_paragraphs_are_skipped` — empty paragraphs (from `\n\n\n` runs) don't produce empty chunks.
+- `test_oversized_single_paragraph_emits_one_chunk` — paragraphs larger than the target chunk size still emit exactly one chunk; v1 chunker doesn't split mid-paragraph.
+
+Articles touched: `concepts/verification/testing.md` (chunking edge-case tests section added).
+
 ## [2026-05-21] stage 2: _PARA_SEP regex accepts single-newline paragraphs (deferred #1)
 
 Changed `pipeline/stage2_chunk.py::_PARA_SEP` from `r"\r?\n\s*\r?\n+"` to `r"\r?\n+"`. Upstream 东周列国志 JSON uses single `\n` between paragraphs; the previous regex required blank-line separators and silently collapsed each chapter into one ~5KB chunk. Added regression test `test_chunks_emerge_from_single_newline_separated_paragraphs`. Re-chunked the corpus: chunk count went from 108 (one per chapter) to 606.

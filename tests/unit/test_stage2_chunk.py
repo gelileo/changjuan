@@ -95,3 +95,38 @@ def test_chunks_emerge_from_single_newline_separated_paragraphs(tmp_path: "Path"
     assert (
         len(chunks) > 1
     ), f"expected >1 chunk from 4 single-\\n-separated paragraphs, got {len(chunks)}"
+
+
+def test_empty_paragraphs_are_skipped(tmp_path: Path) -> None:
+    """Three actual paragraphs with two empty lines between them → 3 paragraphs, not 5.
+
+    Empty paragraphs (from \n\n\n runs) should be stripped out and not produce empty chunks.
+    """
+    cfg = Config(repo_root=tmp_path, chunk_target_chars=500, chunk_overlap_chars=50)
+    with connect(cfg.corpus_db) as conn:
+        apply_schema(conn, CORPUS_SCHEMA)
+        _seed_doc(conn, "d1", ["段一。", "", "", "段二。", "", "段三。"])
+        chunk_documents(conn, cfg)
+        chunks = list(conn.execute("SELECT id, text FROM chunks ORDER BY paragraph_start;"))
+
+    # All chunks should have non-empty text (no empty paragraphs should survive)
+    assert all(c["text"].strip() for c in chunks), "no chunk should be empty"
+    # With target of 500 chars and 3 small paragraphs, should all fit in one chunk
+    assert len(chunks) == 1
+
+
+def test_oversized_single_paragraph_emits_one_chunk(tmp_path: Path) -> None:
+    """A single paragraph larger than the target chunk size still emits exactly one chunk.
+
+    No mid-paragraph splits in the v1 chunker: paragraph boundaries are atomic.
+    """
+    cfg = Config(repo_root=tmp_path, chunk_target_chars=100, chunk_overlap_chars=10)
+    with connect(cfg.corpus_db) as conn:
+        apply_schema(conn, CORPUS_SCHEMA)
+        big = "甲" * 5000  # one paragraph, no newlines
+        _seed_doc(conn, "d1", [big])
+        chunk_documents(conn, cfg)
+        chunks = list(conn.execute("SELECT id, text FROM chunks ORDER BY paragraph_start;"))
+
+    assert len(chunks) == 1, f"expected 1 chunk, got {len(chunks)}"
+    assert len(chunks[0]["text"]) == 5000
