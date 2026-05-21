@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-21
+updated: 2026-05-21 (social_category)
 status: mature
 load_bearing: false
 references:
@@ -89,11 +89,11 @@ Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` cr
 
 ## Golden YAML loader tests
 
-`tests/unit/test_golden_loader.py` exercises `tests.golden.loader.load_golden`. Five tests: `test_loads_valid_golden_set` (happy path — minimal valid YAML set for a chapter, asserts correct entity counts), `test_rejects_dangling_citation_reference` (person references a citation id that doesn't exist in citations.yaml → `GoldenLoadError`), `test_rejects_missing_required_field` (person missing `canonical_name` → `GoldenLoadError`), `test_rejects_unknown_inference_kind` (event date with an unrecognized `inference_kind` value → `GoldenLoadError`), and `test_rejects_relative_anchor_cycle` (two events whose `relative_anchor_event_id` values form a cycle → `GoldenLoadError`). Tests use `tmp_path`-based `golden_dir` fixture writing minimal YAML files. The loader itself lives in `tests/golden/loader.py` — it is test infrastructure, not part of the pipeline package.
+`tests/unit/test_golden_loader.py` exercises `tests.golden.loader.load_golden`. Seven tests: `test_loads_valid_golden_set` (happy path — minimal valid YAML set for a chapter, asserts correct entity counts), `test_rejects_dangling_citation_reference` (person references a citation id that doesn't exist in citations.yaml → `GoldenLoadError`), `test_rejects_missing_required_field` (person missing `canonical_name` → `GoldenLoadError`), `test_rejects_unknown_inference_kind` (event date with an unrecognized `inference_kind` value → `GoldenLoadError`), `test_rejects_relative_anchor_cycle` (two events whose `relative_anchor_event_id` values form a cycle → `GoldenLoadError`), `test_accepts_valid_social_category` (person with `social_category: official` → field returned verbatim), `test_rejects_invalid_social_category` (person with `social_category: wizard` → `GoldenLoadError` matching "social_category"). Tests use `tmp_path`-based `golden_dir` fixture writing minimal YAML files. The loader validates `social_category` against `_VALID_SOCIAL_CATEGORIES` (frozenset of 11 values). The loader itself lives in `tests/golden/loader.py` — it is test infrastructure, not part of the pipeline package.
 
 ## Precision/Recall harness tests
 
-`tests/unit/test_precision_recall.py` exercises `tests.golden.precision_recall.compute_pr`. Five tests: `test_person_p_r_with_perfect_match` (single person in golden and candidates — both precision and recall are 1.0), `test_person_recall_drops_when_missing` (two in golden, one in candidates — recall 0.5, fn 1), `test_person_precision_drops_with_extras` (one in golden, two in candidates — precision 0.5, fp 1), `test_event_matches_on_type_year_and_place` (exact event match — precision 1.0), `test_event_year_within_one_year_counts_as_match` (year off by one — tp 1). The harness lives in `tests/golden/precision_recall.py`; it is test infrastructure, not part of the pipeline package.
+`tests/unit/test_precision_recall.py` exercises `tests.golden.precision_recall.compute_pr`. Seven tests: `test_person_p_r_with_perfect_match` (single person in golden and candidates — both precision and recall are 1.0), `test_person_recall_drops_when_missing` (two in golden, one in candidates — recall 0.5, fn 1), `test_person_precision_drops_with_extras` (one in golden, two in candidates — precision 0.5, fp 1), `test_event_matches_on_type_year_and_place` (exact event match — precision 1.0), `test_event_year_within_one_year_counts_as_match` (year off by one — tp 1), `test_person_match_blocked_by_social_category_mismatch` (golden has `noble`, candidate has `royalty` — tp 0, fp 1, fn 1), `test_person_match_ignores_missing_social_category` (golden has no `social_category`, candidate has `royalty` — tp 1, match not blocked). The `_person_match` function checks `social_category` agreement only when both sides have it set. The harness lives in `tests/golden/precision_recall.py`; it is test infrastructure, not part of the pipeline package.
 
 ## Phase 1 round-trip integration test
 

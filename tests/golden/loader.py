@@ -17,6 +17,22 @@ _VALID_INFERENCE_KINDS = {
     "unknown",
 }
 
+_VALID_SOCIAL_CATEGORIES = frozenset(
+    {
+        "royalty",
+        "noble",
+        "official",
+        "military",
+        "religious",
+        "clergy",
+        "commoner",
+        "servant",
+        "foreign",
+        "mythic",
+        "unknown",
+    }
+)
+
 _REQUIRED_PERSON_FIELDS = ("id", "canonical_name", "citations")
 _REQUIRED_EVENT_FIELDS = ("id", "type", "citations")
 _REQUIRED_PLACE_FIELDS = ("id", "name")
@@ -99,6 +115,12 @@ def load_golden(chapter_dir: Path) -> dict[str, Any]:
 
     for p in persons:
         _require_fields(p, _REQUIRED_PERSON_FIELDS, "persons")
+        if "social_category" in p:
+            if p["social_category"] not in _VALID_SOCIAL_CATEGORIES:
+                raise GoldenLoadError(
+                    f"person {p['id']}: invalid social_category '{p['social_category']}' "
+                    f"(must be one of {sorted(_VALID_SOCIAL_CATEGORIES)})"
+                )
         for cid in p["citations"]:
             if cid not in citation_ids:
                 raise GoldenLoadError(f"person {p['id']}: dangling citation '{cid}'")

@@ -1,5 +1,26 @@
 # Build Log
 
+## [2026-05-21] schema: add `social_category` to Person (coarse-grained type)
+
+Added an optional enum field to the Person entity (and `candidate_persons`):
+royalty / noble / official / military / religious / clergy / commoner /
+servant / foreign / mythic / unknown. Surfaced as a schema gap while
+annotating golden Ch.1's unnamed-but-acting persons (老宫人, 女婴, 妇人,
+男子) — the existing `person_states.role` field is too narrow to capture
+coarse social class for figures who don't hold named state offices.
+Specific positions (太宰 / 大宗伯 / etc.) still live in `person_states.role`;
+`social_category` is independent.
+
+Schema change scoped to:
+- pipeline/schemas/canonical_schema.sql (persons + candidate_persons TEXT column)
+- tests/golden/loader.py (enum validation)
+- tests/golden/precision_recall.py (block matches on category mismatch when both set)
+- tests/golden/ch01/persons.yaml (13 records backfilled)
+- docs/superpowers/specs/2026-05-20-changjuan-design.md (data-model addendum)
+- knowledge/concepts/data-model/knowledge-graph.md (field documentation)
+
+Articles touched: concepts/data-model/knowledge-graph.md, concepts/verification/testing.md.
+
 ## [2026-05-21] tests/golden: precision_recall.py harness
 
 Created `tests/golden/precision_recall.py::compute_pr`. Per-entity-type

@@ -86,6 +86,38 @@ def test_rejects_unknown_inference_kind(golden_dir):
         load_golden(golden_dir)
 
 
+def test_accepts_valid_social_category(golden_dir):
+    _write(
+        golden_dir / "persons.yaml",
+        [
+            {
+                "id": "per:x",
+                "canonical_name": "X",
+                "social_category": "official",
+                "citations": ["cit:1"],
+            },
+        ],
+    )
+    g = load_golden(golden_dir)
+    assert g["persons"][0]["social_category"] == "official"
+
+
+def test_rejects_invalid_social_category(golden_dir):
+    _write(
+        golden_dir / "persons.yaml",
+        [
+            {
+                "id": "per:x",
+                "canonical_name": "X",
+                "social_category": "wizard",
+                "citations": ["cit:1"],
+            },
+        ],
+    )
+    with pytest.raises(GoldenLoadError, match="social_category"):
+        load_golden(golden_dir)
+
+
 def test_rejects_relative_anchor_cycle(golden_dir):
     _write(
         golden_dir / "events.yaml",

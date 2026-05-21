@@ -13,7 +13,14 @@ def _person_match(g: dict[str, Any], c: dict[str, Any]) -> bool:
         return False
     g_state = g.get("state_id")
     c_state = c.get("state_id")
-    return g_state == c_state or g_state is None or c_state is None
+    if not (g_state == c_state or g_state is None or c_state is None):
+        return False
+    # social_category: when both have it set, they must agree
+    g_cat = g.get("social_category")
+    c_cat = c.get("social_category")
+    if g_cat is not None and c_cat is not None and g_cat != c_cat:
+        return False
+    return True
 
 
 def _event_match(g: dict[str, Any], c: dict[str, Any]) -> bool:

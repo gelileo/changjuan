@@ -2,7 +2,7 @@
 title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
-updated: 2026-05-20
+updated: 2026-05-21
 status: thin
 load_bearing: true
 references:
@@ -34,6 +34,7 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 - Candidate staging tables (`candidate_persons`, `candidate_events`, etc.) are the unvetted extractor output; stage 7 merges them into canonical tables with full conflict detection.
 - `audit_log` stores field-level changes as `{value, confidence}` JSON in `after_json`; the `field_history` view reconstructs per-field history without a redundant blob on entity rows. Index on `(entity_kind, entity_id, field)` keeps the view fast.
 - Person identity rule: `canonical_name` + `variants[]` with `kind ∈ {本名, 字, 谥号, 封号, 别名}`.
+- Person carries an optional `social_category` enum (royalty / noble / official / military / religious / clergy / commoner / servant / foreign / mythic / unknown). Added 2026-05-21 after annotating golden Ch.1 exposed that unnamed-but-acting figures (老宫人, 女婴, 妇人, 男子) have no state-office to put in `person_states.role` — the field is too narrow for coarse social class. `social_category` is independent of `person_states.role`: specific positions (太宰, 大宗伯, etc.) remain in `person_states.role`; `social_category` applies even when no state-role record exists. Optional in the schema — a record may omit it — but expected to be filled by the extractor whenever the text provides a clue.
 - Every relation row carries its own `citation_id`, `confidence`, `provenance` — not just entities.
 - Date type: `{year_bce, uncertainty (point|range|circa), year_bce_end?, original, era, inference_kind}`.
 - Stable IDs are human-readable slugs (`per:jin-wen-gong`, `evt:cheng-pu-zhi-zhan-632bce`), seeded from curated `canonical_name`.

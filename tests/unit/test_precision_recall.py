@@ -70,6 +70,36 @@ def test_event_matches_on_type_year_and_place() -> None:
     assert report["per_entity_type"]["event"]["precision"] == 1.0
 
 
+def test_person_match_blocked_by_social_category_mismatch() -> None:
+    golden = _g(
+        persons=[
+            {
+                "id": "per:a",
+                "canonical_name": "重耳",
+                "state_id": "sta:jin",
+                "social_category": "noble",
+            }
+        ]
+    )
+    cands = _g(
+        persons=[{"canonical_name": "重耳", "state_id": "sta:jin", "social_category": "royalty"}]
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["person"]["tp"] == 0
+    assert report["per_entity_type"]["person"]["fp"] == 1
+    assert report["per_entity_type"]["person"]["fn"] == 1
+
+
+def test_person_match_ignores_missing_social_category() -> None:
+    """When either side omits social_category, it doesn't block the match."""
+    golden = _g(persons=[{"id": "per:a", "canonical_name": "重耳", "state_id": "sta:jin"}])
+    cands = _g(
+        persons=[{"canonical_name": "重耳", "state_id": "sta:jin", "social_category": "royalty"}]
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["person"]["tp"] == 1
+
+
 def test_event_year_within_one_year_counts_as_match() -> None:
     golden = _g(
         events=[

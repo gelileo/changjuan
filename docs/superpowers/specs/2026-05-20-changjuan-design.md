@@ -99,12 +99,14 @@ The scoring weights are themselves tuned against the golden chapter set (Section
 
 | Entity | Description | Key fields |
 | --- | --- | --- |
-| **Person** 人物 | A historical figure. | `canonical_name`, `variants[]`, `gender`, `birth_date`, `death_date`, `state_id?`, `clan_name?` |
+| **Person** 人物 | A historical figure. | `canonical_name`, `variants[]`, `gender`, `birth_date`, `death_date`, `state_id?`, `clan_name?`, `social_category?` |
 | **State** 诸侯国 | A polity (周, 齐, 晋, 楚, 秦, 鲁, 卫, 宋, 郑, 陈, 蔡, 燕, 吴, 越, …). | `name`, `founded_date`, `ended_date`, `ruling_clan`, `type`, era-keyed `capitals[]` |
 | **Place** 地点 | A typed location (capital, battlefield, pass, river, mountain, meeting site). | `name`, `type`, `lat`, `lon`, `coord_confidence`, `modern_equiv` |
 | **Event** 事件 | A typed historical event (battle, 盟会, succession, exile, assassination, marriage, omen, embassy, …). | `type`, `date`, `outcome`, `summary`, `primary_place_id?`, role-typed `participants[]` |
 | **Citation** 出处 | Pointer to a verbatim source span. Referenced by every other record. | `corpus`, `chapter`, `paragraph`, `span`, `quote` |
 | **Conflict** 异说 | A first-class record of a disagreement between sources. | `subject_kind`, `subject_id`, `field`, `variants[]` (each with citation), `current_best_variant_idx`, `resolution_rule`, `status` |
+
+> **Note on `social_category` (added 2026-05-21).** Person carries an optional enum field `social_category` (royalty / noble / official / military / religious / clergy / commoner / servant / foreign / mythic / unknown) to express coarse social class. This was surfaced as a schema gap while hand-annotating golden Ch.1: the unnamed-but-acting persons (老宫人, 女婴, 妇人之卖箕袋, 男子之卖桑弓) don't hold named state offices, so `person_states.role` (ruler / minister / exile / …) couldn't capture their social position at all. `social_category` is independent of and complementary to `person_states.role`: specific positions (太宰, 大宗伯, 上大夫, etc.) remain in `person_states.role`, while `social_category` gives the extractor a coarse-grained handle that applies even when no state-role record exists. The field is optional — a Person record may omit it — but the extractor is expected to fill it whenever the text provides a clue.
 
 > **Note on Family.** A first-class `Family` entity was considered and **deferred**. Clan politics (三桓, 田氏代齐, 三家分晋) clearly matter, but the golden-chapter pass has to decide whether clan-level facts exist independently of person-level facts or are fully expressible via `person_relations(kind="clan_member")` + a `clan_name` string on Person + state context. We start with the lighter model and promote `Family` to an entity if and only if the data demands it. The promotion path: add `families` table, migrate `clan_name` strings to `family_id` foreign keys via a deterministic mapping, version-bump the export schema.
 

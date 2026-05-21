@@ -27,6 +27,7 @@
     - { variant: 宣王, kind: 谥号 }
     - { variant: 靖, kind: 本名 }
   gender: male
+  social_category: royalty
   state_id: sta:zhou
   citations:
     - cit:ch01-p3-045
@@ -38,6 +39,7 @@
 - id: per:zhong-shan-fu
   canonical_name: 仲山甫
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝太宰
   citations:
@@ -48,6 +50,7 @@
 - id: per:shao-hu
   canonical_name: 召虎
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝大宗伯；46-year hunt侍御左方
   citations:
@@ -58,6 +61,7 @@
 - id: per:bo-yang-fu
   canonical_name: 伯阳父
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝太史
   citations:
@@ -68,6 +72,7 @@
 - id: per:yin-ji-fu
   canonical_name: 尹吉甫
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝贤臣；46-year hunt侍御右方
   citations:
@@ -79,6 +84,7 @@
   variants:
     - { variant: 姜后, kind: 封号 }
   gender: female
+  social_category: royalty
   state_id: sta:zhou
   notes: 周宣王王后；主六宫之政
   citations:
@@ -89,6 +95,7 @@
 - id: per:du-bo
   canonical_name: 杜伯
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝上大夫；督访妖女不力被斩
   death_date:
@@ -104,6 +111,7 @@
 - id: per:zuo-ru
   canonical_name: 左儒
   gender: male
+  social_category: official
   state_id: sta:zhou
   notes: 周宣王朝下大夫；杜伯之友；杜伯死后自刎
   death_date:
@@ -120,6 +128,7 @@
 - id: per:xi-shu
   canonical_name: 隰叔
   gender: male
+  social_category: noble
   state_id: sta:zhou
   notes: 杜伯之子；杜伯死后奔晋；后仕晋为士师，子孙为士氏、范氏
   citations:
@@ -137,6 +146,7 @@
 - id: per:_lao-gong-ren-ch01
   canonical_name: 老宫人 (ch01)
   gender: female
+  social_category: servant
   state_id: sta:zhou
   notes: 先王手内老宫人；年五十余；自先朝怀孕四十余年生女婴
   citations:
@@ -145,6 +155,7 @@
 - id: per:_nv-ying-ch01
   canonical_name: 女婴 (ch01)
   gender: female
+  social_category: unknown
   notes: 老宫人所生女婴；被姜后弃于清水河；被卖桑弓之男子救起携往褒城。Almost certainly the later 褒姒 (named in subsequent chapters); Phase 2 records here as separate per spec — stage 5 will link.
   citations:
     - cit:ch01-p10-015
@@ -154,6 +165,7 @@
 - id: per:_fu-ren-zhi-mai-jian-dai-ch01
   canonical_name: 妇人之卖箕袋 (ch01)
   gender: female
+  social_category: commoner
   notes: 抱箕草箭袋入城卖；被司市官擒拿；以违禁罪处死
   death_date:
     year_bce: 789
@@ -168,6 +180,7 @@
 - id: per:_nan-zi-zhi-mai-sang-gong-ch01
   canonical_name: 男子之卖桑弓 (ch01)
   gender: male
+  social_category: commoner
   notes: 背山桑木弓入城；妻被擒后逃走；后于清水河救女婴携往褒城
   citations:
     - cit:ch01-p11-021

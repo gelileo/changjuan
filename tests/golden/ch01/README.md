@@ -40,6 +40,12 @@ Append-only list of judgment calls made during annotation. These rules feed into
 
 - **2026-05-21: Two-pass span workflow.** Spans are written as `[0, 0]` placeholders during the prose-annotation pass, then computed by `scripts/fill-spans` (which reads chunk text from `data/corpus.sqlite`, finds the quote, writes the real `[start, end]` offsets). This decouples the annotator's judgment work (what to cite) from mechanical character counting (what offsets correspond). Quote-not-found errors at fill time indicate the annotator's transcription drifted from source — most commonly via Chinese-quote-mark confusion (`"` vs `'`) or by including/excluding trailing punctuation.
 
+### Person `social_category`
+
+- **2026-05-21: Added a coarse-grained Person field.** Captures the kind of person (royalty / noble / official / military / religious / clergy / commoner / servant / foreign / mythic / unknown). Independent of specific state-bound role, which stays in `person_states.role`. Surfaced as a schema gap while annotating Ch.1's unnamed-but-acting persons (老宫人, 女婴, 妇人, 男子) — they don't hold named offices but clearly belong to coarse social categories. Added before the extraction schema (Task 10) locks in, so the extractor learns to emit the field from v1.
+- **2026-05-21: 太史 categorized as `official`, not `religious`.** 太史 is a senior court official whose duties include divination/astronomy, but the position itself is administrative (record-keeping, court announcements). `religious` reserved for figures whose primary identity is ritual/divinatory specialism without state office (太卜, 太祝, 巫, 占者).
+- **2026-05-21: 女婴 categorized as `unknown` despite later 褒姒 identity.** Per Phase 2 convention, cross-name identity (女婴 ↔ later 褒姒) is recorded as separate Person records; stage-5 linker merges. The Ch.1 record reflects what the text attests at the time of Ch.1 — an abandoned infant with no known social position.
+
 ### Variants and identity
 
 - **2026-05-21: Short-form folding only.** The only variant fold in Ch.1 is `宣王` ↔ `周宣王` — same person, just abbreviated form within the chapter. These stay as ONE record with `variants[]`. Any cross-name identification that would require stage-5 reasoning (e.g., 女婴 ↔ 褒姒) stays as SEPARATE records; stage 5 (Phase 3) is responsible for those merges.
