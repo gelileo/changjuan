@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] cli: extend `load` command to all five entity-kind loaders (Task 20)
+
+Extended `changjuan load <pipeline_run_id>` to wire all five loader functions from `pipeline.stage7_load` instead of only `load_candidate_persons`. Load order observed: places + states first (FK targets), then persons, events, relations. CLI output now reports counts for each kind: `loaded: places=N states=N persons=N events=N relations=N (run=ID)`.
+
+New integration test `test_cli_load_wires_all_five_entity_kinds` in `tests/unit/test_cli.py` seeds one candidate of each kind and verifies all five canonical tables receive rows. This is a CLI-level smoke test covering the dispatch wiring only (relations loaders tested separately in Task 19); the test does not exercise relation FK constraints to avoid seeding complexity.
+
+Articles touched: `concepts/runtime/cli.md` (load verb documentation extended to mention all five entity kinds + load order rationale).
+
+Total: 131 tests.
+
 ## [2026-05-21] stage7: load_candidate_relations across six relation kinds (Task 19)
 
 Added `pipeline/stage7_load/relations.py::load_candidate_relations`. Dispatches to six kind-specific loaders: event_participants, event_places, event_relations, person_relations, person_states, state_capitals. All six are append-mostly with tuple-key dedup via EXISTS check before INSERT. Citations accumulate via `record_citation` using a synthetic entity_id formed from the composite key elements joined by `:`.

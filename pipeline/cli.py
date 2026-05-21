@@ -20,7 +20,13 @@ from pipeline.db import apply_schema, connect, open_canonical_db
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
 from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
 from pipeline.stage2_chunk import chunk_documents
-from pipeline.stage7_load import load_candidate_persons
+from pipeline.stage7_load import (
+    load_candidate_events,
+    load_candidate_persons,
+    load_candidate_places,
+    load_candidate_relations,
+    load_candidate_states,
+)
 from pipeline.stage9_export import export_bundle
 
 app = typer.Typer(help="changjuan — Eastern-Zhou knowledge graph pipeline.")
@@ -70,8 +76,16 @@ def load(
     cfg = _cfg(repo_root)
     with connect(cfg.canonical_db) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-        n = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
-    typer.echo(f"loaded {n} candidate_persons rows under pipeline_run_id={pipeline_run_id}")
+        # Order matters: places + states first (events + relations reference them via FK).
+        n_places = load_candidate_places(conn, pipeline_run_id=pipeline_run_id)
+        n_states = load_candidate_states(conn, pipeline_run_id=pipeline_run_id)
+        n_persons = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
+        n_events = load_candidate_events(conn, pipeline_run_id=pipeline_run_id)
+        n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id)
+    typer.echo(
+        f"loaded: places={n_places} states={n_states} persons={n_persons} "
+        f"events={n_events} relations={n_rels} (run={pipeline_run_id})"
+    )
 
 
 @app.command()

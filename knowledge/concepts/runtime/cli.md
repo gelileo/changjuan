@@ -23,7 +23,7 @@ The `changjuan` command is a typer-based CLI exposing one subcommand per pipelin
 
 - **`changjuan ingest [--repo-root PATH]`** — Stage 1: reads the dongzhoulieguozhi JSON from `corpora/dongzhoulieguozhi/json/东周列国志.json` and inserts one row per chapter into `corpus.sqlite`. Exits 1 with a clear message if the corpus file is absent.
 - **`changjuan chunk [--repo-root PATH]`** — Stage 2: splits all unchunked documents into paragraph-aware overlapping chunks and writes them to `corpus.sqlite`.
-- **`changjuan load <pipeline_run_id> [--repo-root PATH]`** — Stage 7: promotes `candidate_persons` rows matching the given `pipeline_run_id` into canonical `persons` with field-level merge semantics (curated-never-overwritten, higher-confidence-wins, Conflict on disagreement).
+- **`changjuan load <pipeline_run_id> [--repo-root PATH]`** — Stage 7: promotes all five entity-kind candidates matching the given `pipeline_run_id` into canonical entities with field-level merge semantics (curated-never-overwritten, higher-confidence-wins, Conflict on disagreement). Load order: places + states first (other entity types reference them via foreign keys), then persons, events, and finally all six relation kinds. Returns counts for each entity kind loaded.
 - **`changjuan export <version> [--repo-root PATH]`** — Stage 9: freezes a versioned export bundle at `data/exports/changjuan-export-<version>/`, containing `manifest.json` and a `candidate_*`-stripped SQLite snapshot.
 
 ### Curator triage verbs (Phase 2)
