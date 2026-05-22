@@ -57,6 +57,8 @@ All threshold values are placeholders and *must* be recalibrated against measure
 
 `pipeline/stage5_link/scoring.py` introduces `person_match_score(a, b)` — the pure-function scorer that reads the thresholds above indirectly via the linker. The scorer itself has no configuration: its weights are hard-coded in the formula (see `concepts/pipeline/linking.md`, Task 12). Only the dispatch thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) live in `pipeline/config.py`. All five scoring dimensions are independent: temporal contributions apply unconditionally — spec §4 confirms this via the regression walkthrough table.
 
-## Stage 5 candidate_pool pre-filter (Phase 3 Task 7)
+## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.
+
+`candidate_pool` is re-exported from `pipeline.stage5_link.__init__` (added Task 7 fix) so callers can import it as `from pipeline.stage5_link import candidate_pool` without reaching into the sub-module directly. No configuration impact.

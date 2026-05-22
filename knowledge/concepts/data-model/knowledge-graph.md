@@ -49,9 +49,13 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 
 `pipeline/stage5_link/scoring.py` provides `person_match_score(a, b)` — a pure function that returns `{score: float, features: dict}`. The scorer is the central identity-judgement kernel: it answers "how likely are two Person records the same entity?" without touching the database. Hard veto when no name overlap exists; otherwise a weighted sum over five dimensions (variant_overlap, state_agreement, clan_agreement, social_category_agreement, temporal_proximity) clamped to [0, 1]. All five dimensions are **independent**: temporal contributions (+0.10 compatible, −0.30 conflict) apply regardless of variant_overlap level — spec §4 regression walkthrough (召公奭↔召虎: partial + state same + conflict = 0.10) confirms this. The score feeds the linker dispatch dial in `pipeline/stage5_link/linker.py` (Task 8): ≥0.75 → auto-merge, 0.40–0.75 → human queue, <0.40 → treat as new record. Full formula documented in `concepts/pipeline/linking.md` (Task 12).
 
-## candidate_person_variants table (Phase 3 Task 7)
+## candidate_person_variants table (Phase 3 Task 7, hardened Task 7 fix)
 
-`candidate_person_variants(id, candidate_person_id, variant, kind)` gives the Stage 5 linker structured SQL access to candidate-side name variants, enabling efficient name-overlap pre-filtering via JOIN without deserializing JSON. The table complements (does not replace) `candidate_persons.variants_json` — Phase 2's JSON column stays; Phase 4 may migrate Stage 3 to populate this table directly instead. For Phase 3, the linker tests and Task 14's integration test write directly to this table. An index on `variant` (`idx_candidate_person_variants_variant`) keeps the pre-filter queries fast when `candidate_pool()` scans for name overlap.
+`candidate_person_variants(id, candidate_person_id, variant, kind)` gives the Stage 5 linker structured SQL access to candidate-side name variants, enabling efficient name-overlap pre-filtering via JOIN without deserializing JSON. The table complements (does not replace) `candidate_persons.variants_json` — Phase 2's JSON column stays; Phase 4 may migrate Stage 3 to populate this table directly instead. For Phase 3, the linker tests and Task 14's integration test write directly to this table.
+
+`candidate_person_id` carries a FOREIGN KEY to `candidate_persons(id)`, mirroring the `person_variants.person_id → persons(id)` constraint (added in Task 7 fix; the initial schema omitted the FK). Two indices exist:
+- `idx_candidate_person_variants_variant` — keeps the cross-table name-overlap JOIN fast.
+- `idx_candidate_person_variants_candidate_id` — avoids a full-scan on the per-row `SELECT variant FROM candidate_person_variants WHERE candidate_person_id = ?` lookup inside `_load_candidate()`.
 
 ## candidate_persons.match_target_id (Phase 3)
 

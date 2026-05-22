@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-21] fix(stage5): harden candidate_pool — FK + index + JSON safety (Phase 3 Task 7 fix)
+
+Code review of Task 7 (commit 5865650) flagged Important issues. This fix:
+- Adds FK `candidate_person_variants.candidate_person_id REFERENCES candidate_persons(id)` (mirrors `person_variants`).
+- Adds index `idx_candidate_person_variants_candidate_id` (per-row variant lookups were full scans).
+- Wraps `json.loads` of date JSON in a safe parser (malformed extraction shouldn't crash the linker).
+- Exports `candidate_pool` from `pipeline.stage5_link.__init__` for cleaner imports.
+
+A new test (`test_pool_handles_malformed_date_json`) covers the JSON-safety path.
+
+Deferred to Task 8: stage 3 writes variants to `variants_json` not the new structured table; `link_run` will denormalize at run start.
+
+no knowledge impact: hardening + tests; behavior unchanged for well-formed data.
+
 ## [2026-05-21] feat(stage5): candidate_pool relevance pre-filter (Phase 3 Task 7)
 
 Added `pipeline/stage5_link/candidate_pool.py` (`candidate_pool(conn, cand_id, run_id)`) — SQL name-overlap pre-filter that returns canonical persons + same-run candidate persons sharing at least one name string with the target. Excludes self + other-run candidates. Six unit tests cover canonical match, sibling match, self-exclusion, run-exclusion, no-overlap exclusion, variant-table matching.

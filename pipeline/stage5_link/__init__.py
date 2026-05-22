@@ -6,6 +6,7 @@ Package layout:
   linker.py         — link_run(conn, pipeline_run_id) orchestrator (Task 8)
 """
 
+from pipeline.stage5_link.candidate_pool import candidate_pool
 from pipeline.stage5_link.scoring import person_match_score
 
-__all__ = ["person_match_score"]
+__all__ = ["candidate_pool", "person_match_score"]

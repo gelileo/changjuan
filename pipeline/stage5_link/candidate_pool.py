@@ -32,6 +32,21 @@ def _load_candidate(conn: sqlite3.Connection, candidate_id: str) -> dict[str, An
     return _row_to_dict(row, variants, target_kind="self")
 
 
+def _safe_json_load(raw: str | None) -> dict[str, Any] | None:
+    """Parse a JSON-encoded date dict, returning None on missing or malformed input.
+
+    LLM-driven extraction occasionally writes malformed JSON; rather than crashing the
+    entire link pass, drop the date and let the scorer treat it as 'unknown'.
+    """
+    if not raw:
+        return None
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
 def _row_to_dict(row: Any, variants: list[dict[str, Any]], target_kind: str) -> dict[str, Any]:
     return {
         "target_id": row[0],
@@ -40,8 +55,8 @@ def _row_to_dict(row: Any, variants: list[dict[str, Any]], target_kind: str) -> 
         "state_id": row[2],
         "social_category": row[3],
         "clan_name": row[4],
-        "birth_date": json.loads(row[5]) if row[5] else None,
-        "death_date": json.loads(row[6]) if row[6] else None,
+        "birth_date": _safe_json_load(row[5]),
+        "death_date": _safe_json_load(row[6]),
         "variants": variants,
     }
 

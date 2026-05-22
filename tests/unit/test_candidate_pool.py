@@ -106,3 +106,24 @@ def test_pool_includes_variant_match(conn: sqlite3.Connection) -> None:
     _seed_candidate(conn, run_id="run:1", cand_id="cand:per:run:1:p1", name="重耳")
     pool = candidate_pool(conn, "cand:per:run:1:p1", "run:1")
     assert any(p["canonical_name"] == "晋文公" for p in pool)
+
+
+def test_pool_handles_malformed_date_json(conn: sqlite3.Connection) -> None:
+    """A candidate with malformed date_json should appear in pool with date=None,
+    not crash the linker."""
+    _seed_candidate(
+        conn, run_id="run:1", cand_id="cand:per:run:1:p1", name="重耳", state_id="sta:jin"
+    )
+    # Write a malformed JSON blob directly
+    conn.execute(
+        "UPDATE candidate_persons SET birth_date_json='{not json' WHERE id='cand:per:run:1:p1'"
+    )
+    _seed_candidate(
+        conn, run_id="run:1", cand_id="cand:per:run:1:p2", name="重耳", state_id="sta:jin"
+    )
+    conn.commit()
+    pool = candidate_pool(conn, "cand:per:run:1:p2", "run:1")
+    # Should include p1 in pool with birth_date=None (no crash).
+    p1_entry = next((p for p in pool if p["target_id"] == "cand:per:run:1:p1"), None)
+    assert p1_entry is not None
+    assert p1_entry["birth_date"] is None

@@ -181,13 +181,17 @@ CREATE TABLE IF NOT EXISTS candidate_persons (
 
 CREATE TABLE IF NOT EXISTS candidate_person_variants (
     id                       TEXT PRIMARY KEY,
-    candidate_person_id      TEXT NOT NULL,
+    candidate_person_id      TEXT NOT NULL REFERENCES candidate_persons(id),
     variant                  TEXT NOT NULL,
     kind                     TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_candidate_person_variants_variant
     ON candidate_person_variants (variant);
+
+-- Phase 3 fix: index on candidate_person_id (used by _load_candidate per-row lookup)
+CREATE INDEX IF NOT EXISTS idx_candidate_person_variants_candidate_id
+    ON candidate_person_variants (candidate_person_id);
 
 CREATE TABLE IF NOT EXISTS candidate_events (
     id              TEXT PRIMARY KEY,
