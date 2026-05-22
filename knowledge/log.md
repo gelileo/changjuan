@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-22] chore(phase4): Ch.2-5 smoke verification (Phase 4 Task 11)
+
+All four new chapters pass `scripts/smoke-check-run`:
+- ch2 (run:extract-ch2-v2-20260522T181735): status=pass, fk_orphans=0, dates_out=0, n_persons=15
+- ch3 (run:extract-ch3-v2-20260522T193527): status=pass, fk_orphans=0, dates_out=0, n_persons=12
+- ch4 (run:extract-ch4-v2-20260522T195536): status=pass, fk_orphans=0, dates_out=0, n_persons=13
+- ch5 (run:extract-ch5-v2-20260522T200954): status=pass, fk_orphans=0, dates_out=0, n_persons=22
+
+Aggregated Ch.1-5 canonical counts: persons=75, events=102, places=37, states=16, event_participants=204, event_relations=43, person_states=39. (person_relations=0: extracted records had empty `kind` strings rejected by CHECK constraint — non-fatal; flagged for Phase 5 prompt iteration to ensure relation `kind` is always populated.)
+
+Ch.1 golden P/R still green: person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70 — no regression across 4 chapter loads.
+
+no knowledge impact: verification step.
+
 ## [2026-05-22] feat(run): Ch.5 end-to-end (Phase 4 Task 10)
 
 Ran extract → /changjuan-extract-v2 chapter:5 → link → load. pipeline_run_id `run:extract-ch5-v2-20260522T200954`. Linker stats: processed=30 auto-merged=0 queued=7 skipped=23. Loader: persons=30 events=26 places=8 states=9 relations=46. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
