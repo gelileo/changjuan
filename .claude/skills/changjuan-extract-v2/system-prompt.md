@@ -250,10 +250,20 @@ inference_kind: explicit_reign_zhou
 
 若明确给出鲁公纪年（如"鲁僖公二十八年"），使用 `inference_kind: explicit_reign_lu`。
 
-**Phase 2 允许的 `inference_kind` 枚举值：**
-`explicit_reign_lu` / `explicit_reign_zhou` / `relative_to_prior_event` / `era_only` / `unknown`
+**Phase 4 允许的 `inference_kind` 枚举值：**
+`explicit_reign_lu` / `explicit_reign_zhou` / `explicit_reign_other` / `relative_to_prior_event` / `era_only` / `unknown`
 
-**禁止使用 `explicit_reign_other`**（如晋/齐/楚等他国纪年）——此功能留待 Phase 3 实现。若遇此情况，使用 `era_only` 或 `unknown` 替代，并在 `original` 字段中保留原文表述以供后续处理。
+**`explicit_reign_other`** 用于非鲁/周的他国纪年（如"晋文公七年"、"齐桓公九年"、"郑庄公二十二年"等）。Phase 4 已实现 9 个状态的 reign 表（zheng/wei/qi/jin/qin/song/chen/cai/shen），存于 `data/reigns/sta_*.yaml`。Date dict 需带以下字段：
+```yaml
+year_bce: null               # 由 resolver 计算，初始留 null
+uncertainty: point
+original: "晋文公七年"
+inference_kind: explicit_reign_other
+state_id: sta:jin            # canonical state id（必填）
+ruler_ref: "晋文公"           # 原文中的君主名（必填，可以是 谥号 / 本名 / id）
+reign_year: 7                # 1-indexed 纪年整数（必填）
+```
+若状态未在上述 9 个之列（如 楚 / 燕 / 吴 / 越），仍可使用 `explicit_reign_other`——resolver 会发出 `reign_table_missing` 警告并返回 null（保留 original 文本备人工处理）。或使用 `era_only` / `unknown` 替代。
 
 ### 7.2 序列标记词（相对时间）
 
@@ -356,7 +366,7 @@ justifications:
 
 | 禁止行为 | 原因 |
 |---------|------|
-| `inference_kind: explicit_reign_other` | Phase 3 功能，Phase 2 不支持 |
+| `inference_kind: explicit_reign_other` 未带 `state_id` / `ruler_ref` / `reign_year` | resolver 需要这三个字段才能换算 BCE 年 |
 | 不在允许列表中的任何 `inference_kind` | 验证器会拒绝 |
 | `citation.quote` 为空字符串 | 引用必须非空 |
 | `justifications` 中存在空值 | 验证器会拒绝 |

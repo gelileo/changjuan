@@ -402,7 +402,7 @@ The tests load via `tests.golden.regression_loader.load_regression_set` (Task 3)
 
 This test catches three failure modes in one pass: over-aggressive linker (auto_merges > 0), broken candidate pool (wrong candidates fed to linker), and broken `match_target_id` integration (wrong person count after load). The `load_candidate_states`-before-`load_candidate_persons` ordering revealed and fixed a pre-existing bug: `candidate_persons.state_id` stores the local extraction id (e.g. `'s1'`), but `persons.state_id` is a FK to `states.id`. The fix adds `_build_candidate_state_id_map` to `load_candidate_persons`, which resolves local ids to canonical ids via a `candidate_states JOIN states ON name` lookup.
 
-## explicit_reign_other date resolver tests (Phase 4 Task 2)
+## explicit_reign_other date resolver tests (Phase 4 Task 2 + Task 7 integration)
 
 `tests/unit/test_dates_reign_other.py` exercises `pipeline.dates.load_reign_yaml` and `pipeline.dates.resolve_explicit_reign_other` against a synthetic fixture (`tests/fixtures/reigns/sta_test.yaml`) that defines three rulers for `sta:test`. Two `autouse` fixtures apply for every test:
 
@@ -419,6 +419,10 @@ Eight tests cover all branches:
 - `test_returns_none_when_ruler_ref_not_found` — ruler not in YAML → None + `ruler_ref_not_found` warning.
 - `test_returns_year_but_warns_when_reign_year_out_of_range` — reign year 50 → computed 666 returned (not None) + `reign_year_out_of_range` warning.
 - `test_load_reign_yaml_parses_fixture` — directly exercises `load_reign_yaml`; asserts `state_id`, ruler count, and first ruler's `reign_start_bce`.
+
+Phase 4 Task 7 added two integration tests covering the `parse_date` dispatch:
+- `test_parse_date_dispatches_to_explicit_reign_other` — full path: `parse_date("晋文公七年")` → `_try_other` → `resolve_explicit_reign_other` → `year_bce == 630`. Sets up a synthetic `sta_jin.yaml` in the redirected reign dir.
+- `test_parse_date_explicit_reign_other_falls_through_when_state_yaml_missing` — `parse_date("楚庄王三年")` with no `sta_chu.yaml` falls through gracefully (no crash; returns a valid DateDict with `year_bce=None`).
 
 ## Discovery module tests (Phase 4 Task 1)
 

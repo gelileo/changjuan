@@ -165,9 +165,15 @@ Print a summary:
   write a shorter one — never paraphrase.
 - **No fabricated justifications.** Every value in `justifications` must be a
   non-empty substring of the same record's `citation.quote`.
-- **`inference_kind` allowlist (Phase 2):** only `explicit_reign_lu`,
-  `explicit_reign_zhou`, `relative_to_prior_event`, `era_only`, `unknown`.
-  Do NOT emit `explicit_reign_other` — this is Phase-3 work.
+- **`inference_kind` allowlist (Phase 4):** `explicit_reign_lu`,
+  `explicit_reign_zhou`, `explicit_reign_other`, `relative_to_prior_event`,
+  `era_only`, `unknown`. The `explicit_reign_other` kind is now resolvable
+  (Phase 4 Task 2 implemented the resolver); use it when the chunk anchors a
+  date to a non-鲁/周 reign (e.g. "晋文公七年", "齐桓公九年"). The Date dict
+  must carry `state_id` (e.g., `sta:jin`), `ruler_ref` (the literal reign name
+  used, e.g. "晋文公" or "重耳"), and `reign_year` (1-indexed integer). See
+  `concepts/data-model/dates-and-reigns.md` for the resolution rules and the
+  states with reign tables (data/reigns/sta_*.yaml).
 - **`social_category` enum (11 values):**
   `royalty / noble / official / military / religious / clergy / commoner /
   servant / foreign / mythic / unknown`.

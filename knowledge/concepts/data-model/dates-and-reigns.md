@@ -96,6 +96,8 @@ For any state other than 鲁 or 周, `resolve_explicit_reign_other(state_id, rul
 
 **Reign-year arithmetic** is identical to the 鲁/周 path: `year_bce = reign_start_bce - (reign_year - 1)`.
 
+**`parse_date` dispatch (Phase 4 Task 7 integration):** `parse_date` recognizes the `<state-prefix><ruler-suffix>X年` pattern (e.g., `晋文公七年`, `齐桓公九年`, `郑庄公二十二年`) via `_try_other` and routes the call to `resolve_explicit_reign_other`. The state prefix maps via `_STATE_PREFIX_TO_ID` (16 known states); the dispatcher tries the ruler_ref in two forms — full (state-prefix + suffix, e.g. `晋文公`) and suffix-only (e.g. `文公`) — falling back to `_unknown` if neither matches. Skips `鲁`/`周` (handled by `_try_lu`/`_try_zhou` against the JSON reign table).
+
 **YAML schema** (committed under `data/reigns/`):
 
 ```yaml

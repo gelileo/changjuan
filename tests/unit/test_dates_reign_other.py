@@ -124,3 +124,59 @@ def test_load_reign_yaml_parses_fixture() -> None:
     first = rulers[0]
     assert isinstance(first, dict)
     assert first["reign_start_bce"] == 715
+
+
+def test_parse_date_dispatches_to_explicit_reign_other(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """parse_date should route '<state><ruler>X年' patterns through resolve_explicit_reign_other."""
+    # Set up a synthetic jin reign YAML in the redirected dir.
+    reigns_dir = tmp_path / "data" / "reigns"
+    if not reigns_dir.exists():
+        reigns_dir.mkdir(parents=True)
+    (reigns_dir / "sta_jin.yaml").write_text(
+        """state_id: sta:jin
+state_name: 晋
+sources: [synthetic]
+rulers:
+  - id: 晋文公
+    posthumous_name: 文公
+    given_name: 重耳
+    reign_start_bce: 636
+    reign_end_bce: 628
+    sources: [synthetic]
+    confidence: high
+    notes: ""
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CHANGJUAN_REIGN_DIR", str(reigns_dir))
+    from pipeline import dates
+
+    dates._REIGN_YAML_CACHE.clear()
+
+    d = dates.parse_date("晋文公七年")
+    assert d["inference_kind"] == "explicit_reign_other"
+    assert d["year_bce"] == 630  # 636 - (7 - 1)
+    assert d["original"] == "晋文公七年"
+
+
+def test_parse_date_explicit_reign_other_falls_through_when_state_yaml_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """If the state has no YAML, parse_date falls through (returns unknown) — doesn't crash."""
+    reigns_dir = tmp_path / "data" / "reigns"
+    if not reigns_dir.exists():
+        reigns_dir.mkdir(parents=True)
+    # No sta_chu.yaml written.
+    monkeypatch.setenv("CHANGJUAN_REIGN_DIR", str(reigns_dir))
+    from pipeline import dates
+
+    dates._REIGN_YAML_CACHE.clear()
+
+    d = dates.parse_date("楚庄王三年")
+    # Without a reign table, falls through. May land in unknown or remain
+    # explicit_reign_other-but-year_bce-None depending on resolver behavior;
+    # the contract is "doesn't crash, returns a valid DateDict".
+    assert "inference_kind" in d
+    assert d.get("year_bce") is None

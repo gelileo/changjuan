@@ -218,6 +218,73 @@ def _try_zhou(original: str) -> DateDict | None:
     )
 
 
+# State-name prefix → state_id mapping for explicit_reign_other (Phase 4).
+# These are the states with reign tables in data/reigns/.
+_STATE_PREFIX_TO_ID: dict[str, str] = {
+    "周": "sta:zhou",
+    "鲁": "sta:lu",
+    "晋": "sta:jin",
+    "齐": "sta:qi",
+    "楚": "sta:chu",
+    "秦": "sta:qin",
+    "宋": "sta:song",
+    "郑": "sta:zheng",
+    "卫": "sta:wei",
+    "陈": "sta:chen",
+    "蔡": "sta:cai",
+    "曹": "sta:cao",
+    "燕": "sta:yan",
+    "吴": "sta:wu",
+    "越": "sta:yue",
+    "申": "sta:shen",
+}
+
+# Match e.g. "晋文公七年", "齐桓公二十八年", "郑庄公元年", "重耳七年" (given_name).
+# Requires a state-prefix on the front; the resolver fills in posthumous_name /
+# given_name lookup via the per-state YAML.
+_OTHER_REIGN_PATTERN = re.compile(
+    r"^("
+    + "|".join(re.escape(p) for p in _STATE_PREFIX_TO_ID)
+    + r")(\S+?)([元一二三四五六七八九十]+)年$"
+)
+
+
+def _try_other(original: str) -> DateDict | None:
+    """Resolve explicit_reign_other: '<state><ruler-suffix>X年' → BCE year.
+
+    Skips 鲁/周 (handled by _try_lu / _try_zhou which use the JSON reign table).
+    For other states, delegates to resolve_explicit_reign_other against
+    `data/reigns/<state_slug>.yaml`.
+    """
+    m = _OTHER_REIGN_PATTERN.match(original)
+    if not m:
+        return None
+    state_char, ruler_suffix, year_cn = m.groups()
+    state_id = _STATE_PREFIX_TO_ID[state_char]
+    if state_id in ("sta:lu", "sta:zhou"):
+        # Handled by _try_lu / _try_zhou.
+        return None
+    # Try ruler_ref in two forms: full prefix+suffix (e.g. "晋文公") and just suffix (e.g. "文公").
+    # Many sources use the full form in narrative; the YAML's `id` field is typically the full form.
+    candidates = [state_char + ruler_suffix, ruler_suffix]
+    n = _cn_to_int(year_cn)
+    for ruler_ref in candidates:
+        year_bce = resolve_explicit_reign_other(
+            state_id=state_id,
+            ruler_ref=ruler_ref,
+            reign_year=n,
+        )
+        if year_bce is not None:
+            return DateDict(
+                year_bce=year_bce,
+                uncertainty="point",
+                original=original,
+                era="春秋",
+                inference_kind="explicit_reign_other",
+            )
+    return None
+
+
 _ERA_PATTERNS: list[tuple[re.Pattern[str], tuple[str, int, int]]] = [
     (re.compile(r"^春秋初$"), ("春秋", 770, 720)),
     (re.compile(r"^春秋早期$"), ("春秋", 770, 700)),
@@ -297,6 +364,8 @@ def parse_date(original: str, anchor: DateDict | None = None) -> DateDict:
     if (d := _try_lu(original)) is not None:
         return d
     if (d := _try_zhou(original)) is not None:
+        return d
+    if (d := _try_other(original)) is not None:
         return d
     if (d := _try_relative(original, anchor)) is not None:
         return d

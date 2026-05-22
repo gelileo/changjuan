@@ -2,7 +2,7 @@
 title: Incremental extraction — re-extract semantics and prompt-version accumulation
 type: concept
 area: pipeline
-updated: 2026-05-21
+updated: 2026-05-22
 status: thin
 load_bearing: true
 references:

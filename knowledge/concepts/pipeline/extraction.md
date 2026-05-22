@@ -61,7 +61,7 @@ The trade-off: batch processing many chapters is manual — one skill invocation
 1. **Citation chunk_id matches target chunk** — `citation.chunk_id` must equal the chunk's `id` in the chapter lookup.
 2. **Verbatim-quote (NFC substring)** — `citation.quote` must be an NFC-normalized substring of `chunk.text`. Catches fabricated quotes or quotes from the wrong chunk.
 3. **Per-field justification non-empty and substring of quote** — every value in `record.justifications` must be non-empty and an NFC-normalized substring of `citation.quote`. The static check catches the empty-justification case; the [sampling QA harness](../verification/confidence-and-invariants.md) catches subtler misattributions.
-4. **Date `inference_kind` in Phase 2 allowlist** — accepts `explicit_reign_lu`, `explicit_reign_zhou`, `relative_to_prior_event`, `era_only`, `unknown`. Rejects `explicit_reign_other`, which is deferred to Phase 3 (#4 backlog item).
+4. **Date `inference_kind` in Phase 4 allowlist** — accepts `explicit_reign_lu`, `explicit_reign_zhou`, `explicit_reign_other`, `relative_to_prior_event`, `era_only`, `unknown`. `explicit_reign_other` resolves against per-state YAMLs in `data/reigns/` (Phase 4 Task 2 implemented the resolver; Phase 4 Task 7 fix wired it into `parse_date`). The extract-v2 skill's system prompt accordingly allows the LLM to emit `explicit_reign_other` for non-鲁/周 reign-anchored dates like "晋文公七年" or "齐桓公九年".
 5. **Chunk-local id resolution** — `primary_place_id` and `state_id` values that contain no `:` (chunk-local refs like `pl3`) must be present in the set of ids declared by other records in the same YAML payload.
 
 ## The chunk-local id scheme
@@ -148,4 +148,4 @@ The skill's `system-prompt.md` evolves between versions; each prompt revision is
 - Changing the invariant list in `validate_record`.
 - Renaming the skill directory naming convention (would break `--prompt-version` inference).
 - Changing the confidence scoring formula in `confidence.py`.
-- Introducing `explicit_reign_other` support (Phase 3 backlog item #4 — would update the allowlist).
+- ~~Introducing `explicit_reign_other` support~~ (landed in Phase 4 Task 2 + 7-fix).
