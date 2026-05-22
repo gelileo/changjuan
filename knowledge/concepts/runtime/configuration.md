@@ -52,3 +52,7 @@ As of Task 5, the following Phase 3 constants are defined:
 ## Design Notes
 
 All threshold values are placeholders and *must* be recalibrated against measured data before production use. The `Config` class is frozen to prevent runtime mutation; constants are module-level to allow easy override in test environments.
+
+## Stage 5 scorer (Phase 3 Task 6)
+
+`pipeline/stage5_link/scoring.py` introduces `person_match_score(a, b)` — the pure-function scorer that reads the thresholds above indirectly via the linker. The scorer itself has no configuration: its weights are hard-coded in the formula (see `concepts/pipeline/linking.md`, Task 12). Only the dispatch thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) live in `pipeline/config.py`.

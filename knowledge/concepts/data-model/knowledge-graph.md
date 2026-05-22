@@ -45,6 +45,10 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 - Date type: `{year_bce, uncertainty (point|range|circa), year_bce_end?, original, era, inference_kind}`.
 - Stable IDs are human-readable slugs (`per:jin-wen-gong`, `evt:cheng-pu-zhi-zhan-632bce`), seeded from curated `canonical_name`.
 
+## person_match_score and identity scoring (Phase 3 Task 6)
+
+`pipeline/stage5_link/scoring.py` provides `person_match_score(a, b)` — a pure function that returns `{score: float, features: dict}`. The scorer is the central identity-judgement kernel: it answers "how likely are two Person records the same entity?" without touching the database. Hard veto when no name overlap exists; otherwise a weighted sum over five dimensions (variant_overlap, state_agreement, clan_agreement, social_category_agreement, temporal_proximity) clamped to [0, 1]. The score feeds the linker dispatch dial in `pipeline/stage5_link/linker.py` (Task 8): ≥0.75 → auto-merge, 0.40–0.75 → human queue, <0.40 → treat as new record. Full formula documented in `concepts/pipeline/linking.md` (Task 12).
+
 ## candidate_persons.match_target_id (Phase 3)
 
 `candidate_persons.match_target_id` is a nullable TEXT column added in Phase 3 Task 1. It is populated by Stage 5 (linker, see `concepts/pipeline/linking.md`) after the linker identifies a canonical or sibling-candidate identity for this record. The value may be either a canonical `persons.id` slug (e.g. `per:jin-wen-gong`) or the `id` of a sibling `candidate_persons` row from the same pipeline run that the linker has decided is the same entity. Stage 7 honors this column during the candidate-promotion pass: when `match_target_id` is set, Stage 7 routes the candidate's data into the identified target record via field-merge logic and uses the target's `canonical_name` as the fallback name rather than minting a new slug. No foreign-key constraint is applied — an FK would reject rows whose target is a sibling candidate not yet promoted to canonical at insert time (spec §6 anti-pattern: "no FK on match_target_id").

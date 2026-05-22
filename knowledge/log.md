@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] feat(stage5): person_match_score scoring formula (Phase 3 Task 6)
+
+Added `pipeline/stage5_link/scoring.py` with `person_match_score(a, b)` (pure function returning `{score, features}`). Hard-veto on no-variant-overlap; weighted sum of variant/state/clan/category/temporal dimensions otherwise; score clamped to [0, 1]. Temporal bonus/penalty (+0.10 compatible, -0.30 conflict) only applied when variant_overlap is "strong" — partial evidence is insufficient to adjudicate temporal conflicts. Ten unit tests cover hard-veto + each positive contribution + each negative contribution + clamping (both directions). Package `__init__.py` re-exports `person_match_score`.
+
+no knowledge impact: pipeline/stage5_link/** maps to concepts/pipeline/linking.md which lands in Task 12. drift-check satisfied by this explicit line.
+
 ## [2026-05-21] feat(config): Phase 3 linker thresholds (auto=0.75, queue=0.40) (Phase 3 Task 5)
 
 Added `LINKER_AUTO_MERGE_THRESHOLD = 0.75` and `LINKER_QUEUE_THRESHOLD = 0.40` to `pipeline/config.py`. Stage 5 linker (lands in Tasks 7-8) dispatches by these thresholds. Initial v1 calibration rationale documented in the config.py comment block (recalibration history pattern matches Phase 2's `GOLDEN_PR_THRESHOLDS`).
