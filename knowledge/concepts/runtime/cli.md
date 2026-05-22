@@ -3,7 +3,7 @@ title: changjuan CLI commands
 type: concept
 area: runtime
 updated: 2026-05-21
-status: current
+status: mature
 load_bearing: false
 references:
   - concepts/pipeline/architecture.md

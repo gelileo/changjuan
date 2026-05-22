@@ -1,3 +1,17 @@
+---
+title: Runtime Configuration
+type: concept
+area: runtime
+updated: 2026-05-21
+status: mature
+load_bearing: true
+references:
+  - concepts/pipeline/architecture.md
+affects:
+  - pipeline/config.py
+  - pipeline/cli.py
+---
+
 # Runtime Configuration
 
 `pipeline/config.py` is the single source of truth for paths, batch sizes, and tunable constants across the changjuan ETL pipeline.

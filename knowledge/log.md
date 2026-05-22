@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-21] docs(knowledge): fix two pre-existing validate-articles failures
+
+- `concepts/runtime/cli.md`: status changed from `current` (non-standard) to `mature`.
+- `concepts/runtime/configuration.md`: added missing YAML frontmatter block.
+
+Both errors predated Phase 2; blocked phase2-prep.sh acceptance. Fixed
+without semantic content changes.
+
+Articles touched: concepts/runtime/cli.md, concepts/runtime/configuration.md.
+
 ## [2026-05-21] scripts: phase2-prep.sh extended with §11-14 + PHASE2_DEFERRED (Task 39)
 
 Extended `scripts/phase2-prep.sh` to cover Phase 2 acceptance:
