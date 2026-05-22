@@ -50,6 +50,24 @@ rulers:                                # chronological order, earliest first
    the same year another ends in the same state, except in the typical succession
    pattern where ruler N's end year = ruler N+1's start year - 1, or they share a year).
 
+## Lifespan heuristic for guesswork
+
+When attested reign dates are missing or partial, never assume adult lifespans
+beyond 70 years for Eastern-Zhou rulers. Realistic assumptions:
+
+- Infant + childhood mortality is high; rulers who reached adulthood typically
+  lived **50-70 years total**.
+- A ruler known to be adult at year X most likely died **15-30 years later**, not
+  40-50.
+- Reigns are bounded by lifespan: a 50-year reign starting at age 20 is plausible
+  (death at 70); a 50-year reign starting at age 40 is not (death at 90).
+- A few documented cases break this rule (e.g., 齐景公 ~58 years, 秦昭襄王 ~56
+  years, 郑文公 ~45 years) — but they are documented exceptions, not the basis
+  for guesswork. When you're guessing, prefer the shorter realistic span.
+
+When uncertain, prefer a shorter reign with `confidence: low` over a longer one
+that implies an implausible age.
+
 ## Common pitfalls
 
 - **曲沃武公**: the 晋 武公 of 曲沃 reigned 715-677 BCE; he is typically counted as the

@@ -127,7 +127,7 @@ rulers:
 | `sta:song` | 18 | 799-470 | 《史记·宋微子世家》 |
 | `sta:chen` | 14 | 754-478 | 《史记·陈杞世家》 |
 | `sta:cai` | 15 | 762-472 | 《史记·管蔡世家》 |
-| `sta:shen` | 1 | 770-720 | 《史记·周本纪》 (placeholder; see notes) |
+| `sta:shen` | 1 | 770-745 | 《史记·周本纪》 (placeholder; see notes) |
 
 Drafted inline following the schema above; curator-trimmed during Phase 4 Task 5 review to remove 23 out-of-scope 战国-era uncertain entries (wrong data is worse than missing data — Phase 4 covers 770-700 BCE; 战国 entries are restored in Phase 5+ with fresh verification when needed). Phase 5+ also adds states beyond this set (楚, 燕, 吴, 越, etc.) as multi-chapter extraction surfaces references.
 

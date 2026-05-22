@@ -42,6 +42,8 @@ Phase 4 Task 5 drafted all 9 worklist states (sta:zheng, sta:wei, sta:qi, sta:ji
 
 **First correction batch** (Phase 4 Task 5 review): dropped 23 out-of-scope 战国-era uncertain entries across 5 YAMLs (wei/song/jin/cai/shen). The original "comprehensive" draft included 战国 rulers down to 209 BCE; Phase 4 only needs 770-700 BCE. Dropping the late-era uncertain entries reduces the risk that a wrong date silently propagates to extracted events that happen to anchor on them. Phase 5+ adds these back with per-state verification when chapters 6+ actually surface references.
 
+**Second correction** (Phase 4 Task 5 review, lifespan heuristic): tightened 申侯's reign (sta_shen.yaml) from 770-720 BCE (50-year reign implying age ~90) to 770-745 BCE (~25-year reign, age ~65). Encoded the lifespan rule into `.claude/skills/changjuan-extract-reigns/system-prompt.md` so future inline drafts apply realistic adult-lifespan bounds (50-70 years total for Eastern-Zhou rulers). Documented exceptions like 齐景公 / 秦昭襄王 / 郑文公 are noted in the prompt but should not be the basis for guesswork.
+
 ## What would invalidate this article
 
 - The skill becomes deterministic (parses a structured corpus instead of using LLM knowledge).

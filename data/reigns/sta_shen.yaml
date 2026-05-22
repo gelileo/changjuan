@@ -8,7 +8,7 @@ rulers:
     posthumous_name: ""
     given_name: ""
     reign_start_bce: 770
-    reign_end_bce: 720
+    reign_end_bce: 745
     sources:
       - 《史记·周本纪》
     confidence: low
@@ -16,10 +16,14 @@ rulers:
       The 申国 of West-Zhou / early-Eastern-Zhou era is sparsely documented. 申侯 is
       the title; the specific holder during 周平王's early reign is the famous one
       (father-in-law of 周幽王; allied with 犬戎 to displace 幽王 in 771 BCE). Specific
-      reign dates are not well-attested in extant sources. This entry is intentionally
-      coarse — a single 申侯 covering the early Eastern-Zhou period. Later 申侯 holders
-      and the eventual absorption of 申国 by 楚 (around 688 BCE per some sources)
-      need finer-grained reign data if extraction surfaces specific date references.
+      reign dates are not well-attested in extant sources.
 
-      Phase 4 spot-checks should flag any 申-anchored extraction; if needed, this
-      YAML can be expanded.
+      Reign-end guess (745 BCE) assumes the famous 申侯 was ~40 years old in 771 BCE
+      (had an adult daughter 申后 + a grandson 太子宜臼) and lived ~25 more years to
+      ~65 (realistic Eastern-Zhou adult lifespan; see system-prompt.md lifespan rule).
+      He could have died anywhere from 760 to 730 BCE — 745 is a midpoint.
+
+      Later 申侯 holders and the eventual absorption of 申国 by 楚 (around 688 BCE per
+      some sources) need finer-grained reign data if extraction surfaces specific
+      date references. Phase 4 spot-checks should flag any 申-anchored extraction;
+      if needed, this YAML can be expanded.
