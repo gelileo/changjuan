@@ -1,5 +1,22 @@
 # Build Log
 
+## [2026-05-22] fix(stage7): comprehensive local-id → canonical-id FK resolution for all relation loaders (Phase 4 Task 7 prerequisite)
+
+Phase 2's stage 7 had a systematic gap: candidate_* relation tables store FK columns using full candidate ids (`cand:evt:run:...:e1`, `cand:per:run:...:p1`) but the canonical relation tables' FK columns expect canonical ids (`evt:战-789bce`, `per:周宣王`). Phase 3 Task 14 fixed `persons.state_id`; Phase 4 Task 7 (controller) fixed `events.primary_place_id`. This commit completes the fix.
+
+New file: `pipeline/stage7_load/id_maps.py` — shared helpers `build_person_id_map`, `build_state_id_map`, `build_place_id_map`, `build_event_id_map` plus `_resolve_fk` helper used by all relation loaders.
+
+Updated loaders:
+- `persons.py`: removed `_build_candidate_state_id_map`, now imports `build_state_id_map` from `id_maps.py`.
+- `events.py`: removed `_build_candidate_place_id_map`, now imports `build_place_id_map` from `id_maps.py`.
+- `relations.py`: all 5 active loaders (event_participants, event_places, event_relations, person_relations, person_states) now resolve FK columns before INSERT. Also guards against invalid `kind`/`role` values via CHECK-constraint allowlist constants (`_VALID_EVENT_RELATION_KINDS`, `_VALID_PERSON_RELATION_KINDS`, `_VALID_PERSON_STATE_ROLES`).
+
+The `_resolve_fk` helper handles three raw-id forms: full candidate ids (`cand:...`), already-canonical ids (contain `:` but not `cand:` prefix), and short local ids (`p1`, `e1`).
+
+Validated: Ch.1 candidates (run:extract-ch1-v2-20260522T002136) now load end-to-end without FK errors: places=8 states=4 persons=13 events=15 event_participants=36 event_places=2 event_relations=10 person_states=9. All 234 tests pass.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (FK resolution section expanded; candidate column naming convention updated).
+
 ## [2026-05-22] fix(reigns): drop 23 out-of-scope 战国-era entries from 5 reign YAMLs (Phase 4 Task 5 fix)
 
 Per Phase 4 curator review (Task 5 batch review): dropped 23 entries from reign YAMLs that are out-of-scope for Phase 4 (chapters 2-5 cover 770-700 BCE; the dropped entries are all 战国-era, ~470 BCE onward).

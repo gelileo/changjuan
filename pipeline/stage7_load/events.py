@@ -29,6 +29,7 @@ from pipeline.stage7_load.helpers import (
     _slugify,
     merge_date_field,
 )
+from pipeline.stage7_load.id_maps import build_place_id_map
 
 # Scalar fields that go through the standard merge loop (non-date scalars).
 # Positional order must match the SELECT in _merge_event_fields.
@@ -235,6 +236,7 @@ def _create_event(
     event_id: str,
     c: tuple[Any, ...],
     pipeline_run_id: str,
+    resolved_primary_place_id: str | None = None,
 ) -> None:
     conn.execute(
         "INSERT INTO events "
@@ -247,7 +249,9 @@ def _create_event(
             c[_CI_DATE_JSON],
             c[_CI_OUTCOME],
             c[_CI_SUMMARY],
-            c[_CI_PRIMARY_PLACE_ID],
+            resolved_primary_place_id
+            if resolved_primary_place_id is not None
+            else c[_CI_PRIMARY_PLACE_ID],
             c[_CI_CONFIDENCE],
             pipeline_run_id,
         ),
@@ -268,8 +272,14 @@ def _merge_event_fields(
     event_id: str,
     c: tuple[Any, ...],
     pipeline_run_id: str,
+    resolved_primary_place_id: str | None = None,
 ) -> None:
-    """Merge candidate fields into an existing canonical event."""
+    """Merge candidate fields into an existing canonical event.
+
+    `resolved_primary_place_id` is the canonical place id resolved from the
+    candidate's local extraction id (e.g. 'pl1' → 'pla:qishan'); used in place
+    of c[_CI_PRIMARY_PLACE_ID] for FK safety. Other scalars unchanged.
+    """
     # SELECT provenance, type, outcome, summary, primary_place_id, date_json, confidence
     existing = conn.execute(
         "SELECT provenance, type, outcome, summary, primary_place_id, date_json, confidence "
@@ -326,7 +336,9 @@ def _merge_event_fields(
         c[_CI_TYPE],
         c[_CI_OUTCOME],
         c[_CI_SUMMARY],
-        c[_CI_PRIMARY_PLACE_ID],
+        resolved_primary_place_id
+        if resolved_primary_place_id is not None
+        else c[_CI_PRIMARY_PLACE_ID],
     )
 
     for idx, field in enumerate(_EVENT_SCALAR_FIELDS):
@@ -391,7 +403,15 @@ def load_candidate_events(conn: sqlite3.Connection, pipeline_run_id: str) -> int
     (type, year_bce from date_json, primary_place_id). Creates a new Event if no
     match found. Merges scalar fields with conflict-emission semantics.
     Returns the number of candidates processed.
+
+    Requires load_candidate_places to have already run so that the FK
+    `events.primary_place_id REFERENCES places(id)` is satisfiable. The local
+    extraction place id (e.g. 'pl1') stored in candidate_events.primary_place_id
+    is resolved to the canonical place id (e.g. 'pla:qishan') via the
+    candidate_places→places join on name.
     """
+    place_id_map = build_place_id_map(conn, pipeline_run_id)
+
     cands = conn.execute(
         "SELECT id, type, date_json, outcome, summary, primary_place_id, "
         "confidence, chunk_id "
@@ -402,14 +422,26 @@ def load_candidate_events(conn: sqlite3.Connection, pipeline_run_id: str) -> int
     n = 0
     for c in cands:
         year_bce = _year_bce_from_date_json(c[_CI_DATE_JSON])
-        existing_id = _find_existing_event(conn, c[_CI_TYPE], year_bce, c[_CI_PRIMARY_PLACE_ID])
+        raw_place_id = c[_CI_PRIMARY_PLACE_ID]
+        # Resolve local extraction id (e.g. 'pl1') → canonical id (e.g. 'pla:qishan').
+        # Already-canonical values (containing ':') pass through unchanged.
+        if raw_place_id is not None and ":" not in raw_place_id:
+            resolved_place_id = place_id_map.get(raw_place_id)
+            if resolved_place_id is None:
+                # Local id not in map — likely a missing candidate_places row or
+                # name mismatch. Fall through with None to avoid FK violation.
+                resolved_place_id = None
+        else:
+            resolved_place_id = raw_place_id
+
+        existing_id = _find_existing_event(conn, c[_CI_TYPE], year_bce, resolved_place_id)
 
         if existing_id is None:
             event_id = _build_event_id(conn, c[_CI_TYPE], year_bce)
-            _create_event(conn, event_id, c, pipeline_run_id)
+            _create_event(conn, event_id, c, pipeline_run_id, resolved_place_id)
         else:
             event_id = existing_id
-            _merge_event_fields(conn, event_id, c, pipeline_run_id)
+            _merge_event_fields(conn, event_id, c, pipeline_run_id, resolved_place_id)
 
         record_citation(conn, "event", event_id, c[_CI_CHUNK_ID])
         n += 1

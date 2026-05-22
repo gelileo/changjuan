@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders)
 status: thin
 load_bearing: true
 references:
@@ -167,9 +167,29 @@ For **directional** relation kinds (`parent`, `child`, `killed_by`, `ruler`, `mi
 
 Non-directional kinds (`spouse`, `sibling`, `ally`, `rival`, `clan_member`) do not trigger contradiction detection.
 
+### FK resolution for relation loaders (Phase 4 comprehensive fix)
+
+Candidate relation tables store FK columns using full candidate ids (e.g. `cand:evt:run:...:e1`, `cand:per:run:...:p1`) rather than canonical ids (`evt:战-783bce`, `per:周宣王`). All six relation loaders now resolve these before INSERT using shared helpers from `pipeline/stage7_load/id_maps.py`:
+
+| Helper | Map built from | Join key |
+|---|---|---|
+| `build_person_id_map` | `candidate_persons` → `persons` | `canonical_name` |
+| `build_state_id_map` | `candidate_states` → `states` | `name` |
+| `build_place_id_map` | `candidate_places` → `places` | `name` |
+| `build_event_id_map` | `candidate_events` → `events` | `(type, year_bce, pipeline_run_id)` |
+
+The shared `_resolve_fk(raw_id, id_map)` helper handles three cases:
+1. `raw_id` starts with `cand:` → extract the local suffix (last `:` segment) and look up in the map.
+2. `raw_id` contains `:` but not `cand:` prefix → already canonical, pass through unchanged.
+3. `raw_id` has no `:` → short local id (e.g. `p1`), look up in map directly.
+
+Rows whose FK cannot be resolved (map miss) are silently skipped rather than crashing; this tolerates name-mismatch failures in the canonical entity loaders without cascading. Rows with invalid `kind`/`role` values (i.e. not in the canonical CHECK constraint allowlist) are also skipped.
+
+`persons.py` and `events.py` now import from `id_maps.py` instead of defining their own `_build_candidate_state_id_map` / `_build_candidate_place_id_map` helpers (those were removed in this fix).
+
 ### Candidate column naming convention
 
-Candidate relation tables use `candidate_*_id` column names (e.g. `candidate_event_id`, `candidate_person_id`) rather than bare `event_id`/`person_id`. The loader treats these values as canonical IDs — upstream linking (stage 5) is responsible for resolving candidate IDs to canonical ones before this stage runs.
+Candidate relation tables use `candidate_*_id` column names (e.g. `candidate_event_id`, `candidate_person_id`) rather than bare `event_id`/`person_id`. The values stored are full candidate ids (e.g. `cand:evt:run:...:e1`), resolved to canonical ids by the FK resolution logic above before insert.
 
 ### Confidence and provenance
 

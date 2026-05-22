@@ -27,10 +27,64 @@ import uuid
 
 from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
+from pipeline.stage7_load.id_maps import (
+    build_event_id_map,
+    build_person_id_map,
+    build_place_id_map,
+    build_state_id_map,
+)
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+_VALID_EVENT_RELATION_KINDS = frozenset({"causes", "precedes", "related"})
+_VALID_PERSON_RELATION_KINDS = frozenset(
+    {
+        "parent",
+        "child",
+        "spouse",
+        "sibling",
+        "mentor",
+        "ruler",
+        "minister",
+        "ally",
+        "rival",
+        "killed_by",
+        "clan_member",
+    }
+)
+_VALID_PERSON_STATE_ROLES = frozenset(
+    {"ruler", "minister", "exile", "defector", "citizen", "other"}
+)
+
+
+def _resolve_fk(raw_id: str | None, id_map: dict[str, str]) -> str | None:
+    """Resolve a raw FK value to a canonical id via id_map.
+
+    Four cases:
+    1. None → returns None.
+    2. Full candidate id like 'cand:per:run:...:p1' → extract the local suffix
+       (the last ':'-delimited segment) and look up in id_map.
+    3. Short local id like 'p1' (no ':') → look up in id_map directly.
+    4. Already-canonical id like 'per:zhou-xuan-wang' (contains ':' but not
+       starting with 'cand:') → pass through unchanged.
+
+    Returns None if resolution fails; callers should skip such rows.
+    """
+    if raw_id is None:
+        return None
+    if raw_id.startswith("cand:"):
+        # Full candidate id: 'cand:{kind}:{run_id}:{local_id}'.
+        # The local_id is always the last ':'-delimited segment.
+        local = raw_id.rsplit(":", 1)[-1]
+        return id_map.get(local)
+    if ":" in raw_id:
+        # Already canonical (e.g. 'per:zhou-xuan-wang', 'evt:崩-783bce').
+        return raw_id
+    # Short local id (e.g. 'p1', 'e1', 'pl1', 's1').
+    return id_map.get(raw_id)
+
 
 # Directional person_relation kinds: a conflict is raised when the inverse
 # (B, A, same kind) already exists in the canonical table.
@@ -77,10 +131,14 @@ def load_candidate_event_participants(conn: sqlite3.Connection, run_id: str) -> 
     """Promote candidate_event_participants rows for run_id.
 
     Unique key: (event_id, person_id, role).
-    The candidate table stores candidate_event_id / candidate_person_id — these
-    are treated as the canonical IDs (the loader trusts that upstream linking has
-    resolved them to canonical IDs already, or they are used as-is).
+    Resolves candidate_event_id / candidate_person_id local extraction ids
+    (e.g. 'e1', 'p1') to canonical ids via build_event_id_map / build_person_id_map.
+    Rows whose event_id or person_id cannot be resolved are skipped to avoid FK
+    constraint violations.
     """
+    event_map = build_event_id_map(conn, run_id)
+    person_map = build_person_id_map(conn, run_id)
+
     rows = conn.execute(
         "SELECT candidate_event_id, candidate_person_id, role, role_detail, pipeline_run_id "
         "FROM candidate_event_participants WHERE pipeline_run_id = ?;",
@@ -88,15 +146,24 @@ def load_candidate_event_participants(conn: sqlite3.Connection, run_id: str) -> 
     ).fetchall()
     n = 0
     for row in rows:
-        event_id: str = row[0]
-        person_id: str = row[1]
+        raw_event_id: str = row[0]
+        raw_person_id: str = row[1]
         role: str = row[2]
         role_detail: str | None = row[3]
+
+        event_id = _resolve_fk(raw_event_id, event_map)
+        person_id = _resolve_fk(raw_person_id, person_map)
+
+        # Both FKs are NOT NULL in the canonical schema; skip if either unresolved.
+        if event_id is None or person_id is None:
+            continue
 
         existing = conn.execute(
             "SELECT 1 FROM event_participants WHERE event_id = ? AND person_id = ? AND role = ?;",
             (event_id, person_id, role),
         ).fetchone()
+
+        relation_id = f"{event_id}:{person_id}:{role}"
 
         if existing is None:
             conn.execute(
@@ -105,7 +172,6 @@ def load_candidate_event_participants(conn: sqlite3.Connection, run_id: str) -> 
                 " VALUES (?, ?, ?, ?, 0.9, 'auto');",
                 (event_id, person_id, role, role_detail),
             )
-            relation_id = f"{event_id}:{person_id}:{role}"
             _audit(
                 conn,
                 "event_participant",
@@ -118,8 +184,6 @@ def load_candidate_event_participants(conn: sqlite3.Connection, run_id: str) -> 
                 actor="load@v1",
                 pipeline_run_id=run_id,
             )
-        else:
-            relation_id = f"{event_id}:{person_id}:{role}"
 
         record_citation(conn, "event_participant", relation_id, run_id)
         n += 1
@@ -136,7 +200,12 @@ def load_candidate_event_places(conn: sqlite3.Connection, run_id: str) -> int:
     """Promote candidate_event_places rows for run_id.
 
     Unique key: (event_id, place_id, role).
+    Resolves candidate_event_id / candidate_place_id local extraction ids
+    (e.g. 'e1', 'pl1') to canonical ids. Rows that cannot be resolved are skipped.
     """
+    event_map = build_event_id_map(conn, run_id)
+    place_map = build_place_id_map(conn, run_id)
+
     rows = conn.execute(
         "SELECT candidate_event_id, candidate_place_id, role, pipeline_run_id "
         "FROM candidate_event_places WHERE pipeline_run_id = ?;",
@@ -144,9 +213,16 @@ def load_candidate_event_places(conn: sqlite3.Connection, run_id: str) -> int:
     ).fetchall()
     n = 0
     for row in rows:
-        event_id: str = row[0]
-        place_id: str = row[1]
+        raw_event_id: str = row[0]
+        raw_place_id: str = row[1]
         role: str = row[2]
+
+        event_id = _resolve_fk(raw_event_id, event_map)
+        place_id = _resolve_fk(raw_place_id, place_map)
+
+        # Both FKs are NOT NULL in the canonical schema; skip if either unresolved.
+        if event_id is None or place_id is None:
+            continue
 
         existing = conn.execute(
             "SELECT 1 FROM event_places WHERE event_id = ? AND place_id = ? AND role = ?;",
@@ -191,7 +267,11 @@ def load_candidate_event_relations(conn: sqlite3.Connection, run_id: str) -> int
 
     Unique key: (from_event_id, to_event_id, kind).
     kind must be one of 'causes','precedes','related' per canonical schema CHECK.
+    Resolves from_candidate_event_id / to_candidate_event_id local extraction ids
+    (e.g. 'e1', 'e2') to canonical ids. Rows that cannot be resolved are skipped.
     """
+    event_map = build_event_id_map(conn, run_id)
+
     rows = conn.execute(
         "SELECT from_candidate_event_id, to_candidate_event_id, kind, pipeline_run_id "
         "FROM candidate_event_relations WHERE pipeline_run_id = ?;",
@@ -199,9 +279,16 @@ def load_candidate_event_relations(conn: sqlite3.Connection, run_id: str) -> int
     ).fetchall()
     n = 0
     for row in rows:
-        from_id: str = row[0]
-        to_id: str = row[1]
+        raw_from_id: str = row[0]
+        raw_to_id: str = row[1]
         kind: str = row[2]
+
+        from_id = _resolve_fk(raw_from_id, event_map)
+        to_id = _resolve_fk(raw_to_id, event_map)
+
+        # Both FKs are NOT NULL and kind must satisfy the CHECK constraint; skip if invalid.
+        if from_id is None or to_id is None or kind not in _VALID_EVENT_RELATION_KINDS:
+            continue
 
         existing = conn.execute(
             "SELECT 1 FROM event_relations"
@@ -249,7 +336,11 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
     Contradiction detection: for directional kinds (parent, child, killed_by,
     ruler, minister, mentor), if the inverse (to_person_id, from_person_id, kind)
     already exists in the canonical table, emit a Conflict row.
+    Resolves from_candidate_person_id / to_candidate_person_id local extraction ids
+    (e.g. 'p1', 'p2') to canonical ids. Rows that cannot be resolved are skipped.
     """
+    person_map = build_person_id_map(conn, run_id)
+
     rows = conn.execute(
         "SELECT from_candidate_person_id, to_candidate_person_id, kind, date_json,"
         " pipeline_run_id "
@@ -258,10 +349,17 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
     ).fetchall()
     n = 0
     for row in rows:
-        from_id: str = row[0]
-        to_id: str = row[1]
+        raw_from_id: str = row[0]
+        raw_to_id: str = row[1]
         kind: str = row[2]
         date_json: str | None = row[3]
+
+        from_id = _resolve_fk(raw_from_id, person_map)
+        to_id = _resolve_fk(raw_to_id, person_map)
+
+        # Both FKs are NOT NULL and kind must satisfy the CHECK constraint; skip if invalid.
+        if from_id is None or to_id is None or kind not in _VALID_PERSON_RELATION_KINDS:
+            continue
 
         existing = conn.execute(
             "SELECT 1 FROM person_relations"
@@ -328,7 +426,12 @@ def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
     canonical person_states PRIMARY KEY. The candidate table omits from_date_json
     from its PK, so when from_date_json is None in the candidate row the canonical
     key is (person_id, state_id, role, NULL).
+    Resolves candidate_person_id / candidate_state_id local extraction ids
+    (e.g. 'p1', 's1') to canonical ids. Rows that cannot be resolved are skipped.
     """
+    person_map = build_person_id_map(conn, run_id)
+    state_map = build_state_id_map(conn, run_id)
+
     rows = conn.execute(
         "SELECT candidate_person_id, candidate_state_id, role, from_date_json,"
         " to_date_json, pipeline_run_id "
@@ -337,11 +440,18 @@ def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
     ).fetchall()
     n = 0
     for row in rows:
-        person_id: str = row[0]
-        state_id: str = row[1]
+        raw_person_id: str = row[0]
+        raw_state_id: str = row[1]
         role: str = row[2]
         from_date_json: str | None = row[3]
         to_date_json: str | None = row[4]
+
+        person_id = _resolve_fk(raw_person_id, person_map)
+        state_id = _resolve_fk(raw_state_id, state_map)
+
+        # Both FKs are NOT NULL and role must satisfy the CHECK constraint; skip if invalid.
+        if person_id is None or state_id is None or role not in _VALID_PERSON_STATE_ROLES:
+            continue
 
         if from_date_json is None:
             existing = conn.execute(

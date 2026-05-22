@@ -14,6 +14,7 @@ from pipeline.stage7_load.helpers import (
     _SIMILAR_CONFIDENCE_DELTA,
     _slugify,
 )
+from pipeline.stage7_load.id_maps import build_state_id_map
 
 log = structlog.get_logger(__name__)
 
@@ -290,31 +291,6 @@ def _resolve_canonical_for_candidate_id(
     return str(row["id"])
 
 
-def _build_candidate_state_id_map(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, str]:
-    """Return a mapping from local extraction state id (e.g. 's1') to canonical state id
-    (e.g. 'sta:周') for all candidate_states in this run.
-
-    candidate_persons.state_id stores the local extraction id (e.g. 's1').  The full
-    candidate id is 'cand:sta:{pipeline_run_id}:{local_id}'.  load_candidate_states must
-    have already run (states table must be populated) before this is called.
-    """
-    result: dict[str, str] = {}
-    # candidate_states.id format: 'cand:sta:{pipeline_run_id}:{local_id}'
-    # Extract the local_id suffix to build the reverse map.
-    prefix = f"cand:sta:{pipeline_run_id}:"
-    rows = conn.execute(
-        "SELECT cs.id, s.id FROM candidate_states cs "
-        "JOIN states s ON s.name = cs.name "
-        "WHERE cs.pipeline_run_id = ?",
-        (pipeline_run_id,),
-    ).fetchall()
-    for cand_id, canonical_id in rows:
-        if cand_id.startswith(prefix):
-            local_id = cand_id[len(prefix) :]
-            result[local_id] = canonical_id
-    return result
-
-
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
@@ -329,7 +305,7 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     canonical state id (e.g. 'sta:周') via the candidate_states→states join.
     """
     # Build local-id → canonical-id map for states referenced by this run's candidates.
-    state_id_map = _build_candidate_state_id_map(conn, pipeline_run_id)
+    state_id_map = build_state_id_map(conn, pipeline_run_id)
 
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
