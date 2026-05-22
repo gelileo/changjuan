@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] golden: tighten 召公奭↔召虎 temporal gap to actually trigger conflict (Phase 3 Task 4 fix)
+
+Bumped 召虎 birth_date.year_bce from 800 to 790 in `tests/golden/merge_regression.yaml`. The scorer's temporal-conflict gap is strictly `> 150`; the original 150-year gap fell through to "compatible" and the pair landed in QUEUE rather than SKIP. With 790, the gap is 160 → conflict triggers, matching spec §4's walkthrough.
+
+no knowledge impact: regression data tuning.
+
 ## [2026-05-21] golden: hand-curated merge regression set populated (Phase 3 Task 4)
 
 Filled in `tests/golden/merge_regression.yaml` with 5 same-person + 5

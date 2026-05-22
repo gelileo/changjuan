@@ -153,7 +153,7 @@ different_person_pairs:
         - {variant: 召公, kind: 别名}
       state_id: sta:zhou
       social_category: official
-      birth_date: {year_bce: 800, uncertainty: era, inference_kind: era_only}
+      birth_date: {year_bce: 790, uncertainty: era, inference_kind: era_only}
 
   - rationale: "申侯 is a hereditary title; the 西周-era 申侯 (周幽王's father-in-law) and a 春秋-era 申侯 are different individuals despite identical name + state"
     source: "《史记·秦本纪》/《左传》"

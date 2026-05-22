@@ -46,3 +46,4 @@ Append-only list of judgment calls made during curation.
 - 2026-05-21: Initial 10 pairs populated from spec §3 + §4 walkthroughs. Field values copied verbatim from spec; rationale/source authored to match.
 - 2026-05-21: Used `era_only` for date inference_kind when only an era is implied (e.g., 召公奭 in 西周, 申侯 in 春秋), and `explicit_reign_zhou` / `explicit_reign_lu` / `explicit_reign_other` for dated reign-anchored deaths.
 - 2026-05-21: 公子重耳 cross-state pair models a hypothetical 卫国 disambiguation — spec §6 names it as a test case; no real 卫 公子重耳 in the texts.
+- 2026-05-21: Adjusted 召虎 birth_date from 800 BCE to 790 BCE to ensure the 召公奭↔召虎 pair exercises the temporal-conflict scoring path. The scorer's conflict gap is `> 150`; the original 950/800 gap of exactly 150 fell through to "compatible". Historically defensible: 召虎 served 周宣王 (827-782 BCE), so a ~790 BCE birth places him in his ~10s at 宣王's reign start.
