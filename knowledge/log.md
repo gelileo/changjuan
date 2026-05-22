@@ -1,6 +1,24 @@
 # Build Log
 
-## [2026-05-22] feat(skill): changjuan-extract-reigns skill scaffold (Phase 4 Task 3)
+## [2026-05-22] chore(phase4): discovery worklist for Ch.2-5 (Phase 4 Task 4)
+
+Ran `scripts/discover-states --chapters 2,3,4,5 --min-count 3`. Output captured at `data/logs/phase4-discovery.tsv` (data/ is gitignored). Worklist of states needing reign YAMLs (excluding 周 and 鲁 which Phase 2 covers via `pipeline/reign_table.json`):
+
+| state_id | count | chapters | notes |
+|---|---|---|---|
+| sta:zheng | 164 | 2,3,4,5 | high priority — central to Ch.2-5 narrative |
+| sta:shen | 106 | 2,3,4,5 | mostly false-positives (申 verb sense) but real 申国 mentions exist |
+| sta:wei | 64 | 3,4,5 | |
+| sta:qi | 31 | 2,3,4,5 | |
+| sta:qin | 27 | 3,4 | |
+| sta:song | 21 | 5 | |
+| sta:chen | 17 | 4,5 | |
+| sta:jin | 16 | 2,3,4,5 | low Ch.2-5 count, but 晋 is central to Ch.6+ (重耳 arc) |
+| sta:cai | 12 | 4,5 | |
+
+9 states total. Task 5 (per-state production loop) follows.
+
+no knowledge impact: discovery output capture; no schema or behavior change.
 
 Added `.claude/skills/changjuan-extract-reigns/SKILL.md` + `system-prompt.md`. One state per invocation; emits draft YAML to `/tmp/changjuan-reigns-<slug>.yaml` for user review before `git mv` into `data/reigns/`. System prompt enumerates output schema + common pitfalls.
 
