@@ -10,12 +10,19 @@ This module starts with `explicit_reign_lu` only. Subsequent tasks add
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
+import structlog
+import yaml
+
+log = structlog.get_logger(__name__)
+
 _REIGN_TABLE: dict[str, object] | None = None
+_REIGN_YAML_CACHE: dict[str, dict[str, object]] = {}
 
 
 def _reigns() -> dict[str, object]:
@@ -24,6 +31,101 @@ def _reigns() -> dict[str, object]:
         p = Path(__file__).parent / "reign_table.json"
         _REIGN_TABLE = json.loads(p.read_text(encoding="utf-8"))
     return _REIGN_TABLE
+
+
+def _reign_dir() -> Path:
+    """Return the directory containing per-state reign YAMLs.
+
+    Honors the CHANGJUAN_REIGN_DIR env var (used by tests). Defaults to
+    `<repo_root>/data/reigns/` relative to this file.
+    """
+    env = os.environ.get("CHANGJUAN_REIGN_DIR")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parent.parent / "data" / "reigns"
+
+
+def _state_id_to_filename(state_id: str) -> str:
+    """Convert 'sta:jin' → 'sta_jin.yaml' for filesystem safety."""
+    return state_id.replace(":", "_") + ".yaml"
+
+
+def load_reign_yaml(state_id: str) -> dict[str, object] | None:
+    """Load and cache the reign YAML for the given state_id.
+
+    Returns None if the file doesn't exist. Raises on YAML parse failure
+    (a malformed file is a bug, not a runtime condition).
+    """
+    if state_id in _REIGN_YAML_CACHE:
+        return _REIGN_YAML_CACHE[state_id]
+    path = _reign_dir() / _state_id_to_filename(state_id)
+    if not path.exists():
+        return None
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    assert isinstance(data, dict)
+    _REIGN_YAML_CACHE[state_id] = data
+    return data
+
+
+def resolve_explicit_reign_other(
+    *,
+    state_id: str,
+    ruler_ref: str,
+    reign_year: int,
+) -> int | None:
+    """Resolve a non-鲁/周 reign-anchored date to a BCE year.
+
+    Returns the absolute BCE year, or None if the state's reign YAML is missing
+    or the ruler_ref doesn't match any ruler. Out-of-range reign years return the
+    computed value with a warning (so the value is preserved for downstream review).
+    """
+    data = load_reign_yaml(state_id)
+    if data is None:
+        log.warning("reign_table_missing", state_id=state_id, ruler_ref=ruler_ref)
+        return None
+
+    rulers = data.get("rulers")
+    if not isinstance(rulers, list):
+        log.warning("reign_table_malformed", state_id=state_id)
+        return None
+
+    matches: list[dict[str, object]] = []
+    for ruler in rulers:
+        if not isinstance(ruler, dict):
+            continue
+        if ruler_ref in (ruler.get("id"), ruler.get("posthumous_name"), ruler.get("given_name")):
+            matches.append(ruler)
+
+    if not matches:
+        log.warning("ruler_ref_not_found", state_id=state_id, ruler_ref=ruler_ref)
+        return None
+    if len(matches) > 1:
+        match_ids = [m.get("id") for m in matches]
+        log.warning(
+            "ruler_ref_ambiguous",
+            state_id=state_id,
+            ruler_ref=ruler_ref,
+            matched_ids=match_ids,
+        )
+        return None
+
+    ruler = matches[0]
+    start = ruler.get("reign_start_bce")
+    end = ruler.get("reign_end_bce")
+    assert isinstance(start, int)
+    assert isinstance(end, int)
+    year_bce = start - (reign_year - 1)
+    if year_bce < end:
+        log.warning(
+            "reign_year_out_of_range",
+            state_id=state_id,
+            ruler_ref=ruler_ref,
+            reign_year=reign_year,
+            computed_year_bce=year_bce,
+            reign_start_bce=start,
+            reign_end_bce=end,
+        )
+    return year_bce
 
 
 class DateDict(TypedDict, total=False):

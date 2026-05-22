@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-22] feat(dates): explicit_reign_other resolver (Phase 4 Task 2)
+
+`pipeline/dates.py::resolve_explicit_reign_other` reads per-state reign YAMLs from `data/reigns/`. Matches ruler_ref against `id`, `posthumous_name`, or `given_name`. Returns None + structured warning on missing YAML / not-found / ambiguous. Out-of-range reign years return the computed year with a warning so the value isn't lost. Eight unit tests against a synthetic fixture cover all branches.
+
+Articles touched: concepts/data-model/dates-and-reigns.md, concepts/verification/testing.md.
+
 ## [2026-05-22] feat(discovery): pipeline.discovery + scripts/discover-states — Phase 4 worklist generator (Phase 4 Task 1)
 
 Added `pipeline/discovery.py::discover_states_for_chapters` that scans `corpus.sqlite` for occurrences of 16 canonical Eastern-Zhou state names. `scripts/discover-states` is a thin wrapper. Emits TSV `state_id\tcount\tchapters` driving Phase 4b's reign-table worklist. Five unit tests cover happy path, count aggregation, multi-chapter aggregation, exclusion of unmentioned states, and the STATE_NAMES constant.

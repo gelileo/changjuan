@@ -1,0 +1,29 @@
+state_id: sta:test
+state_name: 测试国
+sources:
+  - synthetic
+rulers:
+  - id: 测试武公
+    posthumous_name: 武公
+    given_name: 一郎
+    reign_start_bce: 715
+    reign_end_bce: 677
+    sources: [synthetic]
+    confidence: high
+    notes: synthetic ruler for unit tests
+  - id: 测试文公
+    posthumous_name: 文公
+    given_name: 二郎
+    reign_start_bce: 676
+    reign_end_bce: 651
+    sources: [synthetic]
+    confidence: high
+    notes: synthetic ruler for unit tests
+  - id: 测试灵公
+    posthumous_name: 灵公
+    given_name: 三郎
+    reign_start_bce: 620
+    reign_end_bce: 607
+    sources: [synthetic]
+    confidence: high
+    notes: synthetic ruler with same posthumous_name pattern as another state's ruler

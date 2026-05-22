@@ -2,7 +2,7 @@
 title: Dates, reigns, and inference kinds
 type: concept
 area: data-model
-updated: 2026-05-21
+updated: 2026-05-22
 status: thin
 load_bearing: true
 references:
@@ -11,6 +11,7 @@ affects:
   - pipeline/reign_table.json
   - pipeline/dates.py
   - tests/unit/test_dates_relative.py
+  - data/reigns/**
 ---
 
 ## What this is
@@ -81,8 +82,41 @@ walkback only sees records in the current batch). Extending
 `_RELATIVE_OFFSETS` to cover numeric patterns ("其后N年"). Both surface
 in `concepts/pipeline/incremental.md` as Phase 3+ work.
 
+## `explicit_reign_other` — per-state YAML resolver (Phase 4 Task 2)
+
+For any state other than 鲁 or 周, `resolve_explicit_reign_other(state_id, ruler_ref, reign_year)` reads a per-state YAML from `data/reigns/<slug>.yaml` where the slug is the `state_id` with `:` replaced by `_` (e.g. `sta:jin` → `sta_jin.yaml`).
+
+**Ruler matching** tries three fields in each ruler entry, in order: `id` (fully-qualified canonical id), `posthumous_name` (posthumous title such as 武公), `given_name`. Returns None with a structured `log.warning` if:
+
+- The YAML file doesn't exist (`reign_table_missing`).
+- No ruler entry matches the `ruler_ref` (`ruler_ref_not_found`).
+- More than one ruler entry matches (`ruler_ref_ambiguous`).
+
+**Out-of-range reign years** (computed `year_bce < reign_end_bce`) still return the computed value but emit a `reign_year_out_of_range` warning. The value is preserved so downstream review can decide; it is not silently dropped.
+
+**Reign-year arithmetic** is identical to the 鲁/周 path: `year_bce = reign_start_bce - (reign_year - 1)`.
+
+**YAML schema** (committed under `data/reigns/`):
+
+```yaml
+state_id: sta:<slug>
+state_name: <Chinese name>
+sources: [<source>]
+rulers:
+  - id: <string>
+    posthumous_name: <string>
+    given_name: <string>
+    reign_start_bce: <int>
+    reign_end_bce: <int>
+    sources: [<source>]
+    confidence: high|medium|low
+    notes: <string>
+```
+
+**`CHANGJUAN_REIGN_DIR` env var** overrides the default `data/reigns/` directory. Tests use this to redirect the loader to a `tmp_path`-based copy of the synthetic fixture. The module-level `_REIGN_YAML_CACHE` dict is cleared between tests via `dates._REIGN_YAML_CACHE.clear()`.
+
 ## First commitments
 
 - `pipeline/reign_table.json` source: 杨伯峻《春秋左传注》, cross-checked against 史记·十二诸侯年表.
-- `pipeline/dates.py` parsers handle: `explicit_reign_lu`, `explicit_reign_zhou`, `explicit_reign_other` (deferred until needed), `relative_to_prior_event`, `era_only`, `unknown`.
+- `pipeline/dates.py` parsers handle: `explicit_reign_lu`, `explicit_reign_zhou`, `explicit_reign_other` (implemented Phase 4 Task 2), `relative_to_prior_event`, `era_only`, `unknown`.
 - Reign-year arithmetic: BCE year = `start_bce - (N - 1)` for reign year N.

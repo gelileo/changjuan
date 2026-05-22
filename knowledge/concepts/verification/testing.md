@@ -402,6 +402,24 @@ The tests load via `tests.golden.regression_loader.load_regression_set` (Task 3)
 
 This test catches three failure modes in one pass: over-aggressive linker (auto_merges > 0), broken candidate pool (wrong candidates fed to linker), and broken `match_target_id` integration (wrong person count after load). The `load_candidate_states`-before-`load_candidate_persons` ordering revealed and fixed a pre-existing bug: `candidate_persons.state_id` stores the local extraction id (e.g. `'s1'`), but `persons.state_id` is a FK to `states.id`. The fix adds `_build_candidate_state_id_map` to `load_candidate_persons`, which resolves local ids to canonical ids via a `candidate_states JOIN states ON name` lookup.
 
+## explicit_reign_other date resolver tests (Phase 4 Task 2)
+
+`tests/unit/test_dates_reign_other.py` exercises `pipeline.dates.load_reign_yaml` and `pipeline.dates.resolve_explicit_reign_other` against a synthetic fixture (`tests/fixtures/reigns/sta_test.yaml`) that defines three rulers for `sta:test`. Two `autouse` fixtures apply for every test:
+
+- `_structlog_to_stdlib` — configures structlog to emit via `structlog.stdlib.LoggerFactory` so pytest's `caplog` can capture structured warnings (identical pattern to `test_stage7_match_target.py`).
+- `_force_reign_dir` — sets `CHANGJUAN_REIGN_DIR` to a `tmp_path`-based copy of the fixture and clears `dates._REIGN_YAML_CACHE` so the cache doesn't bleed between tests.
+
+Eight tests cover all branches:
+
+- `test_resolves_by_id` — matches ruler by its `id` field; asserts `year_bce == 715`.
+- `test_resolves_by_posthumous_name` — matches by `posthumous_name`; same result.
+- `test_resolves_by_given_name` — matches by `given_name`; same result.
+- `test_resolves_year_n_offsets_correctly` — reign year 5 → `715 − 4 = 711`.
+- `test_returns_none_when_state_yaml_missing` — unknown `state_id` → None + `reign_table_missing` warning captured via `caplog`.
+- `test_returns_none_when_ruler_ref_not_found` — ruler not in YAML → None + `ruler_ref_not_found` warning.
+- `test_returns_year_but_warns_when_reign_year_out_of_range` — reign year 50 → computed 666 returned (not None) + `reign_year_out_of_range` warning.
+- `test_load_reign_yaml_parses_fixture` — directly exercises `load_reign_yaml`; asserts `state_id`, ruler count, and first ruler's `reign_start_bce`.
+
 ## Discovery module tests (Phase 4 Task 1)
 
 `tests/unit/test_discovery.py` tests `pipeline.discovery.discover_states_for_chapters`. The test file builds a synthetic `corpus.sqlite` using helper functions `_seed_corpus` and `_insert_chapter`, mirroring the real schema (`documents` + `chunks` tables). Five tests:
