@@ -12,8 +12,36 @@ import sqlite3
 from typing import Any
 
 
+def _resolve_state_local_to_canonical(
+    conn: sqlite3.Connection,
+    candidate_id: str,
+    raw_state_id: str | None,
+) -> str | None:
+    """Resolve a candidate's local state_id (e.g. 's1') to canonical (e.g. 'sta:zhou').
+
+    Local extraction state ids only have meaning within a single run; the canonical
+    states table is the comparison surface. Resolves via candidate_states.name →
+    states.name join. Returns the canonical id, or the original value if already
+    canonical (contains ':'), or None if no canonical state with matching name exists.
+    """
+    if raw_state_id is None or ":" in raw_state_id:
+        return raw_state_id
+    # Extract pipeline_run_id from candidate_id format: cand:per:{run_id}:{local_id}
+    parts = candidate_id.split(":")
+    if len(parts) < 4 or parts[0] != "cand" or parts[1] != "per":
+        return raw_state_id
+    run_id = ":".join(parts[2:-1])
+    row = conn.execute(
+        "SELECT s.id FROM candidate_states cs "
+        "JOIN states s ON s.name = cs.name "
+        "WHERE cs.pipeline_run_id = ? AND cs.id LIKE ?",
+        (run_id, f"%:{raw_state_id}"),
+    ).fetchone()
+    return row[0] if row is not None else None
+
+
 def _load_candidate(conn: sqlite3.Connection, candidate_id: str) -> dict[str, Any] | None:
-    """Load the candidate Person + its variants."""
+    """Load the candidate Person + its variants. Resolves local state_id → canonical."""
     row = conn.execute(
         "SELECT id, canonical_name, state_id, social_category, clan_name, "
         "       birth_date_json, death_date_json "
@@ -29,7 +57,21 @@ def _load_candidate(conn: sqlite3.Connection, candidate_id: str) -> dict[str, An
             (candidate_id,),
         )
     ]
-    return _row_to_dict(row, variants, target_kind="self")
+    return _row_to_dict_with_resolved_state(conn, candidate_id, row, variants, target_kind="self")
+
+
+def _row_to_dict_with_resolved_state(
+    conn: sqlite3.Connection,
+    source_id: str,
+    row: Any,
+    variants: list[dict[str, Any]],
+    target_kind: str,
+) -> dict[str, Any]:
+    """_row_to_dict + resolve local state_id for candidate-side rows."""
+    d = _row_to_dict(row, variants, target_kind)
+    if target_kind in ("self", "candidate"):
+        d["state_id"] = _resolve_state_local_to_canonical(conn, source_id, d["state_id"])
+    return d
 
 
 def _safe_json_load(raw: str | None) -> dict[str, Any] | None:
@@ -133,6 +175,8 @@ def candidate_pool(
                 (row[0],),
             )
         ]
-        pool.append(_row_to_dict(row, variants, target_kind="candidate"))
+        pool.append(
+            _row_to_dict_with_resolved_state(conn, row[0], row, variants, target_kind="candidate")
+        )
 
     return pool

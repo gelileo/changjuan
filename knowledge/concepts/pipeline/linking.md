@@ -3,7 +3,7 @@ title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Phase 3 Tasks 5-13
+implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution)
 status: thin
 load_bearing: true
 references:
@@ -33,6 +33,10 @@ The spec proposes an LLM judge as a second pass that resolves ambiguous pairs th
 ## Candidate pool pre-filter
 
 `pipeline/stage5_link/candidate_pool.py::candidate_pool` avoids an O(N²) exhaustive comparison by pre-filtering via SQL name-overlap. A target enters the pool only if it shares at least one name string (canonical_name or any variant) with the query candidate. Names that share no characters are never scored. The pool includes both canonical `persons` rows (cross-run targets) and same-run `candidate_persons` siblings.
+
+### Phase 4 state_id resolution
+
+Candidate `state_id` is a local extraction id (e.g. `s1`) only meaningful within one run; canonical persons store canonical state ids (e.g. `sta:zhou`). Without resolution, a Ch.N candidate referencing the same state as a Ch.M canonical Person would score `state_agreement: different` and the match would land below the queue threshold even when the names point at the same state. `_resolve_state_local_to_canonical` (called from `_load_candidate` and applied to same-run candidates in the pool) joins `candidate_states` → `states` on `name` to convert `s1` → `sta:zhou` before scoring. Already-canonical values (containing `:`) pass through unchanged; values with no matching canonical state resolve to None (`one_null` rather than `different`).
 
 ## Feature dimensions and scoring formula
 

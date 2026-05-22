@@ -2,7 +2,7 @@
 title: Runtime Configuration
 type: concept
 area: runtime
-updated: 2026-05-21
+updated: 2026-05-22
 status: mature
 load_bearing: true
 references:

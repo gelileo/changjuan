@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-22] feat(run): Ch.2 end-to-end via Phase 3 linker + Phase 4 reign tables (Phase 4 Task 7)
+
+Ran extract → link → load for chapter 2. pipeline_run_id `run:extract-ch2-v2-20260522T181735`. Extraction: 20 persons, 18 events, 5 places, 5 states, 72 relations (subagent-generated, all validations pass). Linker: 5 queued at score=0.70 (周宣王/尹吉甫/召虎/伯阳父/姜后 — strong-variant + state-same; secondary signals missing so no auto-merge, but Phase 2's canonical_name fallback in stage 7 still merges them correctly). Loader: 5 places, 5 states, 20 persons (15 net-new + 5 merged), 18 events, 63 relations. Smoke check pass. Ch.1 golden P/R still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
+
+Combined canonical state after Ch.1+Ch.2: persons=28, events=33, places=12, states=7, event_participants=85, person_states=16.
+
+Pre-work needed before this task could complete:
+- Wire `_try_other` into `parse_date` (Task 2 had standalone resolver, not integrated — fixed inline).
+- Update extract-v2 SKILL.md + system-prompt.md to allow `explicit_reign_other`.
+- Restructure `.gitignore` to allow committing `data/reigns/` (curated input).
+- Fix linker's candidate_pool to resolve local state_id → canonical via candidate_states→states join (mirrors stage 7 fix; without it, Ch.2 candidates' `s1` state_id appeared "different" from canonical `sta:zhou`).
+
+no knowledge impact: pipeline output capture; behavior changes documented in concepts/data-model/dates-and-reigns.md + concepts/pipeline/load-and-merge.md from prior Task 7-prerequisite commits.
+
 ## [2026-05-22] fix(stage7): comprehensive local-id → canonical-id FK resolution for all relation loaders (Phase 4 Task 7 prerequisite)
 
 Phase 2's stage 7 had a systematic gap: candidate_* relation tables store FK columns using full candidate ids (`cand:evt:run:...:e1`, `cand:per:run:...:p1`) but the canonical relation tables' FK columns expect canonical ids (`evt:战-789bce`, `per:周宣王`). Phase 3 Task 14 fixed `persons.state_id`; Phase 4 Task 7 (controller) fixed `events.primary_place_id`. This commit completes the fix.
