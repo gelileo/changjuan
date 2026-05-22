@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-22] docs(knowledge): concepts/pipeline/linking.md — Stage 5 architecture (Phase 3 Task 12)
+
+Documents the deterministic surface-feature linker. Five feature dimensions (variant_overlap, state_agreement, clan_agreement, social_category_agreement, temporal_proximity), weighted-sum scoring with hard-veto on no-variant-overlap, threshold dispatch (auto-merge / queue / skip per LINKER_AUTO_MERGE_THRESHOLD + LINKER_QUEUE_THRESHOLD). Cross-references to load-and-merge.md (stage-7 honor), runtime/cli.md (link verb), data-model/knowledge-graph.md (match_target_id field), and pipeline/config.py (thresholds + recalibration history).
+
+Articles created: concepts/pipeline/linking.md.
+Articles touched: knowledge/index.md (pipeline rows added — linking.md + load-and-merge.md), CLAUDE.md (stage5_link mapping row verified present from prior work). Also fixed pre-existing frontmatter `updated:` format violations in 4 articles (knowledge-graph.md, incremental.md, configuration.md, testing.md).
+
 ## [2026-05-22] docs(knowledge): finalize link + match_target_id docs (Phase 3 Task 11)
 
 Review of `concepts/runtime/cli.md` and `concepts/pipeline/load-and-merge.md` against the Phase 3 Task 11 checklist. Both articles had core content from Tasks 9 and 10 but were missing several required items.

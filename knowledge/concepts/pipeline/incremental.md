@@ -2,7 +2,7 @@
 title: Incremental extraction — re-extract semantics and prompt-version accumulation
 type: concept
 area: pipeline
-updated: 2026-05-21 (Task 9: link verb added to cli.py; no incremental-extraction semantics changed)
+updated: 2026-05-21
 status: thin
 load_bearing: true
 references:

@@ -2,7 +2,7 @@
 title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
-updated: 2026-05-21 (Task 8)
+updated: 2026-05-21
 status: thin
 load_bearing: true
 references:
