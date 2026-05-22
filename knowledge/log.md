@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-22] feat(skill): changjuan-extract-reigns skill scaffold (Phase 4 Task 3)
+
+Added `.claude/skills/changjuan-extract-reigns/SKILL.md` + `system-prompt.md`. One state per invocation; emits draft YAML to `/tmp/changjuan-reigns-<slug>.yaml` for user review before `git mv` into `data/reigns/`. System prompt enumerates output schema + common pitfalls.
+
+Articles created: concepts/pipeline/reign-extraction.md.
+Articles touched: CLAUDE.md (article-mapping row), knowledge/index.md, concepts/pipeline/extraction.md (narrowed affects: glob), concepts/pipeline/incremental.md (narrowed affects: glob).
+
 ## [2026-05-22] feat(dates): explicit_reign_other resolver (Phase 4 Task 2)
 
 `pipeline/dates.py::resolve_explicit_reign_other` reads per-state reign YAMLs from `data/reigns/`. Matches ruler_ref against `id`, `posthumous_name`, or `given_name`. Returns None + structured warning on missing YAML / not-found / ambiguous. Out-of-range reign years return the computed year with a warning so the value isn't lost. Eight unit tests against a synthetic fixture cover all branches.

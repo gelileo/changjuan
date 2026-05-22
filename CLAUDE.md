@@ -98,6 +98,7 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | `pipeline/**/invariant*.py` or `pipeline/**/justif*.py` | `concepts/verification/extraction-invariants.md` |
 | `curation/**/*.py` | `concepts/curation/streamlit-app.md` |
 | `pipeline/**/incremental*.py` or `pipeline/**/reextract*.py` or `pipeline/cli.py` (re_extract_cmd) or `.claude/skills/changjuan-extract*/**` | `concepts/pipeline/incremental.md` |
+| `.claude/skills/changjuan-extract-reigns/**` or `data/reigns/**` | `concepts/pipeline/reign-extraction.md` |
 | `corpora/**` or `pipeline/**/ingest*.py` | `concepts/corpora/{corpus}.md` |
 | `pipeline/**/stats*.py` or `pipeline/**/metrics*.py` | `concepts/verification/stats-schema.md` |
 | `.env` or `pipeline/config.py` | `concepts/runtime/configuration.md` |

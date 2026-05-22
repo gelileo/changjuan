@@ -12,7 +12,8 @@ references:
   - concepts/data-model/knowledge-graph.md
 affects:
   - pipeline/cli.py
-  - .claude/skills/changjuan-extract*/**
+  - .claude/skills/changjuan-extract/**
+  - .claude/skills/changjuan-extract-v*/**
 ---
 
 ## Why incremental extraction matters

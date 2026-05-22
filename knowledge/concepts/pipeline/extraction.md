@@ -13,7 +13,9 @@ references:
   - concepts/pipeline/load-and-merge.md
   - concepts/verification/confidence-and-invariants.md
 affects:
-  - .claude/skills/changjuan-extract*/**
+  - .claude/skills/changjuan-extract/**
+  - .claude/skills/changjuan-extract-v*/**
+  - .claude/skills/changjuan-verify-sample/**
   - pipeline/stage3_extract.py
   - pipeline/schemas/extract_output.py
   - pipeline/confidence.py
