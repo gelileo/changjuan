@@ -142,16 +142,14 @@ def person_match_score(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         score += 0.10
     if features["social_category_agreement"] == "same":
         score += 0.10
-    # Temporal bonus/penalty only meaningful when variant evidence is strong.
-    if features["variant_overlap"] == "strong":
-        if features["temporal_proximity"] == "compatible":
-            score += 0.10
-        elif features["temporal_proximity"] == "conflict":
-            score -= 0.30
+    if features["temporal_proximity"] == "compatible":
+        score += 0.10
 
-    # Negative contributions (non-temporal)
+    # Negative contributions
     if features["state_agreement"] == "different":
         score -= 0.40
+    if features["temporal_proximity"] == "conflict":
+        score -= 0.30
     if features["clan_agreement"] == "different":
         score -= 0.20
     if features["social_category_agreement"] == "different":

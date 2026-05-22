@@ -321,7 +321,7 @@ Marked `@pytest.mark.golden`. The fixture was frozen at the levels that satisfy 
 
 ## Person match scorer tests
 
-`tests/unit/test_scoring.py` (Phase 3 Task 6) exercises `pipeline.stage5_link.scoring.person_match_score` — the pure-function scorer at the heart of the Stage 5 linker. A `_p(name, **fields)` helper builds minimal Person record dicts. Ten tests:
+`tests/unit/test_scoring.py` (Phase 3 Task 6; corrected in Task 6 fix) exercises `pipeline.stage5_link.scoring.person_match_score` — the pure-function scorer at the heart of the Stage 5 linker. A `_p(name, **fields)` helper builds minimal Person record dicts. Eleven tests:
 
 - `test_hard_veto_when_no_variant_overlap` — no shared names → score 0.0, `variant_overlap="none"`.
 - `test_strong_variant_overlap_canonical_in_other_variants` — A's canonical appears in B's `variants[]` → `variant_overlap="strong"`, score 0.50 (no other signals).
@@ -329,12 +329,13 @@ Marked `@pytest.mark.golden`. The fixture was frozen at the levels that satisfy 
 - `test_full_perfect_match` — strong overlap + same state + same clan + same social category + temporal compatible → score 1.0 (clamped).
 - `test_state_disagreement_subtracts` — strong overlap + different `state_id` → 0.50 − 0.40 = 0.10.
 - `test_clan_disagreement_subtracts` — partial overlap + same state + different clan → 0.20 + 0.20 − 0.20 = 0.20.
-- `test_temporal_conflict_subtracts` — partial overlap + temporal conflict: temporal penalty only applies for strong evidence; with partial overlap score stays 0.20.
+- `test_temporal_conflict_subtracts` — strong overlap (A's canonical in B's `variants[]`) + temporal conflict (death 950 BCE, birth 700 BCE → gap 250 > 150) → 0.50 − 0.30 = 0.20.
 - `test_one_null_does_not_penalize` — partial overlap + one side missing `state_id` → `state_agreement="one_null"`, no penalty, score 0.20.
 - `test_score_clamps_to_zero` — partial overlap + state diff + clan diff + category diff + temporal conflict → heavily negative, clamped to 0.0.
+- `test_temporal_compatible_with_partial_overlap_adds_independently` — partial overlap + same state + temporal compatible → 0.20 + 0.20 + 0.10 = 0.50. Verifies temporal applies regardless of overlap level (spec §4 regression walkthrough confirms this).
 - `test_score_clamps_to_one` — strong overlap + all-same fields + compatible temporal → sum exceeds 1.0, clamped to 1.0.
 
-Key formula invariant documented by these tests: temporal bonus/penalty (+0.10 compatible, −0.30 conflict) is only applied when `variant_overlap == "strong"`. When overlap is "partial", temporal signals are noted in `features` but do not contribute to the score — partial name evidence is insufficient to adjudicate temporal conflicts.
+Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0.30 conflict) is an **independent dimension** — it applies regardless of `variant_overlap` level. The §4 regression walkthrough (召公奭↔召虎: partial + state same + conflict = 0.20 + 0.20 − 0.30 = 0.10) confirms temporal is not gated on strong overlap.
 
 ## What would invalidate this article
 

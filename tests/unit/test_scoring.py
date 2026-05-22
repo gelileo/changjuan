@@ -97,18 +97,21 @@ def test_clan_disagreement_subtracts() -> None:
 
 
 def test_temporal_conflict_subtracts() -> None:
-    """Dates more than 150y apart trigger temporal_proximity = conflict."""
+    """Dates more than 150y apart trigger temporal_proximity = conflict.
+
+    Strong overlap: a's canonical_name appears in b's variants[]."""
     a = _p(
         "X",
-        variants=[{"variant": "shared", "kind": "别名"}],
+        variants=[{"variant": "Y", "kind": "别名"}],
         death_date={"year_bce": 950, "uncertainty": "point", "inference_kind": "era_only"},
     )
     b = _p(
         "Y",
-        variants=[{"variant": "shared", "kind": "别名"}],
+        variants=[{"variant": "X", "kind": "本名"}],
         birth_date={"year_bce": 700, "uncertainty": "point", "inference_kind": "era_only"},
     )
     result = person_match_score(a, b)
+    assert result["features"]["variant_overlap"] == "strong"
     assert result["features"]["temporal_proximity"] == "conflict"
     # +0.50 (strong) - 0.30 (temporal conflict) = 0.20
     assert abs(result["score"] - 0.20) < 1e-9
@@ -144,6 +147,33 @@ def test_score_clamps_to_zero() -> None:
     result = person_match_score(a, b)
     # +0.20 - 0.40 - 0.20 - 0.10 - 0.30 = -0.80 → clamp to 0.0
     assert result["score"] == 0.0
+
+
+def test_temporal_compatible_with_partial_overlap_adds_independently() -> None:
+    """Temporal contributions apply regardless of variant_overlap level.
+
+    Spec §4 walkthrough table (e.g., 召公奭↔召虎: partial + state same - temporal conflict)
+    confirms temporal is an independent dimension.
+    """
+    # Partial overlap (shared variant string only, canonicals differ).
+    a = _p(
+        "X",
+        variants=[{"variant": "shared", "kind": "别名"}],
+        state_id="sta:jin",
+        death_date={"year_bce": 650, "uncertainty": "point", "inference_kind": "era_only"},
+    )
+    b = _p(
+        "Y",
+        variants=[{"variant": "shared", "kind": "别名"}],
+        state_id="sta:jin",
+        death_date={"year_bce": 640, "uncertainty": "point", "inference_kind": "era_only"},
+    )
+    result = person_match_score(a, b)
+    assert result["features"]["variant_overlap"] == "partial"
+    assert result["features"]["state_agreement"] == "same"
+    assert result["features"]["temporal_proximity"] == "compatible"
+    # +0.20 (partial) + 0.20 (state same) + 0.10 (temporal compatible) = 0.50
+    assert abs(result["score"] - 0.50) < 1e-9
 
 
 def test_score_clamps_to_one() -> None:

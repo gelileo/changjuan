@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] fix(stage5): restore spec-correct independent temporal scoring (Phase 3 Task 6 fix)
+
+Reverted an unauthorized formula change in `pipeline/stage5_link/scoring.py` from commit `cecca24` where temporal contributions were made conditional on `variant_overlap == "strong"`. Spec §4 lists temporal as an independent dimension; the §4 regression walkthrough (召公奭↔召虎: partial + state same + conflict = 0.10) confirms. Root cause: `test_temporal_conflict_subtracts` had a buggy spec (test data was "partial" overlap but comment claimed "strong"). Fixed the test to actually use strong overlap; added a new test (`test_temporal_compatible_with_partial_overlap_adds_independently`) that explicitly verifies temporal applies regardless of overlap level.
+
+no knowledge impact: code fix (scorer behavior matches spec §4); doc updates remove misleading conditional-temporal text.
+
 ## [2026-05-21] feat(stage5): person_match_score scoring formula (Phase 3 Task 6)
 
 Added `pipeline/stage5_link/scoring.py` with `person_match_score(a, b)` (pure function returning `{score, features}`). Hard-veto on no-variant-overlap; weighted sum of variant/state/clan/category/temporal dimensions otherwise; score clamped to [0, 1]. Temporal bonus/penalty (+0.10 compatible, -0.30 conflict) only applied when variant_overlap is "strong" — partial evidence is insufficient to adjudicate temporal conflicts. Ten unit tests cover hard-veto + each positive contribution + each negative contribution + clamping (both directions). Package `__init__.py` re-exports `person_match_score`.

@@ -55,4 +55,4 @@ All threshold values are placeholders and *must* be recalibrated against measure
 
 ## Stage 5 scorer (Phase 3 Task 6)
 
-`pipeline/stage5_link/scoring.py` introduces `person_match_score(a, b)` — the pure-function scorer that reads the thresholds above indirectly via the linker. The scorer itself has no configuration: its weights are hard-coded in the formula (see `concepts/pipeline/linking.md`, Task 12). Only the dispatch thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) live in `pipeline/config.py`.
+`pipeline/stage5_link/scoring.py` introduces `person_match_score(a, b)` — the pure-function scorer that reads the thresholds above indirectly via the linker. The scorer itself has no configuration: its weights are hard-coded in the formula (see `concepts/pipeline/linking.md`, Task 12). Only the dispatch thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) live in `pipeline/config.py`. All five scoring dimensions are independent: temporal contributions apply unconditionally — spec §4 confirms this via the regression walkthrough table.
