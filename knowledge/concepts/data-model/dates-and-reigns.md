@@ -115,21 +115,21 @@ rulers:
 
 **`CHANGJUAN_REIGN_DIR` env var** overrides the default `data/reigns/` directory. Tests use this to redirect the loader to a `tmp_path`-based copy of the synthetic fixture. The module-level `_REIGN_YAML_CACHE` dict is cleared between tests via `dates._REIGN_YAML_CACHE.clear()`.
 
-**Phase 4 reign coverage** (Phase 4 Task 5, committed under `data/reigns/`):
+**Phase 4 reign coverage** (Phase 4 Task 5 + post-review trim, committed under `data/reigns/`):
 
 | state | rulers | BCE span | source |
 |---|---|---|---|
 | `sta:zheng` | 24 | 770-375 | 《史记·郑世家》 |
-| `sta:wei` | 35 | 812-209 | 《史记·卫康叔世家》 |
+| `sta:wei` | 23 | 812-451 | 《史记·卫康叔世家》 |
 | `sta:qi` | 27 | 794-221 | 《史记·齐太公世家》 + 《史记·田敬仲完世家》 |
-| `sta:jin` | 30 | 780-349 | 《史记·晋世家》 |
+| `sta:jin` | 28 | 780-389 | 《史记·晋世家》 |
 | `sta:qin` | 32 | 777-221 | 《史记·秦本纪》 |
-| `sta:song` | 24 | 799-286 | 《史记·宋微子世家》 |
+| `sta:song` | 18 | 799-470 | 《史记·宋微子世家》 |
 | `sta:chen` | 14 | 754-478 | 《史记·陈杞世家》 |
-| `sta:cai` | 17 | 762-447 | 《史记·管蔡世家》 |
-| `sta:shen` | 2 | 770-689 | 《史记·周本纪》 (sparse — placeholder) |
+| `sta:cai` | 15 | 762-472 | 《史记·管蔡世家》 |
+| `sta:shen` | 1 | 770-720 | 《史记·周本纪》 (placeholder; see notes) |
 
-These were generated inline (LLM training knowledge) following the schema above; expect the curator to refine entries marked `confidence: medium` or `confidence: low`. Phase 5+ adds additional states (楚, 燕, 吴, 越, etc.) as multi-chapter extraction surfaces references to their reigns.
+Drafted inline following the schema above; curator-trimmed during Phase 4 Task 5 review to remove 23 out-of-scope 战国-era uncertain entries (wrong data is worse than missing data — Phase 4 covers 770-700 BCE; 战国 entries are restored in Phase 5+ with fresh verification when needed). Phase 5+ also adds states beyond this set (楚, 燕, 吴, 越, etc.) as multi-chapter extraction surfaces references.
 
 ## First commitments
 

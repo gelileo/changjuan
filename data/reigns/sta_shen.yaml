@@ -23,14 +23,3 @@ rulers:
 
       Phase 4 spot-checks should flag any 申-anchored extraction; if needed, this
       YAML can be expanded.
-  - id: 申侯二
-    posthumous_name: ""
-    given_name: ""
-    reign_start_bce: 719
-    reign_end_bce: 689
-    sources:
-      - 《史记》
-    confidence: low
-    notes: |
-      Hypothetical placeholder for the 申侯 holder before 楚 absorption. Exact
-      identity and reign dates poorly attested.

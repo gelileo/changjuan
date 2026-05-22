@@ -276,23 +276,3 @@ rulers:
     notes: |
       韩赵魏三家 officially recognized as 诸侯 in 403 BCE during this reign —
       "三家分晋" formalized.
-  - id: 晋孝公
-    posthumous_name: 孝公
-    given_name: 颀
-    reign_start_bce: 388
-    reign_end_bce: 369
-    sources:
-      - 《史记·晋世家》
-    confidence: medium
-    notes: ""
-  - id: 晋静公
-    posthumous_name: 静公
-    given_name: 俱酒
-    reign_start_bce: 368
-    reign_end_bce: 349
-    sources:
-      - 《史记·晋世家》
-    confidence: medium
-    notes: |
-      Last 晋 ruler. Reduced to 端氏 + 屯留 by 三家. Final remnants extinguished
-      around 349 BCE.

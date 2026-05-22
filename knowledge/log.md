@@ -1,5 +1,25 @@
 # Build Log
 
+## [2026-05-22] fix(reigns): drop 23 out-of-scope 战国-era entries from 5 reign YAMLs (Phase 4 Task 5 fix)
+
+Per Phase 4 curator review (Task 5 batch review): dropped 23 entries from reign YAMLs that are out-of-scope for Phase 4 (chapters 2-5 cover 770-700 BCE; the dropped entries are all 战国-era, ~470 BCE onward).
+
+Removed:
+- `sta_wei`: 12 entries (卫君班师, 卫敬公, 卫昭公, 卫怀公, 卫慎公, 卫声公, 卫成侯, 卫平侯, 卫嗣君, 卫怀君, 卫元君, 卫君角). Kept 卫出公二 + 卫悼公 (high confidence, 476-451 BCE).
+- `sta_song`: 6 entries (宋昭公二, 宋悼公, 宋休公, 宋辟公, 宋剔成君, plus 宋康王 dropped because it would be orphaned without its 战国 predecessors). All post-468 BCE.
+- `sta_jin`: 2 entries (晋孝公 388-369, 晋静公 368-349).
+- `sta_cai`: 2 entries (蔡元侯 456-451, 蔡侯齐 450-447).
+- `sta_shen`: 1 entry (申侯二 — placeholder with no historical basis).
+
+Rationale: wrong data is worse than missing data. The dropped entries had medium/low confidence ratings (per the original drafting); their dates are not load-bearing for Phase 4. Phase 5+ adds them back with fresh verification when chapters 6+ surface 战国-era references.
+
+Remaining uncertain entries (all in Phase 4 scope):
+- `sta_cai`: 蔡共侯 (762-760), 蔡戴侯 (759-750) — early 蔡 chronology is genuinely thin.
+- `sta_qin`: 秦静公 (716-716) — often omitted in sources.
+- `sta_shen`: 申侯 (770-720) — see Phase 4 review notes for the reign-period derivation.
+
+no knowledge impact: data correction; covered by concepts/data-model/dates-and-reigns.md (per-state coverage table) and concepts/pipeline/reign-extraction.md (batch exception).
+
 ## [2026-05-22] feat(smoke): pipeline.smoke_checks + scripts/smoke-check-run for per-chapter integrity (Phase 4 Task 6)
 
 `pipeline/smoke_checks.py::smoke_check_run(conn, run_id)` runs PRAGMA integrity_check, FK orphan scans (person_relations + event_participants endpoints), entity-count check, and surfaces dates_out_of_range from the pipeline_run's stats_json. `scripts/smoke-check-run` is a thin wrapper. Returns structured JSON on stdout; exits non-zero on fail. Four unit tests cover happy path, missing run, dates_out_of_range warning, and minimal seed safety.

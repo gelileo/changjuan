@@ -143,23 +143,3 @@ rulers:
       - 《史记·管蔡世家》
     confidence: high
     notes: ""
-  - id: 蔡元侯
-    posthumous_name: 元侯
-    given_name: ""
-    reign_start_bce: 456
-    reign_end_bce: 451
-    sources:
-      - 《史记·管蔡世家》
-    confidence: medium
-    notes: ""
-  - id: 蔡侯齐
-    posthumous_name: ""
-    given_name: 齐
-    reign_start_bce: 450
-    reign_end_bce: 447
-    sources:
-      - 《史记·管蔡世家》
-    confidence: medium
-    notes: |
-      Last 蔡 ruler. 蔡 extinguished by 楚惠王 in 447 BCE. No 谥号 — referenced
-      as 蔡侯齐 in 《史记》.

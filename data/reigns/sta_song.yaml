@@ -169,62 +169,8 @@ rulers:
       - 《史记·宋微子世家》
     confidence: high
     notes: 48-year reign. Given name sometimes written 栾.
-  - id: 宋昭公二
-    posthumous_name: 昭公
-    given_name: 得
-    reign_start_bce: 468
-    reign_end_bce: 404
-    sources:
-      - 《史记·宋微子世家》
-    confidence: medium
-    notes: |
-      Distinct from earlier 宋昭公 (杵臼). Long 65-year reign — dates vary across
-      sources by 1-2 years.
-  - id: 宋悼公
-    posthumous_name: 悼公
-    given_name: 购由
-    reign_start_bce: 403
-    reign_end_bce: 396
-    sources:
-      - 《史记·宋微子世家》
-    confidence: medium
-    notes: ""
-  - id: 宋休公
-    posthumous_name: 休公
-    given_name: 田
-    reign_start_bce: 395
-    reign_end_bce: 373
-    sources:
-      - 《史记·宋微子世家》
-    confidence: medium
-    notes: ""
-  - id: 宋辟公
-    posthumous_name: 辟公
-    given_name: 辟兵
-    reign_start_bce: 372
-    reign_end_bce: 370
-    sources:
-      - 《史记·宋微子世家》
-    confidence: medium
-    notes: ""
-  - id: 宋剔成君
-    posthumous_name: ""
-    given_name: 剔成
-    reign_start_bce: 369
-    reign_end_bce: 329
-    sources:
-      - 《史记·宋微子世家》
-    confidence: medium
-    notes: |
-      Title 君 not 公 (战国 era). Usurped throne; eventually expelled by brother 偃 in 329.
-  - id: 宋康王
-    posthumous_name: 康王
-    given_name: 偃
-    reign_start_bce: 328
-    reign_end_bce: 286
-    sources:
-      - 《史记·宋微子世家》
-    confidence: high
-    notes: |
-      Styled as 王 (around 318 BCE). 宋 destroyed by 齐 (with 楚 + 魏 cooperation)
-      in 286 BCE.
+  # 战国 entries (468-286 BCE) dropped in Phase 4 fix: 5 uncertain entries
+  # (宋昭公二, 宋悼公, 宋休公, 宋辟公, 宋剔成君) removed. 宋康王 (328-286, high
+  # confidence) also dropped because it's out of Phase 4 scope and would be
+  # orphaned without its predecessor chain. Phase 5+ adds them back with fresh
+  # verification when chapters 6+ surface 战国-era 宋 references.
