@@ -2,7 +2,7 @@
 title: Runtime Configuration
 type: concept
 area: runtime
-updated: 2026-05-21 (Task 8)
+updated: 2026-05-21 (Task 9: no configuration changes; cli.py updated with link verb)
 status: mature
 load_bearing: true
 references:

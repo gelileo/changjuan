@@ -349,6 +349,15 @@ Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0
 - `test_pool_includes_variant_match` — a canonical named "晋文公" with a `person_variants` row linking it to variant "重耳" appears in the pool for a candidate named "重耳".
 - `test_pool_handles_malformed_date_json` — a candidate whose `birth_date_json` is not valid JSON still appears in the pool with `birth_date=None` rather than crashing the linker. Covers `_safe_json_load`, which replaces bare `json.loads` in `_row_to_dict`.
 
+## link CLI tests (Phase 3 Task 9)
+
+`tests/unit/test_link_cli.py` exercises the `link` subcommand via `typer.testing.CliRunner`. Two tests:
+
+- `test_link_cli_runs_on_empty_run` — invokes `link run:empty` against an empty canonical database; asserts exit 0 and `processed=0` in stdout.
+- `test_link_cli_reports_counts` — seeds one `candidate_persons` row with no name overlap (hard-veto → skip); invokes `link run:1`; asserts exit 0, `processed=1`, and `skipped=1` in stdout.
+
+These tests verify the CLI shim wires correctly into `stage5_link.link_run` and that the summary line's format includes all four stat keys (processed / auto-merged / queued / skipped).
+
 ## link_run orchestrator tests (Phase 3 Task 8)
 
 `tests/unit/test_linker.py` exercises `pipeline.stage5_link.linker.link_run` — the Stage 5 dispatch orchestrator. Uses the same `open_canonical_db(tmp_path / "changjuan.sqlite")` pattern as candidate_pool tests. Two seeders (`_seed_canonical`, `_seed_candidate`) handle FK-safe insertion; `_seed_state` inserts a `states` row using the actual column name `name` (not `canonical_name`). Six tests:

@@ -693,6 +693,31 @@ def qa_load_cmd(
     )
 
 
+@app.command()
+def link(
+    pipeline_run_id: str = typer.Argument(
+        ..., help="Pipeline run id to link (matches candidate_persons.pipeline_run_id)."
+    ),
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+) -> None:
+    """Run Stage 5 (linker) for the given pipeline_run_id.
+
+    Walks candidate_persons, scores against the canonical + same-run pool, and
+    dispatches by threshold: auto-merge writes match_target_id + audit_log;
+    mid-score writes a merge_candidates row; low-score skips. See
+    concepts/pipeline/linking.md for the full picture.
+    """
+    from pipeline.stage5_link import link_run
+
+    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    stats = link_run(canonical, pipeline_run_id)
+    typer.echo(
+        f"link {pipeline_run_id}: processed={stats['candidates_processed']} "
+        f"auto-merged={stats['auto_merges']} queued={stats['queued']} "
+        f"skipped={stats['skipped']}"
+    )
+
+
 @app.command(name="extract-load")
 def extract_load_cmd(
     chapter: int = typer.Option(..., "--chapter"),

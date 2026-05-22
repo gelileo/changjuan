@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-21] feat(cli): link verb wires link_run into the user workflow (Phase 3 Task 9)
+
+Added `uv run changjuan link <pipeline_run_id>` CLI verb in `pipeline/cli.py`. Thin shim around `pipeline.stage5_link.link_run`; reports a single summary line with processed / auto-merged / queued / skipped counts. Sits between extract-load and load in the user workflow (per spec §5).
+
+Two tests cover: empty-run case (exits 0 with processed=0) and skipped-candidate case (processed=1, skipped=1).
+
+no knowledge impact: concepts/runtime/cli.md updated in Task 11.
+
 ## [2026-05-21] fix(stage5): link_run stats reconciliation invariant (Phase 3 Task 8 fix)
 
 The `already_matched` short-circuit in `link_run` was counting siblings in `candidates_processed` but not bumping `skipped`. Invariant `candidates_processed == auto_merges + queued + skipped` was violated by 1 per cross-run merge. Fixed and asserted in `test_cross_run_chain_resolution`.
