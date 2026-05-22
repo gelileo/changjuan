@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] feat(run): Ch.3 end-to-end (Phase 4 Task 8)
+
+Ran extract → /changjuan-extract-v2 chapter:3 → link → load. pipeline_run_id `run:extract-ch3-v2-20260522T193527`. Linker stats: processed=22 auto-merged=0 queued=9 skipped=13. Loader: persons=22 events=14 places=6 states=7 relations=42. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
+
+Key entities extracted: 周幽王, 申侯, 褒姒, 伯服, 郑伯友, 虢石父, 尹球, 祭公, 犬戎主, 宜臼(周平王), 卫武公, 秦襄公, 晋侯仇, 掘突, 武姜. Events cover: 申侯借兵犬戎 → 围镐京 → 举烽无救 → 石父出城战死 → 幽王出奔 → 骊山幽王被杀 → 申后放出 → 诸侯勤王 → 褒姒自缢 → 宜臼即位(周平王) → 封赏 → 联姻 → 迁都洛邑. 9 persons queued for linker review (cross-chunk overlap with Ch.1+Ch.2 canonical).
+
+no knowledge impact: pipeline output capture.
+
 ## [2026-05-22] feat(run): Ch.2 end-to-end via Phase 3 linker + Phase 4 reign tables (Phase 4 Task 7)
 
 Ran extract → link → load for chapter 2. pipeline_run_id `run:extract-ch2-v2-20260522T181735`. Extraction: 20 persons, 18 events, 5 places, 5 states, 72 relations (subagent-generated, all validations pass). Linker: 5 queued at score=0.70 (周宣王/尹吉甫/召虎/伯阳父/姜后 — strong-variant + state-same; secondary signals missing so no auto-merge, but Phase 2's canonical_name fallback in stage 7 still merges them correctly). Loader: 5 places, 5 states, 20 persons (15 net-new + 5 merged), 18 events, 63 relations. Smoke check pass. Ch.1 golden P/R still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
