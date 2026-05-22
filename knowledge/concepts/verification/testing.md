@@ -337,6 +337,17 @@ Marked `@pytest.mark.golden`. The fixture was frozen at the levels that satisfy 
 
 Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0.30 conflict) is an **independent dimension** — it applies regardless of `variant_overlap` level. The §4 regression walkthrough (召公奭↔召虎: partial + state same + conflict = 0.20 + 0.20 − 0.30 = 0.10) confirms temporal is not gated on strong overlap.
 
+## candidate_pool pre-filter tests (Phase 3 Task 7)
+
+`tests/unit/test_candidate_pool.py` exercises `pipeline.stage5_link.candidate_pool.candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter for the Stage 5 linker. Fixtures use `open_canonical_db(tmp_path / "changjuan.sqlite")` for a fresh in-memory-style SQLite. Two seeders (`_seed_candidate`, `_seed_canonical`) handle FK-safe insertion (state seeded before person when `state_id` is non-null). Six tests:
+
+- `test_pool_includes_canonical_with_shared_canonical_name` — canonical and candidate share `canonical_name` "重耳" → pool includes the canonical, `target_kind == "canonical"`.
+- `test_pool_includes_same_run_sibling_with_overlap` — two same-run candidates share a name → pool includes the sibling, `target_kind == "candidate"`.
+- `test_pool_excludes_self` — the queried candidate never appears in its own pool.
+- `test_pool_excludes_other_run_candidates` — a candidate from a different `pipeline_run_id` with the same name is excluded.
+- `test_pool_excludes_no_overlap_canonical` — a canonical with a completely different name ("仲山甫") does not appear in the pool for "重耳".
+- `test_pool_includes_variant_match` — a canonical named "晋文公" with a `person_variants` row linking it to variant "重耳" appears in the pool for a candidate named "重耳".
+
 ## What would invalidate this article
 
 - Adding a second test runner.

@@ -179,6 +179,16 @@ CREATE TABLE IF NOT EXISTS candidate_persons (
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS candidate_person_variants (
+    id                       TEXT PRIMARY KEY,
+    candidate_person_id      TEXT NOT NULL,
+    variant                  TEXT NOT NULL,
+    kind                     TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_candidate_person_variants_variant
+    ON candidate_person_variants (variant);
+
 CREATE TABLE IF NOT EXISTS candidate_events (
     id              TEXT PRIMARY KEY,
     type            TEXT NOT NULL,

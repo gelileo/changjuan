@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-21] feat(stage5): candidate_pool relevance pre-filter (Phase 3 Task 7)
+
+Added `pipeline/stage5_link/candidate_pool.py` (`candidate_pool(conn, cand_id, run_id)`) — SQL name-overlap pre-filter that returns canonical persons + same-run candidate persons sharing at least one name string with the target. Excludes self + other-run candidates. Six unit tests cover canonical match, sibling match, self-exclusion, run-exclusion, no-overlap exclusion, variant-table matching.
+
+Also added a new `candidate_person_variants` table to `canonical_schema.sql` (TEXT id/candidate_person_id/variant/kind + variant index). Phase 2's `variants_json` column on `candidate_persons` stays; the new table gives the linker structured SQL access.
+
+Articles touched: concepts/data-model/knowledge-graph.md (new table paragraph).
+
 ## [2026-05-21] fix(stage5): restore spec-correct independent temporal scoring (Phase 3 Task 6 fix)
 
 Reverted an unauthorized formula change in `pipeline/stage5_link/scoring.py` from commit `cecca24` where temporal contributions were made conditional on `variant_overlap == "strong"`. Spec §4 lists temporal as an independent dimension; the §4 regression walkthrough (召公奭↔召虎: partial + state same + conflict = 0.10) confirms. Root cause: `test_temporal_conflict_subtracts` had a buggy spec (test data was "partial" overlap but comment claimed "strong"). Fixed the test to actually use strong overlap; added a new test (`test_temporal_compatible_with_partial_overlap_adds_independently`) that explicitly verifies temporal applies regardless of overlap level.
