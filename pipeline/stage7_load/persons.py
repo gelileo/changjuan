@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json as _json
+import logging
 import sqlite3
 import uuid
 
@@ -12,6 +13,8 @@ from pipeline.stage7_load.helpers import (
     _SIMILAR_CONFIDENCE_DELTA,
     _slugify,
 )
+
+log = logging.getLogger(__name__)
 
 
 def _create_person(
@@ -256,6 +259,28 @@ def _write_variants(
         )
 
 
+def _resolve_canonical_for_candidate_id(
+    conn: sqlite3.Connection,
+    target_ref: str,
+    local_canonical_map: dict[str, str],
+) -> str | None:
+    """Resolve match_target_id to a canonical Person id.
+
+    target_ref may be:
+      - A canonical id like 'per:zhou-xuan-wang' → return it if it exists in persons.
+      - A same-run candidate id like 'cand:per:run:1:p1' → look up in
+        local_canonical_map (already-processed-in-this-load-pass siblings).
+
+    Returns None if the target doesn't resolve.
+    """
+    if target_ref.startswith("cand:"):
+        return local_canonical_map.get(target_ref)
+    row = conn.execute("SELECT id FROM persons WHERE id = ?;", (target_ref,)).fetchone()
+    if row is None:
+        return None
+    return str(row["id"])
+
+
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
@@ -266,14 +291,33 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     """
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-        "state_id, clan_name, confidence, chunk_id, quote, variants_json "
+        "state_id, clan_name, confidence, chunk_id, quote, variants_json, match_target_id "
         "FROM candidate_persons WHERE pipeline_run_id = ?;",
         (pipeline_run_id,),
     )
     candidates = cur.fetchall()
     affected = 0
+    local_canonical_map: dict[str, str] = {}
     for c in candidates:
-        existing_id = _find_existing_person(conn, c["canonical_name"])
+        # Phase 3: honor match_target_id if Stage 5 set it.
+        target_id_raw = c["match_target_id"]
+        existing_id: str | None = None
+        if target_id_raw is not None:
+            existing_id = _resolve_canonical_for_candidate_id(
+                conn, target_id_raw, local_canonical_map
+            )
+            if existing_id is None:
+                log.warning(
+                    "candidate %s has match_target_id=%s but resolution returned no canonical; "
+                    "falling through to canonical_name match",
+                    c["id"],
+                    target_id_raw,
+                )
+
+        # Fall back to canonical_name match if match_target_id didn't resolve.
+        if existing_id is None:
+            existing_id = _find_existing_person(conn, c["canonical_name"])
+
         if existing_id is None:
             person_id = f"per:{_slugify(c['canonical_name'])}"
             # Guard against slug collisions: if a different Person already holds this id,
@@ -288,6 +332,10 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         else:
             person_id = existing_id
             _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
+
+        # Record in map for cross-run chain resolution by later siblings in this pass.
+        local_canonical_map[c["id"]] = person_id
+
         _write_variants(conn, person_id, c["variants_json"])
         record_citation(conn, "person", person_id, c["chunk_id"])
         affected += 1

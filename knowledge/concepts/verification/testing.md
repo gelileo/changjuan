@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-21 (Task 8)
+updated: 2026-05-22 (Task 10)
 status: mature
 load_bearing: false
 references:
@@ -357,6 +357,15 @@ Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0
 - `test_link_cli_reports_counts` — seeds one `candidate_persons` row with no name overlap (hard-veto → skip); invokes `link run:1`; asserts exit 0, `processed=1`, and `skipped=1` in stdout.
 
 These tests verify the CLI shim wires correctly into `stage5_link.link_run` and that the summary line's format includes all four stat keys (processed / auto-merged / queued / skipped).
+
+## Stage 7 match_target_id tests (Phase 3 Task 10)
+
+`tests/unit/test_stage7_match_target.py` exercises the Phase 3 `match_target_id`-first matching path added to `load_candidate_persons`. Uses `open_canonical_db` and two seeders (`_seed_canonical`, `_seed_candidate`). Four tests cover the four match paths:
+
+- `test_match_target_id_honored_when_set_to_canonical` — candidate `重耳` has `match_target_id='per:jin-wen-gong'` (an existing canonical named `晋文公`); asserts only one `persons` row with id `per:jin-wen-gong` (merge, not create).
+- `test_match_target_id_null_falls_back_to_name_match` — candidate has `match_target_id=None`; asserts existing Phase 2 canonical_name-match logic fires (one Person, no duplicate).
+- `test_match_target_id_missing_target_falls_through_with_warning` — candidate has `match_target_id='per:NONEXISTENT'`; asserts fallback to name-match succeeds and a `logging.WARNING` containing `"match_target_id"` is emitted (captured via `caplog`).
+- `test_cross_run_chain_resolves_via_local_map` — two same-run candidates: first has no `match_target_id` (creates `per:zhong-er`); second has `match_target_id='cand:per:run:1:p1'`; asserts only one `persons` row (second candidate merged into first via `local_canonical_map`).
 
 ## link_run orchestrator tests (Phase 3 Task 8)
 

@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-22] feat(stage7): honor candidate_persons.match_target_id + cross-run chain (Phase 3 Task 10)
+
+Modified `pipeline/stage7_load/persons.py::load_candidate_persons` to honor `match_target_id`:
+- Set to canonical id → merge into that canonical (skip canonical_name fallback).
+- Set to sibling candidate id → resolve via `local_canonical_map` (tracks canonical id chosen for each candidate during this load pass).
+- Set to non-existent target → log warning + fall through to canonical_name match.
+- Null → existing Phase 2 behavior unchanged.
+
+Added `_resolve_canonical_for_candidate_id(conn, target_ref, map) -> str | None` helper. Four unit tests cover the four paths.
+
+Articles touched: concepts/pipeline/load-and-merge.md (full doc lands in Task 11).
+
 ## [2026-05-21] feat(cli): link verb wires link_run into the user workflow (Phase 3 Task 9)
 
 Added `uv run changjuan link <pipeline_run_id>` CLI verb in `pipeline/cli.py`. Thin shim around `pipeline.stage5_link.link_run`; reports a single summary line with processed / auto-merged / queued / skipped counts. Sits between extract-load and load in the user workflow (per spec §5).
