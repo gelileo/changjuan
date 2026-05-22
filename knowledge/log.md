@@ -1,5 +1,44 @@
 # Build Log
 
+## [2026-05-22] Phase 3 complete — Stage 5 (Link & Dedup) for Persons shipped
+
+Phase 3 ships Stage 5 — the deterministic surface-feature linker for Person entities only. Persons-only scope was deliberate: it's the highest-stakes stage (founding spec §3) and persons are the hardest case (variant chains, state/clan/category agreement, era proximity). LLM judge is deferred to Phase 4.
+
+### What shipped
+
+- `pipeline/stage5_link/` package: `scoring.py` (pure-function scorer with hard-veto on no-variant-overlap + 5-dimension weighted sum), `candidate_pool.py` (SQL name-overlap pre-filter + variants_json safe-load), `linker.py` (orchestrator with threshold-based dispatch + cross-run chain handling + variants denormalization migration).
+- `pipeline/cli.py::link` verb, sits between extract-load and load in the user workflow.
+- `pipeline/stage7_load/persons.py` honors `match_target_id` with canonical-name fallback + missing-target warning + cross-run chain resolution via `_resolve_canonical_for_candidate_id` + `local_canonical_map`. Bonus: fixed a Phase 2 FK gap (`candidate_persons.state_id` is local extraction id, `persons.state_id` is canonical FK; new `_build_candidate_state_id_map` bridges them).
+- Schema: added `candidate_persons.match_target_id` column + new `candidate_person_variants` structured table.
+- Thresholds: `LINKER_AUTO_MERGE_THRESHOLD = 0.75`, `LINKER_QUEUE_THRESHOLD = 0.40` in `pipeline/config.py` with v1 calibration documented.
+- Merge regression set: 10 hand-curated pairs in `tests/golden/merge_regression.yaml` (5 same + 5 different) covering spec §3 + §6 failure modes; `@pytest.mark.regression` integration test pins behavior.
+- Ch.1 link-then-load integration test: confirms the end-to-end pipeline preserves all 13 golden persons.
+- `scripts/phase3-prep.sh`: 6-section acceptance check + 7-item PHASE3_DEFERRED backlog.
+
+### Knowledge articles
+
+- New: `concepts/pipeline/linking.md` (Stage 5 architecture, ~1200 words).
+- Updated: `concepts/data-model/knowledge-graph.md` (match_target_id + candidate_person_variants table), `concepts/pipeline/load-and-merge.md` (match_target_id integration + state_id resolution fix), `concepts/runtime/cli.md` (link verb), `concepts/runtime/configuration.md` (LINKER_* thresholds), `concepts/verification/testing.md` (new test sections), `concepts/pipeline/architecture.md` (linker bullet), `concepts/pipeline/incremental.md` (link verb mention), `knowledge/index.md` (linking.md row).
+- `CLAUDE.md`: `pipeline/**/stage5*.py` → `concepts/pipeline/linking.md` row was already present from earlier work.
+
+### Test totals
+
+- Phase 2 baseline: 173 tests (168 unit + 4 integration + 1 golden).
+- Phase 3 added: 41 tests (37 unit + 2 regression + 1 integration + 1 golden).
+- Total at Phase 3 close: 214 passed; all pre-commit hooks clean; phase2-prep.sh + phase3-prep.sh both green.
+
+### Phase 4 starter backlog (`PHASE3_DEFERRED` in `scripts/phase3-prep.sh`)
+
+1. LLM judge for Stage 5 ambiguous cases (defer until curator UI exists for with/without comparison).
+2. `explicit_reign_other` date parsing + reign tables for 晋/齐/楚/秦/宋/郑/卫… (carried from Phase 2 backlog).
+3. Ch.~40 golden annotation (城濮之战) — cross-chapter linker validation.
+4. Curator UI (Stage 8) — Streamlit; first queue: merge_candidates from Stage 5.
+5. Cross-chunk relative-date automation (Phase 2 manual CLI suffices for now).
+6. Linker for events / places / states / relations — Phase 3 was persons only.
+7. Multi-chapter extraction runs — extract→link→load on chapters 2-108.
+
+Phase 3 is done; the path forward is Phase 4.
+
 ## [2026-05-22] chore(scripts): phase3-prep.sh — Phase 3 acceptance check (Phase 3 Task 15)
 
 Mirrors `scripts/phase2-prep.sh`'s structure. Six pass/fail sections (Phase 2 still passes, Stage 5 module present, link CLI verb, regression set ≥10 pairs, regression test green, Ch.1 link-then-load test green) plus a seventh section that prints the 7-item PHASE3_DEFERRED backlog (Phase 4 starter agenda: LLM judge, date parser expansion, Ch.~40 golden, curator UI, cross-chunk date automation, linker for other entity kinds, multi-chapter extraction).
