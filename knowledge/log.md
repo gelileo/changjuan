@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-22] feat(smoke): pipeline.smoke_checks + scripts/smoke-check-run for per-chapter integrity (Phase 4 Task 6)
+
+`pipeline/smoke_checks.py::smoke_check_run(conn, run_id)` runs PRAGMA integrity_check, FK orphan scans (person_relations + event_participants endpoints), entity-count check, and surfaces dates_out_of_range from the pipeline_run's stats_json. `scripts/smoke-check-run` is a thin wrapper. Returns structured JSON on stdout; exits non-zero on fail. Four unit tests cover happy path, missing run, dates_out_of_range warning, and minimal seed safety.
+
+Articles touched: concepts/verification/testing.md.
+
 ## [2026-05-22] feat(reigns): draft reign YAMLs for 9 states (Phase 4 Task 5, batch)
 
 Drafted reign tables for all 9 worklist states from Task 4 in a single batch. Inline generation (without invoking the slash-skill, which was freshly scaffolded and not loaded in this session); content follows `.claude/skills/changjuan-extract-reigns/system-prompt.md` rules. Per-state ruler counts and date spans:

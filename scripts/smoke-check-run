@@ -1,0 +1,12 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Per-chapter smoke checks. See pipeline/smoke_checks.py for the logic.
+
+scripts/smoke-check-run --run-id <pipeline_run_id>
+"""
+
+import sys
+
+from pipeline.smoke_checks import main
+
+if __name__ == "__main__":
+    sys.exit(main())

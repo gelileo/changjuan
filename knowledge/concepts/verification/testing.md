@@ -432,6 +432,17 @@ Eight tests cover all branches:
 
 All five are unit tests using `tmp_path`; no real corpus access.
 
+## Smoke-check tests (Phase 4 Task 6)
+
+`tests/unit/test_smoke_checks.py` exercises `pipeline.smoke_checks.smoke_check_run`. A `conn` fixture uses `open_canonical_db(tmp_path / "changjuan.sqlite")`. A `_seed_pipeline_run` helper inserts a minimal `pipeline_runs` row with a `stats_json` containing `dates_out_of_range`. A shared SQL constant `_INSERT_RUN` holds the parameterised INSERT string to keep lines within the 100-char limit. Four tests:
+
+- `test_smoke_check_passes_on_clean_run` — seeds one `pipeline_run`, one `states` row (column `name`, not `canonical_name`), and one `persons` row; asserts `status == "pass"`, `fk_orphans == 0`, `dates_out_of_range == 0`.
+- `test_smoke_check_fails_when_pipeline_run_missing` — calls `smoke_check_run` with a non-existent `run_id`; asserts `status == "fail"` and `"no_pipeline_run"` in `failures`.
+- `test_smoke_check_flags_dates_out_of_range` — seeds a `pipeline_run` with `dates_out_of_range: 2`; asserts `dates_out_of_range == 2` and `"dates_out_of_range"` in `warnings` (non-fatal).
+- `test_smoke_check_runs_without_crash_on_minimal_seed` — seeds only the `pipeline_run` (no entities); asserts result contains `"fk_orphans"` and `"status"` keys without crashing.
+
+The `states` table uses `name` (not `canonical_name`) — confirmed against `pipeline/schemas/canonical_schema.sql`.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

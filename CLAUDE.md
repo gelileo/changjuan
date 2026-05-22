@@ -104,6 +104,7 @@ This table is populated from day one of greenfield. Add new rows as new modules 
 | `.env` or `pipeline/config.py` | `concepts/runtime/configuration.md` |
 | `pipeline/**/__main__.py` or `pipeline/**/cli*.py` | `concepts/runtime/cli.md` |
 | `tests/**/*.py` | `concepts/verification/testing.md` |
+| `pipeline/smoke_checks.py` or `scripts/smoke-check-run` | `concepts/verification/testing.md` |
 
 ### When the agent encounters code without a matching article
 
