@@ -2,7 +2,7 @@
 title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
-updated: 2026-05-21
+updated: 2026-05-21 (Task 8)
 status: thin
 load_bearing: true
 references:
@@ -56,6 +56,16 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 `candidate_person_id` carries a FOREIGN KEY to `candidate_persons(id)`, mirroring the `person_variants.person_id → persons(id)` constraint (added in Task 7 fix; the initial schema omitted the FK). Two indices exist:
 - `idx_candidate_person_variants_variant` — keeps the cross-table name-overlap JOIN fast.
 - `idx_candidate_person_variants_candidate_id` — avoids a full-scan on the per-row `SELECT variant FROM candidate_person_variants WHERE candidate_person_id = ?` lookup inside `_load_candidate()`.
+
+## link_run orchestrator and _denormalize_variants (Phase 3 Task 8)
+
+`pipeline/stage5_link/linker.py::link_run(conn, pipeline_run_id)` is the Stage 5 dispatch loop. It walks all `candidate_persons` rows for the run, scores each against its `candidate_pool`, and dispatches:
+
+- **score ≥ 0.75**: writes `match_target_id` on the candidate row + an `audit_log` row with `change_kind='set'`, `actor='link@v1'`.
+- **0.40 ≤ score < 0.75**: writes a `merge_candidates` row with `kind='person'`, `status='open'`.
+- **score < 0.40**: no action (candidate creates a new canonical record at load time).
+
+`_denormalize_variants(conn, pipeline_run_id)` bridges Phase 2 and Phase 3: Phase 2's stage 3 writes variants only to `candidate_persons.variants_json` (a JSON array column); Phase 3's `candidate_pool` reads the structured `candidate_person_variants` table. `_denormalize_variants` runs idempotently at the start of every `link_run` call, copying any unpopulated variants from `variants_json` into the structured table. Cross-run sibling matches are recorded as `match_target_id` pointing at the sibling candidate id; Stage 7's chain helper (Task 10) resolves to canonical at load time.
 
 ## candidate_persons.match_target_id (Phase 3)
 

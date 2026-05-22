@@ -7,6 +7,7 @@ Package layout:
 """
 
 from pipeline.stage5_link.candidate_pool import candidate_pool
+from pipeline.stage5_link.linker import link_run
 from pipeline.stage5_link.scoring import person_match_score
 
-__all__ = ["candidate_pool", "person_match_score"]
+__all__ = ["candidate_pool", "link_run", "person_match_score"]

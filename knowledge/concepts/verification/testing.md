@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-21
+updated: 2026-05-21 (Task 8)
 status: mature
 load_bearing: false
 references:
@@ -348,6 +348,19 @@ Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0
 - `test_pool_excludes_no_overlap_canonical` — a canonical with a completely different name ("仲山甫") does not appear in the pool for "重耳".
 - `test_pool_includes_variant_match` — a canonical named "晋文公" with a `person_variants` row linking it to variant "重耳" appears in the pool for a candidate named "重耳".
 - `test_pool_handles_malformed_date_json` — a candidate whose `birth_date_json` is not valid JSON still appears in the pool with `birth_date=None` rather than crashing the linker. Covers `_safe_json_load`, which replaces bare `json.loads` in `_row_to_dict`.
+
+## link_run orchestrator tests (Phase 3 Task 8)
+
+`tests/unit/test_linker.py` exercises `pipeline.stage5_link.linker.link_run` — the Stage 5 dispatch orchestrator. Uses the same `open_canonical_db(tmp_path / "changjuan.sqlite")` pattern as candidate_pool tests. Two seeders (`_seed_canonical`, `_seed_candidate`) handle FK-safe insertion; `_seed_state` inserts a `states` row using the actual column name `name` (not `canonical_name`). Six tests:
+
+- `test_auto_merge_writes_match_target_id_and_audit` — strong(+0.50) + state_same(+0.20) + social_same(+0.10) = 0.80 ≥ 0.75 → `match_target_id` written + `audit_log` row with `actor='link@v1'`.
+- `test_queue_writes_merge_candidates_row` — strong(+0.50) + state one_null(±0) = 0.50, in [0.40, 0.75) → `merge_candidates` row written with `kind='person'`, `status='open'`.
+- `test_skip_leaves_no_trace` — no variant overlap (hard veto, score=0.0) → nothing written, `skipped=1`.
+- `test_cross_run_chain_resolution` — two same-run sibling candidates sharing names; first alphabetically is processed, scores 0.80 against the sibling → `match_target_id` points at the sibling candidate id; sibling is added to `already_matched` set and skipped.
+- `test_returns_stats_dict` — empty run → stats dict has exactly the four expected keys.
+- `test_variants_denormalized_from_variants_json` — seeds candidate with `variants_json` only (Phase 2 stage 3 pattern); asserts `candidate_person_variants` rows are created by `_denormalize_variants` before scoring.
+
+Score values in tests are calibrated against the actual scorer formula; the queue test uses `state=one_null` (one side has no state_id) to land in [0.40, 0.75), and the cross-run test adds `social_category='royalty'` on both sides to reach 0.80.
 
 ## What would invalidate this article
 

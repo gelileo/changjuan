@@ -2,7 +2,7 @@
 title: Runtime Configuration
 type: concept
 area: runtime
-updated: 2026-05-21
+updated: 2026-05-21 (Task 8)
 status: mature
 load_bearing: true
 references:
@@ -56,6 +56,10 @@ All threshold values are placeholders and *must* be recalibrated against measure
 ## Stage 5 scorer (Phase 3 Task 6)
 
 `pipeline/stage5_link/scoring.py` introduces `person_match_score(a, b)` — the pure-function scorer that reads the thresholds above indirectly via the linker. The scorer itself has no configuration: its weights are hard-coded in the formula (see `concepts/pipeline/linking.md`, Task 12). Only the dispatch thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) live in `pipeline/config.py`. All five scoring dimensions are independent: temporal contributions apply unconditionally — spec §4 confirms this via the regression walkthrough table.
+
+## Stage 5 link_run orchestrator (Phase 3 Task 8)
+
+`pipeline/stage5_link/linker.py::link_run` is now implemented (Task 8). It reads `LINKER_AUTO_MERGE_THRESHOLD` and `LINKER_QUEUE_THRESHOLD` from `pipeline.config` to dispatch candidates. No new configuration constants were added. `link_run` is re-exported from `pipeline.stage5_link.__init__` so callers use `from pipeline.stage5_link import link_run`. The `_denormalize_variants` bridge helper runs at entry and requires no configuration.
 
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 

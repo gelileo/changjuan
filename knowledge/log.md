@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-21] feat(stage5): link_run orchestrator + variants denormalization (Phase 3 Task 8)
+
+Added `pipeline/stage5_link/linker.py::link_run(conn, run_id)` — Stage 5 orchestrator. Walks candidate_persons for the run, scores each against its candidate pool, dispatches by threshold (auto_merge writes match_target_id + audit; queue writes merge_candidates; skip leaves no trace). Cross-run sibling matches recorded as match_target_id pointing at the sibling candidate id; Stage 7's chain helper (Task 10) resolves to canonical at load time.
+
+Also includes `_denormalize_variants` migration that runs at link_run entry: copies variants from Phase 2's `variants_json` column into the structured `candidate_person_variants` table that `candidate_pool` (Task 7) consumes. Idempotent.
+
+Six tests: auto-merge writes target+audit; queue writes merge_candidates; skip leaves no trace; cross-run chain; stats dict shape; variants denormalization. Test seeding fixed for actual scorer: queue case uses state=one_null to land in [0.40, 0.75); cross-run auto-merge uses state_same + social_same to reach 0.80.
+
+`__init__.py` now re-exports `link_run`, `person_match_score`, and `candidate_pool`.
+
+no knowledge impact: pipeline/stage5_link/** maps to concepts/pipeline/linking.md which lands in Task 12.
+
 ## [2026-05-21] fix(stage5): harden candidate_pool — FK + index + JSON safety (Phase 3 Task 7 fix)
 
 Code review of Task 7 (commit 5865650) flagged Important issues. This fix:
