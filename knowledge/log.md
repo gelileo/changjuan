@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-22] fix(stage7): 2-pass load to resolve forward-reference match_target_id (Phase 3 closure fix)
+
+Final code review found that when linker writes `cand_p1.match_target_id = cand_p2` with p1's id sorting before p2's, Stage 7's ORDER BY id loop processed p1 first while `local_canonical_map[p2]` was empty — falling through to canonical_name match and creating a duplicate canonical. Ch.1 test didn't trigger (auto_merges==0); cross-chunk data would.
+
+Fix: 2-pass iteration in `load_candidate_persons` — process match_target_id=NULL candidates first (Pass 1) so all sibling-targets are in the map; then process match_target_id-set candidates (Pass 2). Minimal change; per-candidate logic unchanged.
+
+New test `test_cross_run_chain_when_target_id_lex_greater_than_source` pins the fix.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (2-pass note).
+
+Test total: 215 passed (214 baseline + 1 new).
+
 ## [2026-05-22] Phase 3 complete — Stage 5 (Link & Dedup) for Persons shipped
 
 Phase 3 ships Stage 5 — the deterministic surface-feature linker for Person entities only. Persons-only scope was deliberate: it's the highest-stakes stage (founding spec §3) and persons are the hardest case (variant chains, state/clan/category agreement, era proximity). LLM judge is deferred to Phase 4.

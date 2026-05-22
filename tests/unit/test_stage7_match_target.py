@@ -105,6 +105,39 @@ def test_match_target_id_missing_target_falls_through_with_warning(
     assert any("match_target_id" in record.message for record in caplog.records)
 
 
+def test_cross_run_chain_when_target_id_lex_greater_than_source(conn: sqlite3.Connection) -> None:
+    """Reproduce the ordering bug: source candidate id sorts BEFORE target candidate id.
+
+    The fix is a 2-pass load: process match_target_id=NULL candidates first
+    (so the target's canonical_id is populated in local_canonical_map BEFORE
+    the source's match_target_id is resolved)."""
+    # p1 < p2 lexicographically; p1.match_target_id points at p2.
+    # p2 has NO match_target_id (would be set by linker only if p2's own best
+    # target were elsewhere; here it isn't).
+    _seed_candidate(
+        conn,
+        run_id="run:1",
+        cand_id="cand:per:run:1:p1",
+        name="重耳",
+        match_target_id="cand:per:run:1:p2",
+    )  # forward reference!
+    _seed_candidate(
+        conn,
+        run_id="run:1",
+        cand_id="cand:per:run:1:p2",
+        name="重耳",  # same name (intentional)
+        match_target_id=None,
+    )
+    load_candidate_persons(conn, "run:1")
+    # 1 canonical should result; both candidates merged into p2's canonical.
+    n = conn.execute("SELECT COUNT(*) FROM persons").fetchone()[0]
+    assert n == 1, (
+        f"Expected 1 canonical from the cross-run chain (p1 → p2 forward reference); "
+        f"got {n}. The 2-pass load order should have processed p2 first (no match_target_id), "
+        f"populated local_canonical_map, then resolved p1's match_target_id."
+    )
+
+
 def test_cross_run_chain_resolves_via_local_map(conn: sqlite3.Connection) -> None:
     """A candidate's match_target_id pointing at a sibling candidate gets resolved
     to the canonical that sibling becomes (in the same load pass)."""

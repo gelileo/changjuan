@@ -338,9 +338,18 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         (pipeline_run_id,),
     )
     candidates = cur.fetchall()
+    # Pass 1: candidates without match_target_id (they don't depend on siblings).
+    # Pass 2: candidates with match_target_id (may depend on Pass 1's local_canonical_map).
+    # This ensures that when the linker writes cand_p1.match_target_id = cand_p2 and
+    # p1's id sorts before p2's (ORDER BY id would process p1 first), the target p2
+    # has already been processed in Pass 1 and local_canonical_map[p2] is populated
+    # before p1's match_target_id resolution is attempted in Pass 2.
+    candidates_pass1 = [c for c in candidates if c["match_target_id"] is None]
+    candidates_pass2 = [c for c in candidates if c["match_target_id"] is not None]
+
     affected = 0
     local_canonical_map: dict[str, str] = {}
-    for c in candidates:
+    for c in (*candidates_pass1, *candidates_pass2):
         # Resolve candidate state_id (a local extraction id like 's1') to the canonical
         # state id (e.g. 'sta:周').  If the state_id already contains ':' it is already
         # canonical and is passed through unchanged.  None stays None.

@@ -358,13 +358,14 @@ Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0
 
 These tests verify the CLI shim wires correctly into `stage5_link.link_run` and that the summary line's format includes all four stat keys (processed / auto-merged / queued / skipped).
 
-## Stage 7 match_target_id tests (Phase 3 Task 10)
+## Stage 7 match_target_id tests (Phase 3 Task 10 + Phase 3 closure fix)
 
-`tests/unit/test_stage7_match_target.py` exercises the Phase 3 `match_target_id`-first matching path added to `load_candidate_persons`. Uses `open_canonical_db` and two seeders (`_seed_canonical`, `_seed_candidate`). Four tests cover the four match paths:
+`tests/unit/test_stage7_match_target.py` exercises the Phase 3 `match_target_id`-first matching path added to `load_candidate_persons`. Uses `open_canonical_db` and two seeders (`_seed_canonical`, `_seed_candidate`). Five tests cover the match paths:
 
 - `test_match_target_id_honored_when_set_to_canonical` — candidate `重耳` has `match_target_id='per:jin-wen-gong'` (an existing canonical named `晋文公`); asserts only one `persons` row with id `per:jin-wen-gong` (merge, not create).
 - `test_match_target_id_null_falls_back_to_name_match` — candidate has `match_target_id=None`; asserts existing Phase 2 canonical_name-match logic fires (one Person, no duplicate).
 - `test_match_target_id_missing_target_falls_through_with_warning` — candidate has `match_target_id='per:NONEXISTENT'`; asserts fallback to name-match succeeds and a warning containing `"match_target_id"` is emitted (captured via `caplog`). An `autouse` fixture `_structlog_to_stdlib` configures structlog to emit via `structlog.stdlib.LoggerFactory` so pytest's `caplog` can capture structlog-emitted warnings.
+- `test_cross_run_chain_when_target_id_lex_greater_than_source` (Phase 3 closure fix) — pins the 2-pass iteration fix: `cand:per:run:1:p1` (no `match_target_id`) and `cand:per:run:1:p2` (`match_target_id='cand:per:run:1:p2'`) where p1 sorts lexicographically before p2. With single-pass ORDER BY id, p1 is processed first but `local_canonical_map[p2]` is empty — resolution falls through and creates a duplicate. The 2-pass fix processes match_target_id=NULL candidates first (Pass 1: p2 creates a canonical), then processes match_target_id candidates (Pass 2: p1 merges into p2's canonical). Asserts `COUNT(*) FROM persons == 1`.
 - `test_cross_run_chain_resolves_via_local_map` — two same-run candidates: first has no `match_target_id` (creates `per:zhong-er`); second has `match_target_id='cand:per:run:1:p1'`; asserts only one `persons` row (second candidate merged into first via `local_canonical_map`).
 
 ## link_run orchestrator tests (Phase 3 Task 8)

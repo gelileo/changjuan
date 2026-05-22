@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id)
 status: thin
 load_bearing: true
 references:
@@ -37,7 +37,11 @@ Candidate records are matched against existing canonical Persons by up to three 
 
 The `local_canonical_map` is **in-memory only** (a plain Python dict, not persisted to SQLite). It exists for the duration of a single `load_candidate_persons` call and is discarded afterward. This means `cand:` → `per:` resolution works only within a single load pass; cross-run `cand:` references cannot be resolved by a second `load` invocation. In practice this is fine: Stage 5 (`link`) emits `match_target_id` values that are either canonical `per:` ids (cross-run) or same-run `cand:` sibling ids (intra-run). The `match_target_id` column itself is never cleared by Stage 7 — the column retains whatever Stage 5 wrote and is simply ignored after the load pass processes it.
 
-Candidates are fetched with `ORDER BY id` so the processing order is deterministic and earlier-id siblings are guaranteed to be in the map before later-id siblings attempt resolution. If `link_run` writes `match_target_id` but `load_candidate_persons` is never called, there is no effect: the column is read-only from Stage 7's perspective and writing it has no side-effects on the canonical tables.
+Candidates are fetched with `ORDER BY id` so the processing order is deterministic. However, the linker may write `cand_p1.match_target_id = cand_p2` where p1's id sorts lexicographically before p2's — a forward reference. A single-pass `ORDER BY id` loop would process p1 before p2 is in the map, causing resolution to fail and fall through to canonical_name match, potentially creating a duplicate canonical.
+
+**2-pass iteration (Phase 3 closure fix):** `load_candidate_persons` splits candidates into two groups before iterating: Pass 1 processes candidates where `match_target_id IS NULL` (they have no intra-run dependency); Pass 2 processes candidates where `match_target_id IS NOT NULL`. Pass 1 runs first, populating `local_canonical_map` for all target siblings. Pass 2 then resolves `match_target_id` references against the fully-populated map. Per-candidate logic is unchanged; only iteration order changes. This guarantees that any `cand:` forward reference written by the linker is resolvable regardless of lexicographic id ordering.
+
+If `link_run` writes `match_target_id` but `load_candidate_persons` is never called, there is no effect: the column is read-only from Stage 7's perspective and writing it has no side-effects on the canonical tables.
 
 If none of the checks find a match, a new canonical Person is created with id `per:<slug>` where the slug is derived from `canonical_name` via `_slugify` (regex `[^\w]+` → `-`, lowercased). If that id already exists in `persons` (slug collision from a different `canonical_name`), a 6-character SHA-256 hex suffix is appended: `per:<slug>-<hash6>`.
 
