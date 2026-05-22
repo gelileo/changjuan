@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-22] docs(knowledge): finalize link + match_target_id docs (Phase 3 Task 11)
+
+Review of `concepts/runtime/cli.md` and `concepts/pipeline/load-and-merge.md` against the Phase 3 Task 11 checklist. Both articles had core content from Tasks 9 and 10 but were missing several required items.
+
+`cli.md` additions: workflow position (`extract → extract-load → link → load → golden-eval`), threshold names (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD` with reference to `pipeline/config.py`), and idempotency note for the `link` verb.
+
+`load-and-merge.md` additions: explicit statement that `local_canonical_map` is in-memory only (not persisted), `match_target_id` lifecycle note (never cleared by Stage 7), and note on what happens if `link` runs but `load` does not (no effect; column is read-only from Stage 7's perspective).
+
+Articles touched: concepts/runtime/cli.md, concepts/pipeline/load-and-merge.md.
+
 ## [2026-05-22] fix(stage7): ORDER BY id + align logging with project convention (Phase 3 Task 10 fix)
 
 Code review of Task 10 (commit 6731ce7) flagged two issues:
