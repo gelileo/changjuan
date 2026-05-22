@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-22] chore(phase4): spot-check sampling QA across Ch.2-5 (Phase 4 Task 12)
+
+Ran qa-sample → inline verification → qa-load for each of Ch.2-5. Total 120 facts judged; mismatch_rate 0.163. Bar (≤ 0.10): FAIL.
+
+Per-chapter breakdown:
+- ch2: yes=20/partial=10/no=0 = 30 (mismatch_rate=0.167)
+- ch3: yes=25/partial=5/no=0 = 30 (mismatch_rate=0.083)
+- ch4: yes=18/partial=12/no=0 = 30 (mismatch_rate=0.200)
+- ch5: yes=19/partial=10/no=1 = 30 (mismatch_rate=0.200)
+
+Primary driver of partials: outcome/summary fields where the supporting quote only partially attests the extracted value (broader inferences not fully grounded in the sampled chunk). Type/name/gender fields perform well. Ch.3 alone passes the 0.10 bar; Ch.2, Ch.4, Ch.5 do not.
+
+no knowledge impact: QA capture.
+
 ## [2026-05-22] chore(phase4): Ch.2-5 smoke verification (Phase 4 Task 11)
 
 All four new chapters pass `scripts/smoke-check-run`:
