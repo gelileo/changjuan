@@ -1,5 +1,21 @@
 # Build Log
 
+## [2026-05-21] scripts: phase2-prep.sh extended with §11-14 + PHASE2_DEFERRED (Task 39)
+
+Extended `scripts/phase2-prep.sh` to cover Phase 2 acceptance:
+- §11 golden ch01 P/R via `pytest -m golden`
+- §12 QA harness wired (qa_sampling + qa_cli tests pass)
+- §13 re-extract accumulates (`test_re_extract_accumulates.py`)
+- §14 prints PHASE2_DEFERRED backlog (Phase 3 starter list)
+
+PHASE1_DEFERRED reduced to 1 item (#4 explicit_reign_other only). Added
+PHASE2_DEFERRED array with the 7-item Phase 3 starter backlog (Stage 5,
+reign tables, Ch.~40 golden, curator UI, stage-5 relation consolidation,
+cross-chunk relative-date automation, explicit_reign_other).
+
+Articles touched: none (script changes only; behavior documented in the
+PHASE2_DEFERRED comments).
+
 ## [2026-05-21] test(integration): golden Ch.1 P/R integration test (Task 37)
 
 `tests/integration/test_golden_ch01.py` added. The test loads the frozen v2 extraction fixture (`tests/fixtures/ch01-extraction-v1.yaml`, committed in `add4902`) into a `tmp_path`-based `changjuan.sqlite`, builds candidate dicts mirroring `golden_eval_cmd`'s SELECT logic (using actual canonical schema column names: `from_candidate_event_id`/`to_candidate_event_id` for `candidate_event_relations`, `from_candidate_person_id`/`to_candidate_person_id` for `candidate_person_relations`), runs `compute_pr` against `tests/golden/ch01/`, and asserts all 5 kinds meet `GOLDEN_PR_THRESHOLDS`.

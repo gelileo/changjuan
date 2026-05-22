@@ -54,16 +54,17 @@ set -u
 # When a deferred item is implemented and tested, remove its line.
 # When you start Phase 2, the surviving lines below are your starter backlog.
 PHASE1_DEFERRED=(
-  "BUG: _PARA_SEP regex requires blank lines, but upstream JSON uses single \\n — every chapter becomes one ~5KB mega-chunk. Fix _PARA_SEP to '\\r?\\n+' and add a regression test seeded with single-newline-separated text. HIGH PRIORITY: blocks stage 3 effectiveness."
-  "Reign-year boundary tests (鲁僖公33年→627, 鲁文公1年→626, 鲁庄公32年→662)"
-  "stage1_ingest return value: count actual inserts, not len(rows)"
-  "Date parser: explicit_reign_other (晋/齐/楚 reigns)"
-  "stage7_load module split — do BEFORE adding load_candidate_events/places/states"
-  "pipeline/confidence.py stub (referenced by confidence-and-invariants.md)"
-  "Citation accumulation in stage 7 (entity_citations population)"
-  "re-extract CLI verb (changjuan re-extract --chapter N --prompt-version M)"
-  "Chunking edge case tests (empty paragraphs; oversized single paragraph)"
-  "test_load_updates_scalar_when_new_confidence_higher actually exercises the >+δ branch"
+  "Date parser: explicit_reign_other (晋/齐/楚 reigns) — deferred to Phase 3"
+)
+
+PHASE2_DEFERRED=(
+  "Stage 5 (Link & dedup) — Phase 2's stage-3 candidates use chunk-local ids; stage 5 mints global canonical ids and merges variants (重耳 ↔ 晋文公, 女婴 ↔ 褒姒, etc.)"
+  "explicit_reign_other date parsing — needed when extraction expands beyond Ch.1"
+  "Reign tables for non-鲁/周 states (晋/齐/楚/秦/宋/郑/卫…) — curation task; sources from 杨伯峻 chronology"
+  "Ch.~40 golden annotation (城濮之战) — people-dense ground truth for stage 5 calibration"
+  "Curator UI (Stage 8) — Streamlit; first queue: merge candidates from stage 5"
+  "Stage-5 linker should improve event/relation P/R — Phase 2 relation precision was 0.6984 (recalibrated threshold 0.65); linker consolidation of over-inferred relations should push it past the original 0.75 target"
+  "Cross-chunk relative-date automation — if patterns emerge that the chunk-walkback can't catch (Phase 2 ships the manual CLI path)"
 )
 
 # ---------------------------------------------------------------------------
@@ -373,6 +374,56 @@ else
     log "    ${C_YELLOW}•${C_RESET} ${item}"
   done
 fi
+
+# ---------------------------------------------------------------------------
+# Section 11 — Golden Ch.1
+# ---------------------------------------------------------------------------
+section "11. Golden Ch.1"
+why "Phase 2's primary quality signal."
+
+if [ -f "tests/fixtures/ch01-extraction-v1.yaml" ]; then
+  if uv run pytest -m golden tests/integration/test_golden_ch01.py -q >>"${LOG_FILE}" 2>&1; then
+    pass "golden ch01 P/R meets thresholds"
+  else
+    fail "golden ch01 P/R below thresholds — see log"
+  fi
+else
+  warn "tests/fixtures/ch01-extraction-v1.yaml not yet committed (Task 30)"
+fi
+
+# ---------------------------------------------------------------------------
+# Section 12 — QA sampling harness
+# ---------------------------------------------------------------------------
+section "12. QA sampling harness"
+why "confirms qa-sample/qa-load mechanism is wired before stage 3 expands beyond Ch.1."
+
+if uv run pytest tests/unit/test_qa_sampling.py tests/unit/test_qa_cli.py -q >>"${LOG_FILE}" 2>&1; then
+  pass "qa-sample + qa-load + qa_sampling tests pass"
+else
+  fail "qa harness tests failing"
+fi
+
+# ---------------------------------------------------------------------------
+# Section 13 — Re-extract semantics
+# ---------------------------------------------------------------------------
+section "13. Re-extract semantics"
+why "re-extraction must accumulate, never overwrite."
+
+if uv run pytest -m integration tests/integration/test_re_extract_accumulates.py -q >>"${LOG_FILE}" 2>&1; then
+  pass "re-extract accumulates variants + emits Conflicts + preserves curated"
+else
+  fail "re-extract semantics regression"
+fi
+
+# ---------------------------------------------------------------------------
+# Section 14 — Phase 2 deferred backlog
+# ---------------------------------------------------------------------------
+section "14. Phase 2 deferred backlog"
+why "Phase 3 starter backlog — recorded here so Phase 3 has its starting list."
+log "  ${C_DIM}${#PHASE2_DEFERRED[@]} items deferred to Phase 3:${C_RESET}"
+for item in "${PHASE2_DEFERRED[@]}"; do
+  log "    ${C_YELLOW}•${C_RESET} ${item}"
+done
 
 # ---------------------------------------------------------------------------
 # Summary + next steps
