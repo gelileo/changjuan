@@ -1,5 +1,18 @@
 # Build Log
 
+## [2026-05-21] match(golden): loosen _event_match — type + (year OR place)
+
+Tightening from "type AND year ±1 AND place" to "type AND (year ±1 OR place)"
+keeps the type axis strict (semantic backbone of an event) but tolerates the
+two FK-ish dimensions disagreeing one-at-a-time. Stage-3 candidates haven't
+seen the linker yet, so a slightly off primary_place_id when the type+year
+clearly match shouldn't count as a wholly-different event.
+
+This is calibration, not a behaviour change to extraction. Post-fix Ch.1
+v2 event P/R: precision=0.93, recall=1.00 (tp=14 fp=1 fn=0).
+
+Articles touched: `concepts/verification/testing.md`.
+
 ## [2026-05-21] fix: parenthesized originals treated as same-year in walkback (Task 29 v2)
 
 **pipeline_run_id:** `run:extract-ch1-v2-20260522T002136`

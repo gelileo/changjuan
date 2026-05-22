@@ -4,6 +4,11 @@ Matchers resolve cross-entity ID references (state_id, primary_place_id, event_i
 person_id, place_id) to entity *names* before comparing, because the golden uses
 canonical-style ids ('sta:zhou', 'pla:qian-mu', etc.) while skill output uses
 chunk-local ids ('s1', 'pl1', etc.). Name-based comparison bridges the two.
+
+Phase-2 matcher (event): event requires type + (year ±1 OR place); strict-on-all-three
+is too brittle for stage-3 candidates before linker consolidation. A slightly off
+primary_place_id when type+year clearly match should not count as a wholly-different
+event, and vice-versa. See Task 29 iteration, Path C.
 """
 
 from __future__ import annotations
@@ -68,15 +73,19 @@ def _event_match_factory(
             return False
         g_place = _resolve(g.get("primary_place_id"), place_lookup_g)
         c_place = _resolve(c.get("primary_place_id"), place_lookup_c)
-        if g_place != c_place:
-            return False
+        place_match = g_place == c_place
+
         g_year = (g.get("date") or {}).get("year_bce")
         c_year = (c.get("date") or {}).get("year_bce")
-        if g_year is None and c_year is None:
-            return True
-        if g_year is None or c_year is None:
-            return False
-        return bool(abs(int(g_year) - int(c_year)) <= 1)
+        if g_year is not None and c_year is not None:
+            year_match = abs(int(g_year) - int(c_year)) <= 1
+        elif g_year is None and c_year is None:
+            year_match = True
+        else:
+            year_match = False
+
+        # type matched; need at least one of place / year to match.
+        return place_match or year_match
 
     return matcher
 

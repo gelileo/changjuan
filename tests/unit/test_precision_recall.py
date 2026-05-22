@@ -160,6 +160,69 @@ def test_event_match_with_chunk_local_primary_place_id_resolves_via_lookup() -> 
     assert report["per_entity_type"]["event"]["tp"] == 1
 
 
+def test_event_match_year_alone_suffices_when_place_differs() -> None:
+    """type matches; year matches; place differs → still counted as match (relaxed matcher)."""
+    golden = _g(
+        events=[
+            {
+                "id": "evt:a",
+                "type": "战",
+                "date": {"year_bce": 789},
+                "primary_place_id": "pla:qian-mu",
+            }
+        ],
+        places=[{"id": "pla:qian-mu", "name": "千亩"}],
+    )
+    cands = _g(
+        events=[{"id": "e1", "type": "战", "date": {"year_bce": 789}, "primary_place_id": "pl1"}],
+        places=[{"id": "pl1", "name": "镐京"}],  # different place name
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["event"]["tp"] == 1
+
+
+def test_event_match_place_alone_suffices_when_year_differs() -> None:
+    """type matches; place matches; year differs by more than 1 → still match (relaxed matcher)."""
+    golden = _g(
+        events=[
+            {
+                "id": "evt:a",
+                "type": "战",
+                "date": {"year_bce": 789},
+                "primary_place_id": "pla:qian-mu",
+            }
+        ],
+        places=[{"id": "pla:qian-mu", "name": "千亩"}],
+    )
+    cands = _g(
+        events=[{"id": "e1", "type": "战", "date": {"year_bce": 800}, "primary_place_id": "pl1"}],
+        places=[{"id": "pl1", "name": "千亩"}],
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["event"]["tp"] == 1
+
+
+def test_event_match_type_alone_does_not_suffice() -> None:
+    """type matches but BOTH year AND place differ → still mismatch (relaxed but not loose)."""
+    golden = _g(
+        events=[
+            {
+                "id": "evt:a",
+                "type": "战",
+                "date": {"year_bce": 789},
+                "primary_place_id": "pla:qian-mu",
+            }
+        ],
+        places=[{"id": "pla:qian-mu", "name": "千亩"}],
+    )
+    cands = _g(
+        events=[{"id": "e1", "type": "战", "date": {"year_bce": 800}, "primary_place_id": "pl1"}],
+        places=[{"id": "pl1", "name": "镐京"}],
+    )
+    report = compute_pr(golden, cands)
+    assert report["per_entity_type"]["event"]["tp"] == 0
+
+
 def test_relation_match_with_id_resolution() -> None:
     golden = _g(
         persons=[{"id": "per:a", "canonical_name": "周宣王"}],
