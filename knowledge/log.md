@@ -1,5 +1,21 @@
 # Build Log
 
+## [2026-05-21] schema: add candidate_persons.match_target_id (Phase 3 Task 1)
+
+Added `match_target_id TEXT` (nullable, no FK) to `candidate_persons` in
+`pipeline/schemas/canonical_schema.sql`. Column is populated by the Stage 5
+linker (landing in Phase 3 Tasks 5–8); Stage 7 honors it with canonical-name
+fallback when routing candidate data into an identified target record. No FK
+constraint is applied because the target may be a sibling candidate not yet
+promoted to canonical at insert time (spec §6 anti-pattern).
+
+Applied to the existing `data/changjuan.sqlite` via `ALTER TABLE` to preserve
+the v2 baseline candidates needed for the Ch.1 link-then-load test (Task 14).
+
+`knowledge/concepts/data-model/knowledge-graph.md` updated: new
+`candidate_persons.match_target_id (Phase 3)` section; `affects:` frontmatter
+extended with `pipeline/stage5_link/**`.
+
 ## [2026-05-21] Phase 2 complete — Stage 3 extraction (Claude-Code-skill-driven) shipped
 
 Phase 2 ships Stage 3 (Extract) for 东周列国志 chapter 1 via a Claude Code
