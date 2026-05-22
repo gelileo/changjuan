@@ -35,4 +35,5 @@ pythonpath = ["."]
 markers = [
     "integration: integration tests (slower; need corpus.sqlite)",
     "golden: golden-fixture comparison tests (slowest)",
+    "regression: linker regression-set assertions (Phase 3+)",
 ]

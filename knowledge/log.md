@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-22] feat(test): @pytest.mark.regression linker regression-set assertion (Phase 3 Task 13)
+
+Added `tests/integration/test_link_regression.py` with two regression tests that pin the linker's behavior on the curated 10-pair regression set:
+- `test_known_same_pairs_score_above_auto_merge_threshold` — every same-pair must score >= LINKER_AUTO_MERGE_THRESHOLD.
+- `test_known_different_pairs_score_below_auto_merge_threshold` — every different-pair must score < LINKER_AUTO_MERGE_THRESHOLD.
+
+Registered `regression` marker in `pyproject.toml`. The tests load via the regression_loader from Task 3 and consume `merge_regression.yaml` from Task 4. Failure messages include the offending pair's rationale + features for debugging. Scoring pre-validated: all 5 same-pairs >= 0.75; all 5 different-pairs < 0.75. Full suite: 213 passed.
+
+Articles touched: concepts/verification/testing.md.
+
 ## [2026-05-22] docs(knowledge): concepts/pipeline/linking.md — Stage 5 architecture (Phase 3 Task 12)
 
 Documents the deterministic surface-feature linker. Five feature dimensions (variant_overlap, state_agreement, clan_agreement, social_category_agreement, temporal_proximity), weighted-sum scoring with hard-veto on no-variant-overlap, threshold dispatch (auto-merge / queue / skip per LINKER_AUTO_MERGE_THRESHOLD + LINKER_QUEUE_THRESHOLD). Cross-references to load-and-merge.md (stage-7 honor), runtime/cli.md (link verb), data-model/knowledge-graph.md (match_target_id field), and pipeline/config.py (thresholds + recalibration history).

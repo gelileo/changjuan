@@ -380,6 +380,15 @@ These tests verify the CLI shim wires correctly into `stage5_link.link_run` and 
 
 Score values in tests are calibrated against the actual scorer formula; the queue test uses `state=one_null` (one side has no state_id) to land in [0.40, 0.75), and the cross-run test adds `social_category='royalty'` on both sides to reach 0.80.
 
+## Linker regression-set integration tests (Phase 3 Task 13)
+
+`tests/integration/test_link_regression.py` pins the linker's scoring behavior against the 10-pair curated regression set in `tests/golden/merge_regression.yaml`. Marked `@pytest.mark.regression`. Two tests:
+
+- `test_known_same_pairs_score_above_auto_merge_threshold` — every `same_person_pairs` entry must score `>= LINKER_AUTO_MERGE_THRESHOLD`. On failure, the message includes the offending pair's rationale and computed features.
+- `test_known_different_pairs_score_below_auto_merge_threshold` — every `different_person_pairs` entry must score `< LINKER_AUTO_MERGE_THRESHOLD`. Same failure-message format.
+
+The tests load via `tests.golden.regression_loader.load_regression_set` (Task 3) and call `pipeline.stage5_link.scoring.person_match_score` (Task 6) directly — no database or pipeline stages are involved. The `regression` marker is registered in `pyproject.toml`. Tests run as part of the default `pytest -q` invocation (no explicit exclusion in `addopts`). Scoring validation was performed before committing: all 5 same-pairs score ≥ 0.75; all 5 different-pairs score < 0.75.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
