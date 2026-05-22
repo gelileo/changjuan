@@ -223,10 +223,20 @@ def _default_anchor_lookup(conn: object, event_id: str) -> dict[str, object] | N
 
 def _offset_from_original(original: str, override: int | None) -> int | None:
     """Return the BCE-arithmetic offset to apply.
-    `override` is calendar-years-later (so negated). Returns None if no offset known."""
+    `override` is calendar-years-later (so negated).
+    Parenthesized narrative notes ("(千亩之后)", "(料民回京时)") are treated as
+    offset=0 (same year as the rolling anchor) — they're the agent's shorthand
+    for "same narrative beat, no explicit relative-time token applies."
+    Returns None for non-parenthesized unknown strings so the resolver leaves
+    year_bce null rather than silently inventing a date."""
     if override is not None:
         return -override
-    return _RELATIVE_OFFSETS.get(original)
+    if original in _RELATIVE_OFFSETS:
+        return _RELATIVE_OFFSETS[original]
+    stripped = original.strip()
+    if stripped.startswith("(") and stripped.endswith(")") and len(stripped) > 2:
+        return 0
+    return None
 
 
 def resolve_relative_dates(

@@ -104,3 +104,36 @@ def test_anchor_cycle_raises() -> None:
 
     with pytest.raises(RelativeResolveError, match="cycle"):
         resolve_relative_dates(records, conn=None, anchor_lookup=fake_lookup)
+
+
+def test_parenthesized_original_treated_as_same_year() -> None:
+    """Agent-emitted parenthesized notes like '(千亩之后)' mean 'same narrative
+    beat, same year' and walkback should resolve them to the rolling anchor's year."""
+    records = [
+        _ev("e1", original="周宣王三十九年", year=789, kind="explicit_reign_zhou"),
+        _ev("e2", original="(千亩之后)", kind="relative_to_prior_event"),
+        _ev("e3", original="(料民回京时)", kind="relative_to_prior_event"),
+    ]
+    out = resolve_relative_dates(records, conn=None)
+    assert out[1]["date"]["year_bce"] == 789  # type: ignore[index]
+    assert out[2]["date"]["year_bce"] == 789  # type: ignore[index]
+
+
+def test_non_parenthesized_unknown_original_stays_null() -> None:
+    """Don't invent dates for tokens we don't recognize and aren't paren-shorthand."""
+    records = [
+        _ev("e1", original="周宣王三十九年", year=789, kind="explicit_reign_zhou"),
+        _ev("e2", original="某神秘时间", kind="relative_to_prior_event"),
+    ]
+    out = resolve_relative_dates(records, conn=None)
+    assert out[1]["date"]["year_bce"] is None  # type: ignore[index]
+
+
+def test_empty_parens_stays_null() -> None:
+    """Don't treat '()' as offset=0; it carries no semantic content."""
+    records = [
+        _ev("e1", original="周宣王三十九年", year=789, kind="explicit_reign_zhou"),
+        _ev("e2", original="()", kind="relative_to_prior_event"),
+    ]
+    out = resolve_relative_dates(records, conn=None)
+    assert out[1]["date"]["year_bce"] is None  # type: ignore[index]

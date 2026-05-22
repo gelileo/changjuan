@@ -146,7 +146,7 @@ All four assertions passed without modifying stage 7 merge logic; only the varia
 ## resolve_relative_dates tests
 
 `tests/unit/test_dates_relative.py` (Phase 2 Task 14) exercises
-`pipeline.dates.resolve_relative_dates` and `RelativeResolveError`. Six tests:
+`pipeline.dates.resolve_relative_dates` and `RelativeResolveError`. Six tests (Task 14):
 `test_within_chunk_walkback_resolves` (e1 has year 771, e2 "明年" resolves to 770
 via rolling anchor); `test_cascading_relatives` (three records — first anchored,
 second and third each "明年" step forward: 771 → 770 → 769);
@@ -157,6 +157,14 @@ to a fake_lookup returning year 600 — result is 599, not the walkback target 7
 "dangling"); `test_anchor_cycle_raises` (e1 anchors to itself — RelativeResolveError
 matching "cycle"). A private `_date()` helper extracts and asserts-isinstance the nested
 `date` sub-dict to satisfy mypy strict without cluttering every assertion.
+
+Three additional tests (Task 29 v2 fix) cover the parenthesized-narrative-note convention:
+`test_parenthesized_original_treated_as_same_year` (e2 `"(千亩之后)"` and e3
+`"(料民回京时)"` both resolve to the same year as the prior anchor — offset=0);
+`test_non_parenthesized_unknown_original_stays_null` (unrecognized non-paren token
+`"某神秘时间"` leaves year_bce None — no silent date invention);
+`test_empty_parens_stays_null` (`"()"` also leaves year_bce None — empty parens carry
+no semantic signal). These guard `_offset_from_original`'s parenthesized-shorthand branch.
 
 ## Stage 7 load_candidate_states tests
 

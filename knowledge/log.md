@@ -1,5 +1,38 @@
 # Build Log
 
+## [2026-05-21] fix: parenthesized originals treated as same-year in walkback (Task 29 v2)
+
+**pipeline_run_id:** `run:extract-ch1-v2-20260522T002136`
+**Files changed:** `pipeline/dates.py`, `tests/unit/test_dates_relative.py`, `knowledge/concepts/data-model/dates-and-reigns.md`
+
+### Bug
+
+`_offset_from_original` only checked `_RELATIVE_OFFSETS` for the 7 known tokens. The v2 skill emits `original: "(narrative-note)"` for same-year events without an explicit token — these returned `None` → walkback left `year_bce=null` for 12 of 15 v2 events.
+
+### Fix
+
+Parenthesized strings `"(...)"` (non-empty) now treated as offset=0. Non-parenthesized unknowns and `"()"` still return `None`.
+
+### Tests
+
+3 new unit tests (169 total, all green).
+
+### Golden eval post-fix (v2, Ch.1)
+
+```
+person      precision=1.00 ✓  recall=1.00 ✓  (tp=13 fp=0 fn=0)
+event       precision=0.53 ✗  recall=0.57 ✗  (tp=8 fp=7 fn=6)
+place       precision=1.00 ✓  recall=1.00 ✓  (tp=8 fp=0 fn=0)
+state       precision=1.00 ✓  recall=1.00 ✓  (tp=4 fp=0 fn=0)
+relation    precision=0.70 ✗  recall=0.70 ✓  (tp=44 fp=19 fn=19)
+```
+
+Event P/R improved from 0.13/0.14 → 0.53/0.57.
+
+### Articles touched
+
+- `concepts/data-model/dates-and-reigns.md` — added parenthesized-notes subsection
+
 ## [2026-05-21] phase 2: golden Ch.1 v1 baseline + systematic-differences analysis (Task 29.3)
 
 **pipeline_run_id:** `run:extract-ch1-v1-20260521T204317`

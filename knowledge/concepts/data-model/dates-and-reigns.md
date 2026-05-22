@@ -60,6 +60,22 @@ token in `_RELATIVE_OFFSETS` → use that. Else, if the curator-supplied
 `offset_override` is passed (calendar-years-later) → use `−offset_override`
 (negated for BCE). Else → record's year_bce stays null.
 
+### Parenthesized narrative notes — agent convention
+
+The extraction skill emits `original: "(narrative-note)"` (parenthesized) when
+no explicit relative-time token (其年/明年/etc.) applies but the event clearly
+belongs to the same narrative beat as the prior anchor. The walkback treats
+these as offset=0 (same year as the rolling anchor).
+
+Examples emitted by the skill:
+- `original: "(千亩之后)"` — "after 千亩" — meaning same-year continuation
+- `original: "(料民回京时)"` — "when the 料民 team returned" — same-year
+- `original: "(童谣朝议同时)"` — "at the time of the 童谣 council" — same-year
+
+Empty parens `()` are NOT treated as offset=0 — they carry no signal. Non-parenthesized
+unknown strings (e.g., "某神秘时间") also return None so the resolver leaves
+year_bce as null rather than silently inventing a date.
+
 **Out of scope (Phase 2).** Automatic cross-chunk dereferencing (the
 walkback only sees records in the current batch). Extending
 `_RELATIVE_OFFSETS` to cover numeric patterns ("其后N年"). Both surface
