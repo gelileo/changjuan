@@ -402,6 +402,18 @@ The tests load via `tests.golden.regression_loader.load_regression_set` (Task 3)
 
 This test catches three failure modes in one pass: over-aggressive linker (auto_merges > 0), broken candidate pool (wrong candidates fed to linker), and broken `match_target_id` integration (wrong person count after load). The `load_candidate_states`-before-`load_candidate_persons` ordering revealed and fixed a pre-existing bug: `candidate_persons.state_id` stores the local extraction id (e.g. `'s1'`), but `persons.state_id` is a FK to `states.id`. The fix adds `_build_candidate_state_id_map` to `load_candidate_persons`, which resolves local ids to canonical ids via a `candidate_states JOIN states ON name` lookup.
 
+## Discovery module tests (Phase 4 Task 1)
+
+`tests/unit/test_discovery.py` tests `pipeline.discovery.discover_states_for_chapters`. The test file builds a synthetic `corpus.sqlite` using helper functions `_seed_corpus` and `_insert_chapter`, mirroring the real schema (`documents` + `chunks` tables). Five tests:
+
+1. **`test_finds_known_states_in_text`** — real Chinese text with 晋 and 齐; asserts both `sta:jin` and `sta:qi` appear in the result set.
+2. **`test_counts_occurrences`** — text with 3×晋 + 1×齐; asserts per-state counts are exact.
+3. **`test_aggregates_across_chapters`** — 晋 in ch.2 + 晋晋 in ch.3; asserts count==3 and chapters==[2,3].
+4. **`test_excludes_states_not_in_text`** — text with only 晋; asserts `sta:qi` absent from results.
+5. **`test_state_names_constant_has_expected_entries`** — spot-checks `STATE_NAMES` mappings and asserts `len >= 14`.
+
+All five are unit tests using `tmp_path`; no real corpus access.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

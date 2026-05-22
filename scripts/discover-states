@@ -1,0 +1,14 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Scan corpus.sqlite for Eastern-Zhou state-name occurrences in given chapters.
+
+See pipeline/discovery.py for the logic. Run from the repo root:
+
+    scripts/discover-states --chapters 2,3,4,5
+
+Output: TSV state_id/count/chapters to stdout.
+"""
+
+from pipeline.discovery import main
+
+if __name__ == "__main__":
+    main()

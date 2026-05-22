@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-22] feat(discovery): pipeline.discovery + scripts/discover-states — Phase 4 worklist generator (Phase 4 Task 1)
+
+Added `pipeline/discovery.py::discover_states_for_chapters` that scans `corpus.sqlite` for occurrences of 16 canonical Eastern-Zhou state names. `scripts/discover-states` is a thin wrapper. Emits TSV `state_id\tcount\tchapters` driving Phase 4b's reign-table worklist. Five unit tests cover happy path, count aggregation, multi-chapter aggregation, exclusion of unmentioned states, and the STATE_NAMES constant.
+
+Articles touched: concepts/verification/testing.md.
+
 ## [2026-05-22] fix(stage7): 2-pass load to resolve forward-reference match_target_id (Phase 3 closure fix)
 
 Final code review found that when linker writes `cand_p1.match_target_id = cand_p2` with p1's id sorting before p2's, Stage 7's ORDER BY id loop processed p1 first while `local_canonical_map[p2]` was empty — falling through to canonical_name match and creating a duplicate canonical. Ch.1 test didn't trigger (auto_merges==0); cross-chunk data would.
