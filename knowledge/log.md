@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-21] golden: hand-curated merge regression set populated (Phase 3 Task 4)
+
+Filled in `tests/golden/merge_regression.yaml` with 5 same-person + 5
+different-person pairs from spec §3's curation targets + §4's scoring
+walkthroughs. Covers cross-life-phase folding (重耳/晋文公), 字↔本名
+(管仲/管夷吾), short-form fold (重耳/公子重耳), pre/post-coronation
+(太子宜臼/周平王), 本名/谥号 (小白/齐桓公), state veto (公子重耳 across states),
+temporal conflict (召公奭/召虎, 申侯 西周↔春秋), hard-veto (太子宜臼↔太子伯服,
+晋文公↔晋灵公). Decisions log entries appended to the README.
+
+no knowledge impact: regression data + README updates (per Task 2 pattern).
+
 ## [2026-05-21] feat(golden): regression_loader.py validates merge regression YAML structure (Phase 3 Task 3)
 
 Added `tests/golden/regression_loader.py` (load_regression_set + RegressionLoadError) plus 7 unit tests in `tests/unit/test_regression_loader.py`. Validates top-level shape, required pair fields (rationale/source/person_a/person_b), required person fields (canonical_name), and social_category enum membership. The Phase 3 linker (lands in Tasks 5-8) and the regression test (Task 13) both consume this loader.

@@ -43,4 +43,6 @@ Aim for ≥5 same + ≥5 different, covering at minimum these failure-mode categ
 
 Append-only list of judgment calls made during curation.
 
-- YYYY-MM-DD: <decision>
+- 2026-05-21: Initial 10 pairs populated from spec §3 + §4 walkthroughs. Field values copied verbatim from spec; rationale/source authored to match.
+- 2026-05-21: Used `era_only` for date inference_kind when only an era is implied (e.g., 召公奭 in 西周, 申侯 in 春秋), and `explicit_reign_zhou` / `explicit_reign_lu` / `explicit_reign_other` for dated reign-anchored deaths.
+- 2026-05-21: 公子重耳 cross-state pair models a hypothetical 卫国 disambiguation — spec §6 names it as a test case; no real 卫 公子重耳 in the texts.

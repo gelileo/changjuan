@@ -21,6 +21,185 @@
 #   birth_date      (optional, structured Date dict)
 #   death_date      (optional, structured Date dict)
 
-same_person_pairs: []
+same_person_pairs:
 
-different_person_pairs: []
+  - rationale: "重耳 (公子) and 晋文公 are the same person across his exile and ruler phases"
+    source: "《史记·晋世家》/《左传·僖公二十三年》"
+    person_a:
+      canonical_name: 重耳
+      variants:
+        - {variant: 公子重耳, kind: 别名}
+      state_id: sta:jin
+      social_category: noble
+      clan_name: 姬
+      death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
+    person_b:
+      canonical_name: 晋文公
+      variants:
+        - {variant: 重耳, kind: 本名}
+        - {variant: 文公, kind: 谥号}
+      state_id: sta:jin
+      social_category: royalty
+      clan_name: 姬
+      death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
+
+  - rationale: "管仲 (字) and 管夷吾 (本名) are the same 齐国 official under 齐桓公"
+    source: "《史记·管晏列传》/《左传》"
+    person_a:
+      canonical_name: 管仲
+      variants:
+        - {variant: 管夷吾, kind: 本名}
+      state_id: sta:qi
+      social_category: official
+      death_date: {year_bce: 645, uncertainty: point, inference_kind: explicit_reign_lu}
+    person_b:
+      canonical_name: 管夷吾
+      variants:
+        - {variant: 管仲, kind: 字}
+      state_id: sta:qi
+      social_category: official
+      death_date: {year_bce: 645, uncertainty: point, inference_kind: explicit_reign_lu}
+
+  - rationale: "Short-form fold: 公子重耳 is just 重耳's title-prefixed name in his pre-coronation phase"
+    source: "Founding spec §6 (canonical example)"
+    person_a:
+      canonical_name: 重耳
+      variants:
+        - {variant: 公子重耳, kind: 别名}
+      state_id: sta:jin
+      social_category: noble
+      clan_name: 姬
+      death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
+    person_b:
+      canonical_name: 公子重耳
+      variants:
+        - {variant: 重耳, kind: 本名}
+      state_id: sta:jin
+      social_category: noble
+      clan_name: 姬
+      death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
+
+  - rationale: "太子宜臼 succeeded 周幽王 and became 周平王 (East-Zhou's first king)"
+    source: "《史记·周本纪》/Ch.1 of 东周列国志"
+    person_a:
+      canonical_name: 太子宜臼
+      variants:
+        - {variant: 周平王, kind: 谥号}
+      state_id: sta:zhou
+      social_category: royalty
+      clan_name: 姬
+      death_date: {year_bce: 720, uncertainty: point, inference_kind: explicit_reign_zhou}
+    person_b:
+      canonical_name: 周平王
+      variants:
+        - {variant: 太子宜臼, kind: 别名}
+        - {variant: 宜臼, kind: 本名}
+      state_id: sta:zhou
+      social_category: royalty
+      clan_name: 姬
+      death_date: {year_bce: 720, uncertainty: point, inference_kind: explicit_reign_zhou}
+
+  - rationale: "小白 (本名) and 齐桓公 (谥号) are the same 齐 ruler — the first 春秋五霸"
+    source: "《史记·齐太公世家》/《左传》"
+    person_a:
+      canonical_name: 小白
+      variants:
+        - {variant: 公子小白, kind: 别名}
+        - {variant: 齐桓公, kind: 谥号}
+      state_id: sta:qi
+      social_category: royalty
+      clan_name: 姜
+      death_date: {year_bce: 643, uncertainty: point, inference_kind: explicit_reign_lu}
+    person_b:
+      canonical_name: 齐桓公
+      variants:
+        - {variant: 小白, kind: 本名}
+      state_id: sta:qi
+      social_category: royalty
+      clan_name: 姜
+      death_date: {year_bce: 643, uncertainty: point, inference_kind: explicit_reign_lu}
+
+different_person_pairs:
+
+  - rationale: "Same name 公子重耳, but one is the famous 晋 prince, the other is a hypothetical 卫 noble — state_id distinguishes them"
+    source: "Spec §6 — \"different 公子重耳 across states\" disambiguation case"
+    person_a:
+      canonical_name: 重耳
+      variants:
+        - {variant: 公子重耳, kind: 别名}
+      state_id: sta:jin
+      social_category: noble
+      clan_name: 姬
+    person_b:
+      canonical_name: 重耳
+      variants:
+        - {variant: 公子重耳, kind: 别名}
+      state_id: sta:wei
+      social_category: noble
+      clan_name: 姬
+
+  - rationale: "Same lineage (召公 family title), but separated by ~200 years — 召公奭 is 西周 founder-era; 召虎 served 周宣王"
+    source: "《史记·燕召公世家》"
+    person_a:
+      canonical_name: 召公奭
+      variants:
+        - {variant: 召公, kind: 别名}
+      state_id: sta:zhou
+      social_category: official
+      death_date: {year_bce: 950, uncertainty: era, inference_kind: era_only}
+    person_b:
+      canonical_name: 召虎
+      variants:
+        - {variant: 召公, kind: 别名}
+      state_id: sta:zhou
+      social_category: official
+      birth_date: {year_bce: 800, uncertainty: era, inference_kind: era_only}
+
+  - rationale: "申侯 is a hereditary title; the 西周-era 申侯 (周幽王's father-in-law) and a 春秋-era 申侯 are different individuals despite identical name + state"
+    source: "《史记·秦本纪》/《左传》"
+    person_a:
+      canonical_name: 申侯
+      state_id: sta:shen
+      social_category: royalty
+      death_date: {year_bce: 770, uncertainty: era, inference_kind: era_only}
+    person_b:
+      canonical_name: 申侯
+      state_id: sta:shen
+      social_category: royalty
+      birth_date: {year_bce: 600, uncertainty: era, inference_kind: era_only}
+
+  - rationale: "Different sons of 周幽王: 宜臼 (the displaced heir, future 平王) and 伯服 (褒姒's son). Same field structure but no name overlap"
+    source: "《史记·周本纪》/Ch.1 of 东周列国志"
+    person_a:
+      canonical_name: 太子宜臼
+      variants:
+        - {variant: 宜臼, kind: 本名}
+      state_id: sta:zhou
+      social_category: royalty
+      clan_name: 姬
+    person_b:
+      canonical_name: 太子伯服
+      variants:
+        - {variant: 伯服, kind: 本名}
+      state_id: sta:zhou
+      social_category: royalty
+      clan_name: 姬
+
+  - rationale: "Both are 晋 rulers from the 姬 clan with 谥号, but they're grandfather and grandson — different individuals despite identical field structure"
+    source: "《史记·晋世家》"
+    person_a:
+      canonical_name: 晋文公
+      variants:
+        - {variant: 重耳, kind: 本名}
+      state_id: sta:jin
+      social_category: royalty
+      clan_name: 姬
+      death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
+    person_b:
+      canonical_name: 晋灵公
+      variants:
+        - {variant: 夷皋, kind: 本名}
+      state_id: sta:jin
+      social_category: royalty
+      clan_name: 姬
+      death_date: {year_bce: 607, uncertainty: point, inference_kind: explicit_reign_other}
