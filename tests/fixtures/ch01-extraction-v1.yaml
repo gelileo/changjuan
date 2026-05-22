@@ -1,0 +1,1398 @@
+persons:
+  - id: p1
+    canonical_name: 周宣王
+    variants:
+      - { variant: 宣王, kind: 谥号 }
+      - { variant: 靖, kind: 本名 }
+    gender: male
+    social_category: royalty
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 2
+      quote: "立太子靖为王，是为宣王"
+      span: [188, 199]
+    justifications:
+      canonical_name: "是为宣王"
+      gender: "立太子靖为王"
+      social_category: "立太子靖为王，是为宣王"
+
+  - id: p2
+    canonical_name: 仲山甫
+    gender: male
+    social_category: official
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "太宰仲山甫进谏不听"
+      span: [455, 464]
+    justifications:
+      canonical_name: "仲山甫"
+      gender: "太宰仲山甫"
+      social_category: "太宰仲山甫"
+
+  - id: p3
+    canonical_name: 召虎
+    gender: male
+    social_category: official
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "大宗伯召虎对曰"
+      span: [847, 854]
+    justifications:
+      canonical_name: "召虎"
+      gender: "大宗伯召虎"
+      social_category: "大宗伯召虎"
+
+  - id: p4
+    canonical_name: 伯阳父
+    gender: male
+    social_category: official
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "太史伯阳父奏曰"
+      span: [993, 1000]
+    justifications:
+      canonical_name: "伯阳父"
+      gender: "太史伯阳父"
+      social_category: "太史伯阳父"
+
+  - id: p5
+    canonical_name: 姜后
+    variants:
+      - { variant: 姜后, kind: 封号 }
+    gender: female
+    social_category: royalty
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "朕赖姜后主六宫之政，甚有贤德"
+      span: [1238, 1252]
+    justifications:
+      canonical_name: "姜后"
+      gender: "姜后主六宫之政"
+      social_category: "姜后主六宫之政"
+
+  - id: p6
+    canonical_name: 尹吉甫
+    gender: male
+    social_category: official
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 2
+      quote: "任用贤臣方叔、召虎、尹吉甫、申伯、仲山甫"
+      span: [213, 233]
+    justifications:
+      canonical_name: "尹吉甫"
+      gender: "贤臣方叔、召虎、尹吉甫"
+      social_category: "任用贤臣方叔、召虎、尹吉甫"
+
+  - id: p7
+    canonical_name: 老宫人 (ch01)
+    gender: female
+    social_category: servant
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "今有先王手内老宫人，年五十余"
+      span: [617, 631]
+    justifications:
+      canonical_name: "老宫人"
+      gender: "老宫人"
+      social_category: "先王手内老宫人"
+
+  - id: p8
+    canonical_name: 女婴 (ch01)
+    gender: female
+    social_category: unknown
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "往清水河看视女婴下落"
+      span: [1223, 1233]
+    justifications:
+      canonical_name: "女婴"
+      gender: "女婴"
+
+  - id: p9
+    canonical_name: 杜伯
+    gender: male
+    social_category: official
+    state_id: s1
+    death_date:
+      year_bce: 785
+      uncertainty: point
+      original: "宣王四十三年"
+      inference_kind: explicit_reign_zhou
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+    justifications:
+      canonical_name: "上大夫杜伯"
+      gender: "上大夫杜伯"
+      social_category: "上大夫杜伯"
+
+  - id: p10
+    canonical_name: 左儒
+    gender: male
+    social_category: official
+    state_id: s1
+    death_date:
+      year_bce: 785
+      uncertainty: point
+      original: "(与杜伯同年)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e11
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "再命下大夫左儒"
+      span: [956, 963]
+    justifications:
+      canonical_name: "下大夫左儒"
+      gender: "下大夫左儒"
+      social_category: "下大夫左儒"
+
+  - id: p11
+    canonical_name: 妇人之卖箕袋 (ch01)
+    gender: female
+    social_category: commoner
+    state_id: s1
+    death_date:
+      year_bce: 789
+      uncertainty: point
+      original: "(童谣事件次年内)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e3
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "有一妇人，抱著几个箭袋，正是箕草织成的"
+      span: [1045, 1064]
+    justifications:
+      canonical_name: "妇人，抱著几个箭袋，正是箕草织成的"
+      gender: "妇人"
+      social_category: "妇人"
+
+  - id: p12
+    canonical_name: 男子之卖桑弓 (ch01)
+    gender: male
+    social_category: commoner
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "一男子背著山桑木弓十来把"
+      span: [1065, 1077]
+    justifications:
+      canonical_name: "男子背著山桑木弓"
+      gender: "男子"
+      social_category: "男子背著山桑木弓"
+
+  - id: p13
+    canonical_name: 隰叔
+    gender: male
+    social_category: noble
+    state_id: s1
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋"
+      span: [1247, 1256]
+    justifications:
+      canonical_name: "隰叔"
+      gender: "杜伯之子隰叔"
+      social_category: "杜伯之子隰叔"
+
+events:
+  - id: e1
+    type: 战
+    date:
+      year_bce: 789
+      uncertainty: point
+      original: "宣王三十九年"
+      inference_kind: explicit_reign_zhou
+    outcome: 败绩
+    summary: 宣王三十九年姜戎抗命，宣王御驾亲征，败绩于千亩，车徒大损
+    primary_place_id: pl1
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "姜戎抗命，宣王御驾亲征，败绩于千亩，车徒大损"
+      span: [350, 372]
+    justifications:
+      type: "宣王御驾亲征"
+      outcome: "败绩"
+      summary: "姜戎抗命，宣王御驾亲征，败绩于千亩，车徒大损"
+
+  - id: e2
+    type: 料民
+    date:
+      original: "(千亩之后)"
+      inference_kind: relative_to_prior_event
+    outcome: 仲山甫进谏不听
+    summary: 千亩之败后宣王思再举之计，亲自料民于太原；仲山甫进谏不听
+    primary_place_id: pl2
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "思为再举之计，又恐军数不充，亲自料民于太原"
+      span: [373, 394]
+    justifications:
+      type: "亲自料民于太原"
+      outcome: "再举之计"
+      summary: "思为再举之计，又恐军数不充，亲自料民于太原"
+
+  - id: e3
+    type: 童谣
+    date:
+      original: "(料民回京时)"
+      inference_kind: relative_to_prior_event
+    outcome: 宣王传谕禁止再歌
+    summary: 宣王料民回京近镐京，闻市童歌"月将升日将没，壓弧箕焤几亡周国"，传谕禁止
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 8
+      quote: "忽见市上小儿数十为群，拍手作歌，其声如一"
+      span: [537, 557]
+    justifications:
+      type: "小儿数十为群，拍手作歌"
+      outcome: "拍手作歌"
+      summary: "忽见市上小儿数十为群，拍手作歌"
+
+  - id: e4
+    type: 朝议
+    date:
+      original: "次日早朝"
+      inference_kind: relative_to_prior_event
+    outcome: 召虎、仲山甫、伯阳父释谣；伯阳父言后世女主乱国之祸
+    summary: 童谣次日早朝宣王问群臣解谣意；召虎言弓矢之变，仲山甫言亡国之患，伯阳父言女主乱国
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "次日早朝，三公六卿，齐集殿下"
+      span: [800, 814]
+    justifications:
+      type: "次日早朝，三公六卿，齐集殿下"
+      outcome: "三公六卿，齐集殿下"
+      summary: "次日早朝，三公六卿，齐集殿下"
+
+  - id: e5
+    type: 怪诞
+    date:
+      original: "(童谣朝议同时)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e4
+    outcome: 女婴生
+    summary: 先王手内老宫人怀孕四十余年昨夜生一女
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "自先朝怀孕，到今四十余年，昨夜方生一女"
+      span: [632, 651]
+    justifications:
+      type: "怀孕，到今四十余年，昨夜方生一女"
+      outcome: "昨夜方生一女"
+      summary: "自先朝怀孕，到今四十余年，昨夜方生一女"
+
+  - id: e6
+    type: 弃婴
+    date:
+      original: "(老宫人生女后)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e5
+    outcome: 女婴弃于清水河
+    summary: 姜后以女婴为不祥之物，令人草席包裹，弃于二十里外清水河中
+    primary_place_id: pl4
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "妾思此乃不祥之物，已令人将草席包裹，抛弃于二十里外清水河中"
+      span: [673, 702]
+    justifications:
+      type: "已令人将草席包裹，抛弃于二十里外清水河中"
+      outcome: "抛弃于二十里外清水河中"
+      summary: "妾思此乃不祥之物，已令人将草席包裹，抛弃于二十里外清水河中"
+
+  - id: e7
+    type: 诏令
+    date:
+      original: "(女婴弃河次日早朝)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e6
+    outcome: 上大夫杜伯督访妖女；下大夫左儒督禁桑弓箕袋
+    summary: 宣王召伯阳父占龙漦之事，繇词应童谣；遂命杜伯访妖女，命左儒禁卖桑弓箕草箭袋
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+    justifications:
+      type: "命上大夫杜伯专督其事"
+      outcome: "命上大夫杜伯专督其事"
+      summary: "命上大夫杜伯专督其事"
+
+  - id: e8
+    type: 处死
+    date:
+      original: "(禁令次日)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e7
+    outcome: 妇人斩，男子逃
+    summary: 司市官擒抱箕袋之妇人，男子背桑弓逃脱；左儒奏违禁，宣王命斩妇人，焚桑弓箕袋于市
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "宣王命将此女斩汔；其桑弓箕袋，焚弃于市"
+      span: [1245, 1264]
+    justifications:
+      type: "宣王命将此女斩汔"
+      outcome: "斩汔"
+      summary: "宣王命将此女斩汔；其桑弓箕袋，焚弃于市"
+
+  - id: e9
+    type: 救婴
+    date:
+      original: "(妇人死后次日)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e8
+    outcome: 男子救女婴往褒城
+    summary: 卖桑弓男子逃至清水河，见百鸟衔草席女婴出水，遂取归，抱往褒城投亲
+    primary_place_id: pl4
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "带水取起席包，到草坡中解看。但闻一声啼哭，原来是一个女婴"
+      span: [1515, 1543]
+    justifications:
+      type: "带水取起席包"
+      outcome: "原来是一个女婴"
+      summary: "带水取起席包，到草坡中解看。但闻一声啼哭，原来是一个女婴"
+
+  - id: e10
+    type: 异梦
+    date:
+      year_bce: 785
+      uncertainty: point
+      original: "宣王四十三年"
+      inference_kind: explicit_reign_zhou
+    outcome: 伯阳父言梦应童谣之谶
+    summary: 宣王四十三年大祭宿斋宫，夜梦美貌女子自西来，入太庙大笑大哭，捆七庙神主东去；告伯阳父，言女祸应童谣谶
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "到四十三年，时当大祭，宣王宿于斋宫"
+      span: [402, 419]
+    justifications:
+      type: "宣王宿于斋宫"
+      outcome: "宣王宿于斋宫"
+      summary: "到四十三年，时当大祭，宣王宿于斋宫"
+
+  - id: e11
+    type: 处死
+    date:
+      original: "(颁胙之后)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e10
+    outcome: 杜伯斩
+    summary: 宣王问杜伯访妖女何无回话，杜伯奏中止；宣王怒，斥为不忠，命武士推出朝门斩之
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "武士将杜伯推出朝门斩了"
+      span: [1173, 1184]
+    justifications:
+      type: "武士将杜伯推出朝门斩了"
+      outcome: "推出朝门斩了"
+      summary: "武士将杜伯推出朝门斩了"
+
+  - id: e12
+    type: 自刎
+    date:
+      original: "(杜伯死同日)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e11
+    outcome: 左儒自刎
+    summary: 左儒先谏宣王勿杀杜伯不听，杜伯被斩后回家自刎
+    primary_place_id: pl3
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "左儒回到家中，自刎而死"
+      span: [1185, 1196]
+    justifications:
+      type: "自刎而死"
+      outcome: "自刎而死"
+      summary: "左儒回到家中，自刎而死"
+
+  - id: e13
+    type: 出奔
+    date:
+      uncertainty: circa
+      original: "(杜伯死后)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e11
+    outcome: 隰叔仕晋为士师；子孙为士氏、范氏
+    summary: 杜伯之子隰叔奔晋，后仕晋为士师之官；子孙食邑于范，遂为士氏、范氏
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋。后仕晋为士师之官"
+      span: [1247, 1265]
+    justifications:
+      type: "奔晋"
+      outcome: "后仕晋为士师之官"
+      summary: "杜伯之子隰叔，奔晋。后仕晋为士师之官"
+
+  - id: e14
+    type: 游猎
+    date:
+      year_bce: 782
+      uncertainty: point
+      original: "宣王四十六年秋七月"
+      inference_kind: explicit_reign_zhou
+    outcome: 围毕散归
+    summary: 宣王四十六年秋七月体稍豫，出东郊游猎；尹吉甫侍右、召虎侍左；获禽多，传令散围而回
+    primary_place_id: pl8
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "至四十六年秋七月，玉体稍豫，意欲出郊游猎"
+      span: [1035, 1055]
+    justifications:
+      type: "意欲出郊游猎"
+      outcome: "出郊游猎"
+      summary: "至四十六年秋七月，玉体稍豫，意欲出郊游猎"
+
+  - id: e15
+    type: 显灵
+    date:
+      original: "(东郊游猎归途)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e14
+    outcome: 宣王中箭昏倒
+    summary: 游猎散归途中，杜伯、左儒乘小车现身，臂朱弓手赤矢；杜伯射宣王心窝，宣王昏倒于玉辇
+    primary_place_id: pl8
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "望宣王心窝内射来。宣王大叫一声，昏倒于玉辇之上"
+      span: [1599, 1622]
+    justifications:
+      type: "望宣王心窝内射来"
+      outcome: "昏倒于玉辇之上"
+      summary: "望宣王心窝内射来。宣王大叫一声，昏倒于玉辇之上"
+
+places:
+  - id: pl1
+    name: 千亩
+    type: 战场
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: null
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "败绩于千亩"
+      span: [362, 367]
+    justifications:
+      name: "千亩"
+      type: "败绩于千亩"
+
+  - id: pl2
+    name: 太原
+    type: 邑
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: "固原州 (novel's own gloss; near modern 宁夏固原, not Shanxi 太原)"
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "亲自料民于太原。那太原，即今固原州"
+      span: [387, 404]
+    justifications:
+      name: "太原"
+      type: "料民于太原"
+      modern_equiv: "即今固原州"
+
+  - id: pl3
+    name: 镐京
+    type: 都城
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: 西安市西南
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 8
+      quote: "再说宣王在太原料民回来，离镐京不远"
+      span: [509, 526]
+    justifications:
+      name: "镐京"
+      type: "离镐京不远"
+
+  - id: pl4
+    name: 清水河
+    type: 河
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: null
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "抛弃于二十里外清水河中"
+      span: [691, 702]
+    justifications:
+      name: "清水河"
+      type: "抛弃于二十里外清水河中"
+
+  - id: pl5
+    name: 褒城
+    type: 城
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: null
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "乃望褒城投奔相识而去"
+      span: [1614, 1624]
+    justifications:
+      name: "褒城"
+      type: "乃望褒城投奔相识而去"
+
+  - id: pl6
+    name: 杜陵
+    type: 邑
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: null
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "立祠于杜陵，号为杜主"
+      span: [1291, 1301]
+    justifications:
+      name: "杜陵"
+      type: "立祠于杜陵"
+
+  - id: pl7
+    name: 范
+    type: 邑
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: null
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "食邑于范，又为范氏"
+      span: [1273, 1282]
+    justifications:
+      name: "食邑于范"
+      type: "食邑于范"
+
+  - id: pl8
+    name: 东郊
+    type: 郊
+    lat: null
+    lon: null
+    coord_confidence: null
+    modern_equiv: 镐京东郊
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "一齐往东郊进发"
+      span: [1120, 1127]
+    justifications:
+      name: "东郊"
+      type: "一齐往东郊进发"
+
+states:
+  - id: s1
+    name: 周
+    type: 王朝
+    ruling_clan: 姬
+    founded_date:
+      year_bce: 1046
+      uncertainty: circa
+      original: "武王伐纣"
+      inference_kind: era_only
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 2
+      quote: "话说周朝，自武王伐纣，即天子位"
+      span: [65, 80]
+    justifications:
+      name: "周朝"
+      type: "话说周朝"
+
+  - id: s2
+    name: 姜戎
+    type: 戎
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "姜戎抗命"
+      span: [350, 354]
+    justifications:
+      name: "姜戎"
+      type: "姜戎抗命"
+
+  - id: s3
+    name: 犬戎
+    type: 戎
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "思欲报犬戎之仇"
+      span: [933, 940]
+    justifications:
+      name: "犬戎"
+      type: "思欲报犬戎之仇"
+
+  - id: s4
+    name: 晋
+    type: 诸侯国
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋"
+      span: [1247, 1256]
+    justifications:
+      name: "奔晋"
+      type: "奔晋"
+
+relations:
+  # =========================================================================
+  # state_capital — 周's capital is 镐京 (era_only inference for 西周开国)
+  # =========================================================================
+  - kind: state_capital
+    state_id: s1
+    place_id: pl3
+    from_date:
+      uncertainty: circa
+      original: "(西周开国)"
+      inference_kind: era_only
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 8
+      quote: "再说宣王在太原料民回来，离镐京不远"
+      span: [509, 526]
+
+  # =========================================================================
+  # person_state — rulers, ministers, defectors
+  # =========================================================================
+  - kind: person_state
+    person_id: p1
+    state_id: s1
+    role: ruler
+    from_date:
+      uncertainty: circa
+      original: "(立太子靖为王)"
+      inference_kind: era_only
+    to_date:
+      year_bce: 782
+      uncertainty: point
+      original: "宣王四十六年"
+      inference_kind: explicit_reign_zhou
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 2
+      quote: "立太子靖为王，是为宣王"
+      span: [188, 199]
+
+  - kind: person_state
+    person_id: p2
+    state_id: s1
+    role: minister
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "太宰仲山甫进谏不听"
+      span: [455, 464]
+
+  - kind: person_state
+    person_id: p3
+    state_id: s1
+    role: minister
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "大宗伯召虎对曰"
+      span: [847, 854]
+
+  - kind: person_state
+    person_id: p4
+    state_id: s1
+    role: minister
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "太史伯阳父奏曰"
+      span: [993, 1000]
+
+  - kind: person_state
+    person_id: p6
+    state_id: s1
+    role: minister
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 2
+      quote: "任用贤臣方叔、召虎、尹吉甫"
+      span: [213, 226]
+
+  - kind: person_state
+    person_id: p9
+    state_id: s1
+    role: minister
+    to_date:
+      year_bce: 785
+      uncertainty: point
+      original: "宣王四十三年"
+      inference_kind: explicit_reign_zhou
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+
+  - kind: person_state
+    person_id: p10
+    state_id: s1
+    role: minister
+    to_date:
+      original: "(杜伯死同日)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e11
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "再命下大夫左儒"
+      span: [956, 963]
+
+  - kind: person_state
+    person_id: p13
+    state_id: s1
+    role: defector
+    to_date:
+      uncertainty: circa
+      original: "(杜伯死后)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e11
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋"
+      span: [1247, 1256]
+
+  - kind: person_state
+    person_id: p13
+    state_id: s4
+    role: minister
+    from_date:
+      uncertainty: circa
+      original: "(奔晋后)"
+      inference_kind: relative_to_prior_event
+      relative_anchor_event_id: e13
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "后仕晋为士师之官"
+      span: [1257, 1265]
+
+  # =========================================================================
+  # person_relation — kinship, friendship, mentor, killed_by, spouse
+  # =========================================================================
+  - kind: person_relation
+    from_person_id: p9
+    to_person_id: p13
+    kind_detail: parent
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔"
+      span: [1247, 1253]
+
+  - kind: person_relation
+    from_person_id: p10
+    to_person_id: p9
+    kind_detail: ally
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "乃下大夫左儒，是杜伯的好友"
+      span: [926, 939]
+
+  - kind: person_relation
+    from_person_id: p9
+    to_person_id: p10
+    kind_detail: mentor
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "乃下大夫左儒，是杜伯的好友，举荐同朝的"
+      span: [926, 945]
+
+  - kind: person_relation
+    from_person_id: p1
+    to_person_id: p5
+    kind_detail: spouse
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "朕赖姜后主六宫之政，甚有贤德"
+      span: [1238, 1252]
+
+  - kind: person_relation
+    from_person_id: p7
+    to_person_id: p8
+    kind_detail: parent
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "自先朝怀孕，到今四十余年，昨夜方生一女"
+      span: [632, 651]
+
+  - kind: person_relation
+    from_person_id: p1
+    to_person_id: p9
+    kind_detail: killed_by
+    date:
+      year_bce: 785
+      uncertainty: point
+      original: "宣王四十三年"
+      inference_kind: explicit_reign_zhou
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "武士将杜伯推出朝门斩了"
+      span: [1173, 1184]
+
+  # =========================================================================
+  # event_participant — one entry per (event, person, role)
+  # =========================================================================
+  # --- e1 千亩之战
+  - kind: event_participant
+    event_id: e1
+    person_id: p1
+    role: 主将
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "宣王御驾亲征，败绩于千亩"
+      span: [355, 367]
+
+  # --- e2 太原料民
+  - kind: event_participant
+    event_id: e2
+    person_id: p1
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "亲自料民于太原"
+      span: [387, 394]
+
+  - kind: event_participant
+    event_id: e2
+    person_id: p2
+    role: 进谏
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "太宰仲山甫进谏不听"
+      span: [455, 464]
+
+  # --- e3 童谣
+  - kind: event_participant
+    event_id: e3
+    person_id: p1
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 8
+      quote: "若有小儿再歌此词者，连父兄同罪"
+      span: [774, 789]
+
+  # --- e4 朝议
+  - kind: event_participant
+    event_id: e4
+    person_id: p1
+    role: 主问
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "宣王将夜来所闻小儿之歌，述于众臣"
+      span: [821, 837]
+
+  - kind: event_participant
+    event_id: e4
+    person_id: p3
+    role: 奏对
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "大宗伯召虎对曰"
+      span: [847, 854]
+
+  - kind: event_participant
+    event_id: e4
+    person_id: p2
+    role: 奏对
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "太宰仲山甫奏曰"
+      span: [906, 913]
+
+  - kind: event_participant
+    event_id: e4
+    person_id: p4
+    role: 奏对
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "太史伯阳父奏曰"
+      span: [993, 1000]
+
+  # --- e5 老宫人生女
+  - kind: event_participant
+    event_id: e5
+    person_id: p7
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "自先朝怀孕，到今四十余年，昨夜方生一女"
+      span: [632, 651]
+
+  - kind: event_participant
+    event_id: e5
+    person_id: p8
+    role: 生
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "昨夜方生一女"
+      span: [645, 651]
+
+  # --- e6 弃婴
+  - kind: event_participant
+    event_id: e6
+    person_id: p5
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "已令人将草席包裹，抛弃于二十里外清水河中"
+      span: [682, 702]
+
+  - kind: event_participant
+    event_id: e6
+    person_id: p8
+    role: 弃
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "抛弃于二十里外清水河中"
+      span: [691, 702]
+
+  - kind: event_participant
+    event_id: e6
+    person_id: p1
+    role: 后命复察
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "随唤守宫侍者，往清水河看视女婴下落"
+      span: [1216, 1233]
+
+  # --- e7 杜伯搜查令
+  - kind: event_participant
+    event_id: e7
+    person_id: p1
+    role: 颁令
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+
+  - kind: event_participant
+    event_id: e7
+    person_id: p4
+    role: 奏对
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "伯阳父布卦已毕，献上繇词"
+      span: [747, 759]
+
+  - kind: event_participant
+    event_id: e7
+    person_id: p9
+    role: 受命
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+
+  - kind: event_participant
+    event_id: e7
+    person_id: p10
+    role: 受命
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "再命下大夫左儒"
+      span: [956, 963]
+
+  # --- e8 妇人处死
+  - kind: event_participant
+    event_id: e8
+    person_id: p11
+    role: 死
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "宣王命将此女斩汔"
+      span: [1245, 1253]
+
+  - kind: event_participant
+    event_id: e8
+    person_id: p12
+    role: 脱
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "抛下桑弓在地，飞步走脱"
+      span: [1148, 1159]
+
+  - kind: event_participant
+    event_id: e8
+    person_id: p10
+    role: 奏报
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "单奏妇人违禁造卖，法宜处死"
+      span: [1231, 1244]
+
+  - kind: event_participant
+    event_id: e8
+    person_id: p1
+    role: 命斩
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "宣王命将此女斩汔"
+      span: [1245, 1253]
+
+  # --- e9 男子救婴
+  - kind: event_participant
+    event_id: e9
+    person_id: p12
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "带水取起席包，到草坡中解看"
+      span: [1515, 1528]
+
+  - kind: event_participant
+    event_id: e9
+    person_id: p8
+    role: 被救
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "原来是一个女婴"
+      span: [1536, 1543]
+
+  # --- e10 异梦
+  - kind: event_participant
+    event_id: e10
+    person_id: p1
+    role: 梦者
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "到四十三年，时当大祭，宣王宿于斋宫"
+      span: [402, 419]
+
+  - kind: event_participant
+    event_id: e10
+    person_id: p4
+    role: 奏对
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "遣左右密召太史伯阳父，告以梦中所见"
+      span: [572, 589]
+
+  # --- e11 杜伯处死
+  - kind: event_participant
+    event_id: e11
+    person_id: p1
+    role: 命斩
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "宣王大怒曰"
+      span: [822, 827]
+
+  - kind: event_participant
+    event_id: e11
+    person_id: p9
+    role: 死
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "武士将杜伯推出朝门斩了"
+      span: [1173, 1184]
+
+  - kind: event_participant
+    event_id: e11
+    person_id: p10
+    role: 进谏
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "左儒叩头奏曰"
+      span: [946, 952]
+
+  # --- e12 左儒自刎
+  - kind: event_participant
+    event_id: e12
+    person_id: p10
+    role: 自刎
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "左儒回到家中，自刎而死"
+      span: [1185, 1196]
+
+  # --- e13 隰叔出奔
+  - kind: event_participant
+    event_id: e13
+    person_id: p13
+    role: 出奔
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋"
+      span: [1247, 1256]
+
+  # --- e14 东郊游猎
+  - kind: event_participant
+    event_id: e14
+    person_id: p1
+    role: 主行
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "意欲出郊游猎，以快心神"
+      span: [1049, 1060]
+
+  - kind: event_participant
+    event_id: e14
+    person_id: p6
+    role: 侍御
+    role_detail: 右
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "右有尹吉甫"
+      span: [1099, 1104]
+
+  - kind: event_participant
+    event_id: e14
+    person_id: p3
+    role: 侍御
+    role_detail: 左
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "左有召虎"
+      span: [1105, 1109]
+
+  # --- e15 鬼魂显灵
+  - kind: event_participant
+    event_id: e15
+    person_id: p9
+    role: 显灵
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "乃上大夫杜伯，下大夫左儒"
+      span: [1431, 1443]
+
+  - kind: event_participant
+    event_id: e15
+    person_id: p10
+    role: 显灵
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "乃上大夫杜伯，下大夫左儒"
+      span: [1431, 1443]
+
+  - kind: event_participant
+    event_id: e15
+    person_id: p1
+    role: 中箭
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "宣王大叫一声，昏倒于玉辇之上"
+      span: [1608, 1622]
+
+  # =========================================================================
+  # event_place — secondary places (in addition to primary_place_id)
+  # =========================================================================
+  - kind: event_place
+    event_id: e6
+    place_id: pl3
+    role: 起点
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "抛弃于二十里外清水河中"
+      span: [691, 702]
+
+  - kind: event_place
+    event_id: e9
+    place_id: pl5
+    role: 终点
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "乃望褒城投奔相识而去"
+      span: [1614, 1624]
+
+  # =========================================================================
+  # event_relation — explicit causation
+  # =========================================================================
+  - kind: event_relation
+    from_event_id: e1
+    to_event_id: e2
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 5
+      quote: "败绩于千亩，车徒大损，思为再举之计"
+      span: [362, 379]
+
+  - kind: event_relation
+    from_event_id: e3
+    to_event_id: e4
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:0"
+      paragraph: 9
+      quote: "宣王将夜来所闻小儿之歌，述于众臣"
+      span: [821, 837]
+
+  - kind: event_relation
+    from_event_id: e4
+    to_event_id: e7
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "命上大夫杜伯专督其事"
+      span: [931, 941]
+
+  - kind: event_relation
+    from_event_id: e5
+    to_event_id: e6
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:9"
+      paragraph: 10
+      quote: "妾思此乃不祥之物，已令人将草席包裹，抛弃于二十里外清水河中"
+      span: [673, 702]
+
+  - kind: event_relation
+    from_event_id: e6
+    to_event_id: e9
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 14
+      quote: "带水取起席包"
+      span: [1515, 1521]
+
+  - kind: event_relation
+    from_event_id: e7
+    to_event_id: e8
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:10"
+      paragraph: 11
+      quote: "司市官将妇人锁押"
+      span: [1160, 1168]
+
+  - kind: event_relation
+    from_event_id: e10
+    to_event_id: e11
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "忽然想起三年前，曾命上大夫杜伯督率司市，查访妖女，全无下落"
+      span: [708, 737]
+
+  - kind: event_relation
+    from_event_id: e11
+    to_event_id: e12
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 17
+      quote: "左儒回到家中，自刎而死"
+      span: [1185, 1196]
+
+  - kind: event_relation
+    from_event_id: e11
+    to_event_id: e13
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:14"
+      paragraph: 19
+      quote: "杜伯之子隰叔，奔晋"
+      span: [1247, 1256]
+
+  - kind: event_relation
+    from_event_id: e11
+    to_event_id: e15
+    kind_detail: causes
+    citation:
+      chunk_id: "chk:dzl:1:17"
+      paragraph: 20
+      quote: "你不修德政，妄戮无辜，今日大数已尽，吾等专来报冤"
+      span: [1553, 1577]

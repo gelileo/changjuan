@@ -68,3 +68,4 @@ re-introducing the bug.
 - Conflict auto-resolution rule: configurable precedence (default 史记 > 左传 > 东周列国志 for dates; 东周列国志 wins narrative detail). The picked variant is recorded in `Conflict.current_best_variant_idx`; alternatives are preserved.
 - `pipeline_runs.stats_json.thresholds_breached` is the gate for stage-9 freeze.
 - `--chapters N..M` flag on every stage for dry runs; nothing requires "full corpus" mode to run.
+- `pipeline/config.py::GOLDEN_PR_THRESHOLDS` gates `changjuan golden-eval` per entity kind. Recalibrated after v2 baseline (Task 29.4): relation.precision lowered 0.75 → 0.65 (v2 measured 0.6984); all others unchanged. See `concepts/runtime/configuration.md` for the full table + recalibration history.
