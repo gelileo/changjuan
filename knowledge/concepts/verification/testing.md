@@ -299,6 +299,18 @@ A `_facts` helper builds minimal synthetic fact dicts with `pipeline_run_id`, `r
 
 These tests confirm the full `qa-sample` → `qa-load` round-trip path: fact enumeration, YAML output, verdict ingestion, stats patching, and threshold breach detection.
 
+## Golden Ch.1 P/R integration test
+
+`tests/integration/test_golden_ch01.py` (Phase 2 Task 37) is the end-to-end gate test. It:
+
+1. Copies `data/corpus.sqlite` into a `tmp_path` database (skips if absent — allows CI to run without the full corpus).
+2. Calls `load_extraction` against `tests/fixtures/ch01-extraction-v1.yaml` (the frozen v2 extraction output, committed in `add4902`).
+3. Builds candidate dicts via `_build_candidates`, which mirrors `golden_eval_cmd`'s SELECT logic using the actual canonical schema column names: `from_candidate_event_id`/`to_candidate_event_id` for `candidate_event_relations`, `from_candidate_person_id`/`to_candidate_person_id` for `candidate_person_relations`. Event-relation and person-relation rows store the `kind` column directly as the `"kind"` key in the relation dict (matching how `golden_eval_cmd` reads them).
+4. Runs `compute_pr` against `tests/golden/ch01/`.
+5. Asserts each kind's P/R meets `pipeline.config.GOLDEN_PR_THRESHOLDS`.
+
+Marked `@pytest.mark.golden`. The fixture was frozen at the levels that satisfy the recalibrated thresholds — this test pins the relationship between the two so any future fixture replacement or threshold tighten will surface the regression.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

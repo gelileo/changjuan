@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-21] test(integration): golden Ch.1 P/R integration test (Task 37)
+
+`tests/integration/test_golden_ch01.py` added. The test loads the frozen v2 extraction fixture (`tests/fixtures/ch01-extraction-v1.yaml`, committed in `add4902`) into a `tmp_path`-based `changjuan.sqlite`, builds candidate dicts mirroring `golden_eval_cmd`'s SELECT logic (using actual canonical schema column names: `from_candidate_event_id`/`to_candidate_event_id` for `candidate_event_relations`, `from_candidate_person_id`/`to_candidate_person_id` for `candidate_person_relations`), runs `compute_pr` against `tests/golden/ch01/`, and asserts all 5 kinds meet `GOLDEN_PR_THRESHOLDS`.
+
+Marked `@pytest.mark.golden` to signal the LLM-corpus dependency (skips if `corpus.sqlite` absent in CI). Passed in 0.31 s — fast enough that the marker is informational, not a gate. Total tests: 173 (172 prior + 1 new golden test).
+
+### Key adaptation vs. task spec
+
+The task-spec's `_build_candidates` used incorrect FK column names from `candidate_event_relations` and `candidate_person_relations` (`candidate_from_event_id`, `candidate_to_event_id`, etc.). Aligned to actual canonical schema columns as used in `golden_eval_cmd`: `from_candidate_event_id`, `to_candidate_event_id`, `from_candidate_person_id`, `to_candidate_person_id`. Event-relation/person-relation `kind` column stored directly as `kind` key in the dict (matches CLI logic).
+
+### Articles touched
+
+`concepts/verification/testing.md` (golden integration test section).
+
 ## [2026-05-21] phase 2: v2 baseline locked — all 5 kinds ✓; threshold recalibration + fixture freeze (Tasks 29.4 + 30)
 
 After v2 iteration + walkback fix + event-matcher relaxation, all 5 entity kinds pass the golden Ch.1 P/R thresholds. Final v2 numbers (from `run:extract-ch1-v2-<latest>`):
