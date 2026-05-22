@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] feat(run): Ch.5 end-to-end (Phase 4 Task 10)
+
+Ran extract → /changjuan-extract-v2 chapter:5 → link → load. pipeline_run_id `run:extract-ch5-v2-20260522T200954`. Linker stats: processed=30 auto-merged=0 queued=7 skipped=23. Loader: persons=30 events=26 places=8 states=9 relations=46. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
+
+Key entities extracted: 郑庄公, 公子吕, 卫桓公, 公孙滑, 高渠弥, 公子州吁, 石碏, 姜氏(国母), 周平王, 虢公忌父, 世子忽, 周太子狐, 周公黑肩, 周桓王, 颍考叔, 祭足, 齐僖公, 卫庄公, 庄姜, 厉妫, 戴妫, 石厚, 宁翊, 宋殇公, 孔父嘉, 公子翚, 鲁隐公, 公子冯, 宋穆公, 瑕叔盈. Events cover: 郑庄公遣使说卫→卫撤兵→廪延之战→周郑交质→平王崩桓王立→桓王夺郑政→祭足掠粮温洛→齐郑石门之盟→郑世子辞婚→卫州吁弑桓公→州吁即位→五国联军围郑东门. Note: `explicit_reign_other` not yet supported by schema (additionalProperties:false + Phase2 allowlist) — used `explicit_reign_zhou` for 周桓王元年 date. 7 persons queued for linker review (new persons from Ch.5). Completes Phase 4 chapter scope (Ch.1–5).
+
+no knowledge impact: pipeline output capture.
+
 ## [2026-05-22] feat(run): Ch.4 end-to-end (Phase 4 Task 9)
 
 Ran extract → /changjuan-extract-v2 chapter:4 → link → load. pipeline_run_id `run:extract-ch4-v2-20260522T195536`. Linker stats: processed=17 auto-merged=0 queued=5 skipped=12. Loader: persons=17 events=34 places=14 states=6 relations=86. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
