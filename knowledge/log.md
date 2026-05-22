@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-22] chore(scripts): phase3-prep.sh — Phase 3 acceptance check (Phase 3 Task 15)
+
+Mirrors `scripts/phase2-prep.sh`'s structure. Six pass/fail sections (Phase 2 still passes, Stage 5 module present, link CLI verb, regression set ≥10 pairs, regression test green, Ch.1 link-then-load test green) plus a seventh section that prints the 7-item PHASE3_DEFERRED backlog (Phase 4 starter agenda: LLM judge, date parser expansion, Ch.~40 golden, curator UI, cross-chunk date automation, linker for other entity kinds, multi-chapter extraction).
+
+no knowledge impact: script only; PHASE3_DEFERRED items documented in the script body + this log entry.
+
 ## [2026-05-22] test(integration): link + load Ch.1 fixture preserves 13 persons (Phase 3 Task 14)
 
 @pytest.mark.golden integration test. Runs extract-load → link → load against the frozen `tests/fixtures/ch01-extraction-v1.yaml` and asserts exactly 13 canonical persons result — the Ch.1 golden count. Catches over-aggressive linker, broken candidate pool, or broken match_target_id integration as a single end-to-end regression.
