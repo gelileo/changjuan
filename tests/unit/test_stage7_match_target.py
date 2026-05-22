@@ -7,9 +7,20 @@ import sqlite3
 from pathlib import Path
 
 import pytest
+import structlog
 
 from pipeline.db import open_canonical_db
 from pipeline.stage7_load.persons import load_candidate_persons
+
+
+@pytest.fixture(autouse=True)
+def _structlog_to_stdlib() -> None:
+    """Route structlog through stdlib logging so pytest's caplog can capture it."""
+    structlog.configure(
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=False,
+    )
 
 
 @pytest.fixture

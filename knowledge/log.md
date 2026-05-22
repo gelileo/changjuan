@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-22] fix(stage7): ORDER BY id + align logging with project convention (Phase 3 Task 10 fix)
+
+Code review of Task 10 (commit 6731ce7) flagged two issues:
+- Stage 7's candidate SELECT lacked `ORDER BY id`; the cross-run chain test relied on undefined fetch order. Fixed.
+- Logging module choice mismatched the project's existing convention. Verified by grep: `cli.py` uses `structlog`; `persons.py` was the only file using stdlib `logging`. Switched `persons.py` to `structlog.get_logger(__name__)` with keyword-arg style warning call.
+
+Test `test_match_target_id_missing_target_falls_through_with_warning` updated: added an `autouse` fixture `_structlog_to_stdlib` that configures structlog to emit via `structlog.stdlib.LoggerFactory` so pytest's `caplog` can still capture the warning.
+
+no knowledge impact: correctness fix + convention alignment.
+
 ## [2026-05-22] feat(stage7): honor candidate_persons.match_target_id + cross-run chain (Phase 3 Task 10)
 
 Modified `pipeline/stage7_load/persons.py::load_candidate_persons` to honor `match_target_id`:

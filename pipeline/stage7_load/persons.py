@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json as _json
-import logging
 import sqlite3
 import uuid
+
+import structlog
 
 from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
@@ -14,7 +15,7 @@ from pipeline.stage7_load.helpers import (
     _slugify,
 )
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 
 def _create_person(
@@ -292,7 +293,7 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
         "state_id, clan_name, confidence, chunk_id, quote, variants_json, match_target_id "
-        "FROM candidate_persons WHERE pipeline_run_id = ?;",
+        "FROM candidate_persons WHERE pipeline_run_id = ? ORDER BY id;",
         (pipeline_run_id,),
     )
     candidates = cur.fetchall()
@@ -308,10 +309,10 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
             )
             if existing_id is None:
                 log.warning(
-                    "candidate %s has match_target_id=%s but resolution returned no canonical; "
+                    "match_target_id resolution returned no canonical; "
                     "falling through to canonical_name match",
-                    c["id"],
-                    target_id_raw,
+                    candidate_id=c["id"],
+                    match_target_id=target_id_raw,
                 )
 
         # Fall back to canonical_name match if match_target_id didn't resolve.

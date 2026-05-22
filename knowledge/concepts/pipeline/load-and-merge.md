@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention)
 status: thin
 load_bearing: true
 references:
@@ -25,11 +25,11 @@ Candidate records are matched against existing canonical Persons by up to three 
 1. **match_target_id (Stage 5 linker output)** — if the candidate row carries a non-null `match_target_id`, the loader attempts to resolve it first:
    - If `match_target_id` starts with `cand:`, it is a same-run sibling candidate id. The loader looks it up in `local_canonical_map` (a dict populated during this load pass that maps each processed candidate id to its chosen canonical id). This enables cross-run chain resolution: if sibling A was processed first and became `per:zhong-er`, sibling B's `cand:A` reference resolves to `per:zhong-er`.
    - Otherwise, `match_target_id` is treated as a canonical `per:` id. The loader queries `persons` for it directly.
-   - If resolution fails (target not found in `local_canonical_map` or `persons`), a warning is logged and the loader falls through to the canonical_name checks below.
+   - If resolution fails (target not found in `local_canonical_map` or `persons`), a `structlog` warning is emitted with `candidate_id` and `match_target_id` as keyword args, and the loader falls through to the canonical_name checks below.
 2. **canonical_name equality** — if a Person with the same `canonical_name` exists, the candidate merges into it.
 3. **person_variants lookup** — if the candidate's `canonical_name` appears as a `variant` in `person_variants`, the candidate merges into the owning Person.
 
-The `local_canonical_map` is populated for every candidate (both create-new and merge-into-existing paths) so that later siblings in the same load pass can resolve `cand:` references to it.
+The `local_canonical_map` is populated for every candidate (both create-new and merge-into-existing paths) so that later siblings in the same load pass can resolve `cand:` references to it. Candidates are fetched with `ORDER BY id` so the processing order is deterministic and earlier-id siblings are guaranteed to be in the map before later-id siblings attempt resolution.
 
 If none of the checks find a match, a new canonical Person is created with id `per:<slug>` where the slug is derived from `canonical_name` via `_slugify` (regex `[^\w]+` → `-`, lowercased). If that id already exists in `persons` (slug collision from a different `canonical_name`), a 6-character SHA-256 hex suffix is appended: `per:<slug>-<hash6>`.
 
