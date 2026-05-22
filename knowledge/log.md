@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] feat(golden): regression_loader.py validates merge regression YAML structure (Phase 3 Task 3)
+
+Added `tests/golden/regression_loader.py` (load_regression_set + RegressionLoadError) plus 7 unit tests in `tests/unit/test_regression_loader.py`. Validates top-level shape, required pair fields (rationale/source/person_a/person_b), required person fields (canonical_name), and social_category enum membership. The Phase 3 linker (lands in Tasks 5-8) and the regression test (Task 13) both consume this loader.
+
+Articles touched: `knowledge/concepts/verification/testing.md` — added regression-loader section.
+
 ## [2026-05-21] golden: scaffold merge_regression.yaml + README (Phase 3 Task 2)
 
 Created `tests/golden/merge_regression.yaml` (empty lists) + curation

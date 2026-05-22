@@ -311,6 +311,10 @@ These tests confirm the full `qa-sample` → `qa-load` round-trip path: fact enu
 
 Marked `@pytest.mark.golden`. The fixture was frozen at the levels that satisfy the recalibrated thresholds — this test pins the relationship between the two so any future fixture replacement or threshold tighten will surface the regression.
 
+## Merge regression loader tests
+
+`tests/unit/test_regression_loader.py` (Phase 3 Task 3) exercises `tests.golden.regression_loader.load_regression_set` and `RegressionLoadError`. Seven tests: `test_loads_empty_set` (both top-level lists empty → returns dict with empty lists), `test_loads_populated_set` (one pair in each list → correct entity counts and field access), `test_rejects_missing_top_level_key` (absent `different_person_pairs` → `RegressionLoadError` matching the key name), `test_rejects_pair_missing_required_field` (pair without `rationale`/`source` → `RegressionLoadError` matching "rationale|source"), `test_rejects_pair_missing_person` (pair without `person_b` → `RegressionLoadError` matching "person_b"), `test_rejects_person_missing_canonical_name` (person dict without `canonical_name` → `RegressionLoadError` matching "canonical_name"), `test_rejects_invalid_social_category` (person with `social_category: wizard` → `RegressionLoadError` matching "social_category"). Tests use `tmp_path`-based `reg_dir` fixture writing minimal YAML files. The loader validates `social_category` against the same 11-value `_VALID_SOCIAL_CATEGORIES` frozenset used in `tests/golden/loader.py`. The loader itself lives in `tests/golden/regression_loader.py` — it is test infrastructure consumed by the Phase 3 linker regression test (Task 13), not part of the pipeline package.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
