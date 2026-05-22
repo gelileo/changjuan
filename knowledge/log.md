@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] feat(run): Ch.4 end-to-end (Phase 4 Task 9)
+
+Ran extract → /changjuan-extract-v2 chapter:4 → link → load. pipeline_run_id `run:extract-ch4-v2-20260522T195536`. Linker stats: processed=17 auto-merged=0 queued=5 skipped=12. Loader: persons=17 events=34 places=14 states=6 relations=86. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
+
+Key entities extracted: 周平王, 秦襄公, 秦文公, 太史敦, 鲁惠公, 太宰让, 郑武公(掘突), 卫武公, 武姜, 公子寤生(郑庄公), 共叔段(京城太叔), 祭足, 公子吕(子封), 公孙滑, 颍考叔, 卫桓公, 公孙阏. Events cover: 平王东迁洛阳 → 秦受岐丰封 → 秦文公梦白帝 → 鲁惠公僭祀 → 郑武公嗣位 → 卫武公薨 → 武姜生寤生 → 姜氏请立段 → 武公薨庄公嗣位 → 祭足进谏 → 段封京城 → 姜氏密谋 → 太叔扩张 → 庄公诱敌 → 密信被截 → 太叔起兵兵败 → 共城攻破太叔自刎 → 庄公放逐武姜 → 颍考叔怀肉进谏 → 掘地见泉母子相见 → 公孙滑逃奔卫 → 卫桓公伐郑. 5 persons queued for linker review.
+
+no knowledge impact: pipeline output capture.
+
 ## [2026-05-22] feat(run): Ch.3 end-to-end (Phase 4 Task 8)
 
 Ran extract → /changjuan-extract-v2 chapter:3 → link → load. pipeline_run_id `run:extract-ch3-v2-20260522T193527`. Linker stats: processed=22 auto-merged=0 queued=9 skipped=13. Loader: persons=22 events=14 places=6 states=7 relations=42. Smoke check pass. Ch.1 golden still green (person 1.00/1.00, event 0.93/1.00, place 1.00/1.00, state 1.00/1.00, relation 0.70/0.70). dates_out_of_range: 0.
