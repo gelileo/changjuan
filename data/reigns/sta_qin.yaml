@@ -1,0 +1,309 @@
+state_id: sta:qin
+state_name: 秦
+sources:
+  - 《史记·秦本纪》
+  - 《左传》
+rulers:
+  - id: 秦襄公
+    posthumous_name: 襄公
+    given_name: ""
+    reign_start_bce: 777
+    reign_end_bce: 766
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      First 秦 ruler recognized as 诸侯 by 周平王 (770 BCE) for escorting him east.
+      Pre-East-Zhou-into-Eastern-Zhou.
+  - id: 秦文公
+    posthumous_name: 文公
+    given_name: ""
+    reign_start_bce: 765
+    reign_end_bce: 716
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: 50-year reign.
+  - id: 秦静公
+    posthumous_name: 静公
+    given_name: ""
+    reign_start_bce: 716
+    reign_end_bce: 716
+    sources:
+      - 《史记·秦本纪》
+    confidence: medium
+    notes: |
+      Died before formal accession (太子身份); often omitted. Some sources skip this entry.
+  - id: 秦宪公
+    posthumous_name: 宪公
+    given_name: ""
+    reign_start_bce: 715
+    reign_end_bce: 704
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: Sometimes written 秦宁公.
+  - id: 秦出公
+    posthumous_name: 出公
+    given_name: ""
+    reign_start_bce: 703
+    reign_end_bce: 698
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: 6-year-old at accession; killed in 698 BCE.
+  - id: 秦武公
+    posthumous_name: 武公
+    given_name: ""
+    reign_start_bce: 697
+    reign_end_bce: 678
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦德公
+    posthumous_name: 德公
+    given_name: ""
+    reign_start_bce: 677
+    reign_end_bce: 676
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: Brief 2-year reign.
+  - id: 秦宣公
+    posthumous_name: 宣公
+    given_name: ""
+    reign_start_bce: 675
+    reign_end_bce: 664
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦成公
+    posthumous_name: 成公
+    given_name: ""
+    reign_start_bce: 663
+    reign_end_bce: 660
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦穆公
+    posthumous_name: 穆公
+    given_name: 任好
+    reign_start_bce: 659
+    reign_end_bce: 621
+    sources:
+      - 《史记·秦本纪》
+      - 《左传·僖公十三年》
+    confidence: high
+    notes: |
+      One of 春秋五霸 (per some lists). Restored 晋文公 (重耳). 韩原之战 (645 BCE) —
+      captured 晋惠公. 殽之战 (627 BCE) — defeated by 晋. 39-year reign.
+  - id: 秦康公
+    posthumous_name: 康公
+    given_name: 罃
+    reign_start_bce: 620
+    reign_end_bce: 609
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦共公
+    posthumous_name: 共公
+    given_name: 稻
+    reign_start_bce: 608
+    reign_end_bce: 604
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦桓公
+    posthumous_name: 桓公
+    given_name: 荣
+    reign_start_bce: 603
+    reign_end_bce: 577
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦景公
+    posthumous_name: 景公
+    given_name: 后伯车
+    reign_start_bce: 576
+    reign_end_bce: 537
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: 40-year reign.
+  - id: 秦哀公
+    posthumous_name: 哀公
+    given_name: ""
+    reign_start_bce: 536
+    reign_end_bce: 501
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦惠公一
+    posthumous_name: 惠公
+    given_name: ""
+    reign_start_bce: 500
+    reign_end_bce: 491
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: First 秦惠公; distinct from later 秦惠文王 / 战国 era 惠公.
+  - id: 秦悼公
+    posthumous_name: 悼公
+    given_name: ""
+    reign_start_bce: 490
+    reign_end_bce: 477
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦厉共公
+    posthumous_name: 厉共公
+    given_name: ""
+    reign_start_bce: 476
+    reign_end_bce: 443
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦躁公
+    posthumous_name: 躁公
+    given_name: ""
+    reign_start_bce: 442
+    reign_end_bce: 429
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦怀公
+    posthumous_name: 怀公
+    given_name: ""
+    reign_start_bce: 428
+    reign_end_bce: 425
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦灵公
+    posthumous_name: 灵公
+    given_name: 肃
+    reign_start_bce: 424
+    reign_end_bce: 415
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦简公
+    posthumous_name: 简公
+    given_name: 悼子
+    reign_start_bce: 414
+    reign_end_bce: 400
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: ""
+  - id: 秦惠公二
+    posthumous_name: 惠公
+    given_name: ""
+    reign_start_bce: 399
+    reign_end_bce: 387
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: Distinct from earlier 秦惠公 (500-491 BCE).
+  - id: 秦出子
+    posthumous_name: ""
+    given_name: ""
+    reign_start_bce: 386
+    reign_end_bce: 385
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      Brief reign as child ruler; killed by 庶长 changfu. No 谥号 (referenced as 出子).
+  - id: 秦献公
+    posthumous_name: 献公
+    given_name: 师隰
+    reign_start_bce: 384
+    reign_end_bce: 362
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      Returned from exile in 魏; began 秦's renewal.
+  - id: 秦孝公
+    posthumous_name: 孝公
+    given_name: 渠梁
+    reign_start_bce: 361
+    reign_end_bce: 338
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      商鞅变法 (rural reforms beginning ~356 BCE).
+  - id: 秦惠文王
+    posthumous_name: 惠文王
+    given_name: 驷
+    reign_start_bce: 337
+    reign_end_bce: 311
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      First 秦 ruler to style as 王 (around 325 BCE). Killed 商鞅 early in reign.
+  - id: 秦武王
+    posthumous_name: 武王
+    given_name: 荡
+    reign_start_bce: 310
+    reign_end_bce: 307
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: Died lifting 周 鼎 in 雒邑.
+  - id: 秦昭襄王
+    posthumous_name: 昭襄王
+    given_name: 稷
+    reign_start_bce: 306
+    reign_end_bce: 251
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      56-year reign — longest in 秦 history. 长平之战 (260 BCE).
+  - id: 秦孝文王
+    posthumous_name: 孝文王
+    given_name: 柱
+    reign_start_bce: 250
+    reign_end_bce: 250
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: 3-day reign (formally ascended then died).
+  - id: 秦庄襄王
+    posthumous_name: 庄襄王
+    given_name: 子楚
+    reign_start_bce: 249
+    reign_end_bce: 247
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      吕不韦 chief minister. Father of 秦始皇 (秦王政).
+  - id: 秦王政
+    posthumous_name: ""
+    given_name: 政
+    reign_start_bce: 246
+    reign_end_bce: 221
+    sources:
+      - 《史记·秦本纪》
+    confidence: high
+    notes: |
+      Conquered 6 states 230-221 BCE. Became 秦始皇 in 221 BCE (post-Eastern-Zhou).
+      For Eastern-Zhou-period references, "秦王政" or "秦政". End year 221 marks
+      his transition to 始皇帝 — actual 秦 reign continues but as 秦 dynasty proper.

@@ -1,0 +1,140 @@
+state_id: sta:chen
+state_name: 陈
+sources:
+  - 《史记·陈杞世家》
+  - 《左传》
+rulers:
+  - id: 陈文公
+    posthumous_name: 文公
+    given_name: 圉
+    reign_start_bce: 754
+    reign_end_bce: 745
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈桓公
+    posthumous_name: 桓公
+    given_name: 鲍
+    reign_start_bce: 744
+    reign_end_bce: 707
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈废公
+    posthumous_name: ""
+    given_name: 佗
+    reign_start_bce: 707
+    reign_end_bce: 707
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: |
+      陈佗 — usurper. Briefly held throne in 707 BCE; killed by 蔡 the same year.
+      No 谥号.
+  - id: 陈厉公
+    posthumous_name: 厉公
+    given_name: 跃
+    reign_start_bce: 706
+    reign_end_bce: 700
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈庄公
+    posthumous_name: 庄公
+    given_name: 林
+    reign_start_bce: 699
+    reign_end_bce: 693
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈宣公
+    posthumous_name: 宣公
+    given_name: 杵臼
+    reign_start_bce: 692
+    reign_end_bce: 648
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: |
+      45-year reign. 公子完 (陈完) fled to 齐 during succession crisis — ancestor
+      of 田氏 line that eventually took 齐.
+  - id: 陈穆公
+    posthumous_name: 穆公
+    given_name: 款
+    reign_start_bce: 647
+    reign_end_bce: 632
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈共公
+    posthumous_name: 共公
+    given_name: 朔
+    reign_start_bce: 631
+    reign_end_bce: 614
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈灵公
+    posthumous_name: 灵公
+    given_name: 平国
+    reign_start_bce: 613
+    reign_end_bce: 599
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: |
+      Killed by 夏徵舒 in 599 BCE — the 夏姬 / 夏徵舒 scandal. 楚庄王 invaded 陈
+      in response.
+  - id: 陈成公
+    posthumous_name: 成公
+    given_name: 午
+    reign_start_bce: 598
+    reign_end_bce: 569
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: Restored by 楚 after 夏徵舒 killed.
+  - id: 陈哀公
+    posthumous_name: 哀公
+    given_name: 弱
+    reign_start_bce: 568
+    reign_end_bce: 534
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: |
+      陈 was briefly extinguished by 楚 in 534 BCE; later restored as 楚 dependency.
+  - id: 陈惠公
+    posthumous_name: 惠公
+    given_name: 吴
+    reign_start_bce: 533
+    reign_end_bce: 506
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: First period of 陈 restoration (still partially under 楚 influence).
+  - id: 陈怀公
+    posthumous_name: 怀公
+    given_name: 柳
+    reign_start_bce: 505
+    reign_end_bce: 502
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: ""
+  - id: 陈湣公
+    posthumous_name: 湣公
+    given_name: 越
+    reign_start_bce: 501
+    reign_end_bce: 478
+    sources:
+      - 《史记·陈杞世家》
+    confidence: high
+    notes: |
+      Last 陈 ruler. 陈 was extinguished by 楚惠王 in 478 BCE.

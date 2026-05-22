@@ -1,5 +1,31 @@
 # Build Log
 
+## [2026-05-22] feat(reigns): draft reign YAMLs for 9 states (Phase 4 Task 5, batch)
+
+Drafted reign tables for all 9 worklist states from Task 4 in a single batch. Inline generation (without invoking the slash-skill, which was freshly scaffolded and not loaded in this session); content follows `.claude/skills/changjuan-extract-reigns/system-prompt.md` rules. Per-state ruler counts and date spans:
+
+| state | rulers | BCE span | low conf | medium conf |
+|---|---|---|---|---|
+| sta:zheng | 24 | 770-375 | 0 | 0 |
+| sta:wei | 35 | 812-209 | 3 | 9 |
+| sta:qi | 27 | 794-221 | 0 | 0 |
+| sta:jin | 30 | 780-349 | 0 | 2 |
+| sta:qin | 32 | 777-221 | 0 | 1 |
+| sta:song | 24 | 799-286 | 0 | 5 |
+| sta:chen | 14 | 754-478 | 0 | 0 |
+| sta:cai | 17 | 762-447 | 0 | 4 |
+| sta:shen | 2 | 770-689 | 2 | 0 |
+
+Spot-checks against the resolver pass:
+- 晋文公七年 → 630 BCE ✓
+- 重耳元年 (matched by given_name) → 636 BCE ✓
+- 齐桓公五年 → 681 BCE ✓
+- 小白五年 (matched by given_name) → 681 BCE ✓
+
+Awaiting user batch review. Tasks 6+ proceed while the curator reviews; any corrections committed as fix(reigns) entries.
+
+no knowledge impact: data files only; covered by concepts/pipeline/reign-extraction.md.
+
 ## [2026-05-22] chore(phase4): discovery worklist for Ch.2-5 (Phase 4 Task 4)
 
 Ran `scripts/discover-states --chapters 2,3,4,5 --min-count 3`. Output captured at `data/logs/phase4-discovery.tsv` (data/ is gitignored). Worklist of states needing reign YAMLs (excluding 周 and 鲁 which Phase 2 covers via `pipeline/reign_table.json`):

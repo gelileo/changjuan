@@ -1,0 +1,298 @@
+state_id: sta:jin
+state_name: 晋
+sources:
+  - 《史记·晋世家》
+  - 《左传》
+rulers:
+  - id: 晋文侯
+    posthumous_name: 文侯
+    given_name: 仇
+    reign_start_bce: 780
+    reign_end_bce: 746
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      Assisted 周平王 in moving east to 雒邑 (770 BCE). Pre-East-Zhou-into-Eastern-Zhou reign.
+  - id: 晋昭侯
+    posthumous_name: 昭侯
+    given_name: 伯
+    reign_start_bce: 745
+    reign_end_bce: 740
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Killed by 潘父 (who plotted to install 曲沃 桓叔). Marks beginning of 曲沃 split.
+  - id: 晋孝侯
+    posthumous_name: 孝侯
+    given_name: 平
+    reign_start_bce: 739
+    reign_end_bce: 724
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Killed by 曲沃 庄伯 (曲沃 桓叔's son).
+  - id: 晋鄂侯
+    posthumous_name: 鄂侯
+    given_name: 郄
+    reign_start_bce: 723
+    reign_end_bce: 718
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋哀侯
+    posthumous_name: 哀侯
+    given_name: 光
+    reign_start_bce: 717
+    reign_end_bce: 709
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Captured by 曲沃 武公 in 709 BCE; killed.
+  - id: 晋小子侯
+    posthumous_name: 小子侯
+    given_name: ""
+    reign_start_bce: 708
+    reign_end_bce: 705
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: 哀侯's son; killed by 曲沃 武公. Given name uncertain.
+  - id: 晋侯缗
+    posthumous_name: ""
+    given_name: 缗
+    reign_start_bce: 704
+    reign_end_bce: 679
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      Last ruler of the 翼 (i.e. 大宗) 晋 line. Killed by 曲沃 武公 in 679 BCE;
+      曲沃 武公 became 晋武公 the same year. No 谥号 — referenced as 晋侯缗.
+  - id: 晋武公
+    posthumous_name: 武公
+    given_name: 称
+    reign_start_bce: 678
+    reign_end_bce: 677
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      曲沃 武公 — completed displacement of 翼 (大宗) line in 679 BCE. Recognized as
+      晋 ruler by 周 in 678 BCE. Brief reign as unified 晋 ruler (2 years). Some
+      sources count from his 曲沃 takeover (715 BCE) but 晋 reign proper is 678-677.
+  - id: 晋献公
+    posthumous_name: 献公
+    given_name: 诡诸
+    reign_start_bce: 676
+    reign_end_bce: 651
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      Famous reign — 骊姬之乱 (driving 重耳 + 夷吾 into exile). Annexed 虞 + 虢
+      (假道伐虢 / "唇亡齿寒"). Father of 晋文公 (重耳) and 晋惠公 (夷吾).
+  - id: 晋奚齐
+    posthumous_name: ""
+    given_name: 奚齐
+    reign_start_bce: 651
+    reign_end_bce: 651
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: 骊姬's son; killed by 里克 within months. No 谥号.
+  - id: 晋卓子
+    posthumous_name: ""
+    given_name: 卓子
+    reign_start_bce: 651
+    reign_end_bce: 651
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Brief reign after 奚齐; killed by 里克. No 谥号.
+  - id: 晋惠公
+    posthumous_name: 惠公
+    given_name: 夷吾
+    reign_start_bce: 650
+    reign_end_bce: 637
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      重耳's brother. Returned from exile to take throne. 韩原之战 (645 BCE) — captured
+      by 秦穆公, released. Died 637 BCE.
+  - id: 晋怀公
+    posthumous_name: 怀公
+    given_name: 圉
+    reign_start_bce: 637
+    reign_end_bce: 637
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: 惠公's son; brief reign. Killed when 重耳 returned with 秦 support.
+  - id: 晋文公
+    posthumous_name: 文公
+    given_name: 重耳
+    reign_start_bce: 636
+    reign_end_bce: 628
+    sources:
+      - 《史记·晋世家》
+      - 《左传·僖公二十三年》
+    confidence: high
+    notes: |
+      Second of 春秋五霸. Famous exile (19 years), then return with 秦穆公's support.
+      城濮之战 (632 BCE) — defeated 楚, became 霸主. Died 628 BCE.
+  - id: 晋襄公
+    posthumous_name: 襄公
+    given_name: 欢
+    reign_start_bce: 627
+    reign_end_bce: 621
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: 殽之战 (627 BCE) — defeated 秦.
+  - id: 晋灵公
+    posthumous_name: 灵公
+    given_name: 夷皋
+    reign_start_bce: 620
+    reign_end_bce: 607
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      Famous as a cruel ruler. Killed by 赵穿 in 607 BCE (赵盾 implicated by 董狐 —
+      "赵盾弑其君" 春秋笔法).
+  - id: 晋成公
+    posthumous_name: 成公
+    given_name: 黑臀
+    reign_start_bce: 606
+    reign_end_bce: 600
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋景公
+    posthumous_name: 景公
+    given_name: 据
+    reign_start_bce: 599
+    reign_end_bce: 581
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      邲之战 (597 BCE) — lost to 楚庄王. Later 鞍之战 (589 BCE) — won against 齐.
+  - id: 晋厉公
+    posthumous_name: 厉公
+    given_name: 寿曼
+    reign_start_bce: 580
+    reign_end_bce: 573
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      鄢陵之战 (575 BCE) — defeated 楚. Killed by 栾书 + 中行偃 in 573 BCE.
+  - id: 晋悼公
+    posthumous_name: 悼公
+    given_name: 周
+    reign_start_bce: 572
+    reign_end_bce: 558
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Restored 晋 hegemony briefly.
+  - id: 晋平公
+    posthumous_name: 平公
+    given_name: 彪
+    reign_start_bce: 557
+    reign_end_bce: 532
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋昭公
+    posthumous_name: 昭公
+    given_name: 夷
+    reign_start_bce: 531
+    reign_end_bce: 526
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋顷公
+    posthumous_name: 顷公
+    given_name: 去疾
+    reign_start_bce: 525
+    reign_end_bce: 512
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋定公
+    posthumous_name: 定公
+    given_name: 午
+    reign_start_bce: 511
+    reign_end_bce: 475
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      Internal struggle of 六卿 (赵韩魏知范中行) intensified during this reign.
+  - id: 晋出公
+    posthumous_name: 出公
+    given_name: 凿
+    reign_start_bce: 474
+    reign_end_bce: 452
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋哀公
+    posthumous_name: 哀公
+    given_name: 骄
+    reign_start_bce: 451
+    reign_end_bce: 434
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: Sometimes called 晋懿公 in older sources.
+  - id: 晋幽公
+    posthumous_name: 幽公
+    given_name: 柳
+    reign_start_bce: 433
+    reign_end_bce: 416
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: ""
+  - id: 晋烈公
+    posthumous_name: 烈公
+    given_name: 止
+    reign_start_bce: 415
+    reign_end_bce: 389
+    sources:
+      - 《史记·晋世家》
+    confidence: high
+    notes: |
+      韩赵魏三家 officially recognized as 诸侯 in 403 BCE during this reign —
+      "三家分晋" formalized.
+  - id: 晋孝公
+    posthumous_name: 孝公
+    given_name: 颀
+    reign_start_bce: 388
+    reign_end_bce: 369
+    sources:
+      - 《史记·晋世家》
+    confidence: medium
+    notes: ""
+  - id: 晋静公
+    posthumous_name: 静公
+    given_name: 俱酒
+    reign_start_bce: 368
+    reign_end_bce: 349
+    sources:
+      - 《史记·晋世家》
+    confidence: medium
+    notes: |
+      Last 晋 ruler. Reduced to 端氏 + 屯留 by 三家. Final remnants extinguished
+      around 349 BCE.

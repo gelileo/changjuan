@@ -1,0 +1,336 @@
+state_id: sta:wei
+state_name: 卫
+sources:
+  - 《史记·卫康叔世家》
+  - 《左传》
+rulers:
+  - id: 卫武公
+    posthumous_name: 武公
+    given_name: 和
+    reign_start_bce: 812
+    reign_end_bce: 758
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: |
+      Long pre-East-Zhou reign continuing into Eastern Zhou; assisted 周平王 in 犬戎之乱.
+      Reign began in West-Zhou era; ended 758 BCE.
+  - id: 卫庄公
+    posthumous_name: 庄公
+    given_name: 扬
+    reign_start_bce: 757
+    reign_end_bce: 735
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Father of 桓公 + 州吁.
+  - id: 卫桓公
+    posthumous_name: 桓公
+    given_name: 完
+    reign_start_bce: 734
+    reign_end_bce: 719
+    sources:
+      - 《史记·卫康叔世家》
+      - 《左传·隐公四年》
+    confidence: high
+    notes: Murdered by half-brother 州吁 in 719 BCE.
+  - id: 卫前废公
+    posthumous_name: ""
+    given_name: 州吁
+    reign_start_bce: 719
+    reign_end_bce: 719
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: |
+      Usurped 桓公; killed by 石碏 (acting via 陈) the same year. No 谥号.
+      Referenced as 州吁 in 《左传》.
+  - id: 卫宣公
+    posthumous_name: 宣公
+    given_name: 晋
+    reign_start_bce: 718
+    reign_end_bce: 700
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Father of 急子 (太子伋) and 公子寿; involved in 太子伋 murder.
+  - id: 卫惠公
+    posthumous_name: 惠公
+    given_name: 朔
+    reign_start_bce: 699
+    reign_end_bce: 696
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: First reign — expelled in 696 BCE.
+  - id: 卫黔牟
+    posthumous_name: ""
+    given_name: 黔牟
+    reign_start_bce: 695
+    reign_end_bce: 688
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Installed during 惠公 exile; expelled when 惠公 restored. No 谥号.
+  - id: 卫惠公二
+    posthumous_name: 惠公
+    given_name: 朔
+    reign_start_bce: 687
+    reign_end_bce: 669
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Second reign after restoration.
+  - id: 卫懿公
+    posthumous_name: 懿公
+    given_name: 赤
+    reign_start_bce: 668
+    reign_end_bce: 660
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: |
+      Famous for "好鹤" — keeping cranes as pets. Killed by 狄 invasion in 660 BCE;
+      卫 was effectively destroyed and refounded by 齐桓公.
+  - id: 卫戴公
+    posthumous_name: 戴公
+    given_name: 申
+    reign_start_bce: 660
+    reign_end_bce: 660
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Reigned briefly during 卫 refounding after 狄 invasion; died the same year.
+  - id: 卫文公
+    posthumous_name: 文公
+    given_name: 燬
+    reign_start_bce: 659
+    reign_end_bce: 635
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: |
+      Re-established 卫 at 楚丘 (then 帝丘) with 齐桓公's backing.
+      Hosted 重耳 (晋文公) during exile.
+  - id: 卫成公
+    posthumous_name: 成公
+    given_name: 郑
+    reign_start_bce: 634
+    reign_end_bce: 600
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Briefly deposed during 城濮之战 era; restored.
+  - id: 卫穆公
+    posthumous_name: 穆公
+    given_name: 速
+    reign_start_bce: 599
+    reign_end_bce: 589
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: ""
+  - id: 卫定公
+    posthumous_name: 定公
+    given_name: 臧
+    reign_start_bce: 588
+    reign_end_bce: 577
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: ""
+  - id: 卫献公
+    posthumous_name: 献公
+    given_name: 衎
+    reign_start_bce: 576
+    reign_end_bce: 559
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: First reign — expelled in 559 BCE.
+  - id: 卫殇公
+    posthumous_name: 殇公
+    given_name: 秋
+    reign_start_bce: 558
+    reign_end_bce: 547
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Installed during 献公 exile.
+  - id: 卫献公二
+    posthumous_name: 献公
+    given_name: 衎
+    reign_start_bce: 546
+    reign_end_bce: 544
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Restored.
+  - id: 卫襄公
+    posthumous_name: 襄公
+    given_name: 恶
+    reign_start_bce: 543
+    reign_end_bce: 535
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: ""
+  - id: 卫灵公
+    posthumous_name: 灵公
+    given_name: 元
+    reign_start_bce: 534
+    reign_end_bce: 493
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: |
+      Famous reign — 孔子 visited 卫 multiple times during it. Wife 南子 also famous.
+  - id: 卫出公
+    posthumous_name: 出公
+    given_name: 辄
+    reign_start_bce: 492
+    reign_end_bce: 481
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: First reign — expelled by father 蒯聩 in 481 BCE.
+  - id: 卫庄公二
+    posthumous_name: 庄公
+    given_name: 蒯聩
+    reign_start_bce: 480
+    reign_end_bce: 478
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Distinct from earlier 卫庄公 (扬); often called 后庄公 / 后蒯聩.
+  - id: 卫君班师
+    posthumous_name: ""
+    given_name: 般师
+    reign_start_bce: 477
+    reign_end_bce: 477
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: |
+      Brief interregnum after 庄公二 expelled by 戎. Sources vary on length.
+  - id: 卫出公二
+    posthumous_name: 出公
+    given_name: 辄
+    reign_start_bce: 476
+    reign_end_bce: 456
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: Restored.
+  - id: 卫悼公
+    posthumous_name: 悼公
+    given_name: 黔
+    reign_start_bce: 455
+    reign_end_bce: 451
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: high
+    notes: ""
+  - id: 卫敬公
+    posthumous_name: 敬公
+    given_name: 弗
+    reign_start_bce: 450
+    reign_end_bce: 432
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: Dates have minor 1-2 year discrepancies across sources.
+  - id: 卫昭公
+    posthumous_name: 昭公
+    given_name: 纠
+    reign_start_bce: 431
+    reign_end_bce: 426
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: ""
+  - id: 卫怀公
+    posthumous_name: 怀公
+    given_name: 亹
+    reign_start_bce: 425
+    reign_end_bce: 415
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: ""
+  - id: 卫慎公
+    posthumous_name: 慎公
+    given_name: 颓
+    reign_start_bce: 414
+    reign_end_bce: 373
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: ""
+  - id: 卫声公
+    posthumous_name: 声公
+    given_name: 训
+    reign_start_bce: 372
+    reign_end_bce: 362
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: ""
+  - id: 卫成侯
+    posthumous_name: 成侯
+    given_name: 遬
+    reign_start_bce: 361
+    reign_end_bce: 333
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: |
+      Title downgraded from 公 to 侯 during 战国 as 卫 lost stature.
+  - id: 卫平侯
+    posthumous_name: 平侯
+    given_name: ""
+    reign_start_bce: 332
+    reign_end_bce: 325
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: low
+    notes: Given name uncertain.
+  - id: 卫嗣君
+    posthumous_name: 嗣君
+    given_name: ""
+    reign_start_bce: 324
+    reign_end_bce: 283
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: Title downgraded again to 君.
+  - id: 卫怀君
+    posthumous_name: 怀君
+    given_name: ""
+    reign_start_bce: 282
+    reign_end_bce: 252
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: medium
+    notes: ""
+  - id: 卫元君
+    posthumous_name: 元君
+    given_name: ""
+    reign_start_bce: 251
+    reign_end_bce: 230
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: low
+    notes: ""
+  - id: 卫君角
+    posthumous_name: ""
+    given_name: 角
+    reign_start_bce: 229
+    reign_end_bce: 209
+    sources:
+      - 《史记·卫康叔世家》
+    confidence: low
+    notes: |
+      Last 卫 ruler; 卫 was reduced to 君角 (a vassal of 秦) and finally abolished
+      by 秦二世 in 209 BCE. End year is technically post-Eastern-Zhou (Eastern Zhou
+      ended in 256 BCE) but included for completeness.

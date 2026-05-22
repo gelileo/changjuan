@@ -1,0 +1,165 @@
+state_id: sta:cai
+state_name: 蔡
+sources:
+  - 《史记·管蔡世家》
+  - 《左传》
+rulers:
+  - id: 蔡共侯
+    posthumous_name: 共侯
+    given_name: 兴
+    reign_start_bce: 762
+    reign_end_bce: 760
+    sources:
+      - 《史记·管蔡世家》
+    confidence: medium
+    notes: ""
+  - id: 蔡戴侯
+    posthumous_name: 戴侯
+    given_name: ""
+    reign_start_bce: 759
+    reign_end_bce: 750
+    sources:
+      - 《史记·管蔡世家》
+    confidence: medium
+    notes: ""
+  - id: 蔡宣侯
+    posthumous_name: 宣侯
+    given_name: 措父
+    reign_start_bce: 749
+    reign_end_bce: 715
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡桓侯
+    posthumous_name: 桓侯
+    given_name: 封人
+    reign_start_bce: 714
+    reign_end_bce: 695
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡哀侯
+    posthumous_name: 哀侯
+    given_name: 献舞
+    reign_start_bce: 694
+    reign_end_bce: 675
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: Captured by 楚 in 684 BCE; held in 楚 the rest of his life.
+  - id: 蔡穆侯
+    posthumous_name: 穆侯
+    given_name: 肸
+    reign_start_bce: 674
+    reign_end_bce: 646
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡庄侯
+    posthumous_name: 庄侯
+    given_name: 甲午
+    reign_start_bce: 645
+    reign_end_bce: 612
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡文侯
+    posthumous_name: 文侯
+    given_name: 申
+    reign_start_bce: 611
+    reign_end_bce: 592
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡景侯
+    posthumous_name: 景侯
+    given_name: 固
+    reign_start_bce: 591
+    reign_end_bce: 543
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: |
+      49-year reign. Killed by son 般 (later 蔡灵侯).
+  - id: 蔡灵侯
+    posthumous_name: 灵侯
+    given_name: 般
+    reign_start_bce: 542
+    reign_end_bce: 531
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: Killed by 楚灵王 in 531 BCE.
+  - id: 蔡平侯
+    posthumous_name: 平侯
+    given_name: 庐
+    reign_start_bce: 530
+    reign_end_bce: 522
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: |
+      Installed by 楚 (then 楚灵王) after 灵侯 killed. 蔡 was briefly extinguished
+      in 531; restored a few years later — sources disagree on exact reign start
+      (529 or 530 BCE).
+  - id: 蔡悼侯
+    posthumous_name: 悼侯
+    given_name: 东国
+    reign_start_bce: 521
+    reign_end_bce: 519
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡昭侯
+    posthumous_name: 昭侯
+    given_name: 申
+    reign_start_bce: 518
+    reign_end_bce: 491
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡成侯
+    posthumous_name: 成侯
+    given_name: 朔
+    reign_start_bce: 490
+    reign_end_bce: 472
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡声侯
+    posthumous_name: 声侯
+    given_name: 产
+    reign_start_bce: 471
+    reign_end_bce: 457
+    sources:
+      - 《史记·管蔡世家》
+    confidence: high
+    notes: ""
+  - id: 蔡元侯
+    posthumous_name: 元侯
+    given_name: ""
+    reign_start_bce: 456
+    reign_end_bce: 451
+    sources:
+      - 《史记·管蔡世家》
+    confidence: medium
+    notes: ""
+  - id: 蔡侯齐
+    posthumous_name: ""
+    given_name: 齐
+    reign_start_bce: 450
+    reign_end_bce: 447
+    sources:
+      - 《史记·管蔡世家》
+    confidence: medium
+    notes: |
+      Last 蔡 ruler. 蔡 extinguished by 楚惠王 in 447 BCE. No 谥号 — referenced
+      as 蔡侯齐 in 《史记》.

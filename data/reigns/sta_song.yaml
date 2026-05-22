@@ -1,0 +1,230 @@
+state_id: sta:song
+state_name: 宋
+sources:
+  - 《史记·宋微子世家》
+  - 《左传》
+rulers:
+  - id: 宋戴公
+    posthumous_name: 戴公
+    given_name: ""
+    reign_start_bce: 799
+    reign_end_bce: 766
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Pre-East-Zhou-into-Eastern-Zhou reign.
+  - id: 宋武公
+    posthumous_name: 武公
+    given_name: 司空
+    reign_start_bce: 765
+    reign_end_bce: 748
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋宣公
+    posthumous_name: 宣公
+    given_name: 力
+    reign_start_bce: 747
+    reign_end_bce: 729
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Passed throne to brother 穆公 (和) instead of son 与夷.
+  - id: 宋穆公
+    posthumous_name: 穆公
+    given_name: 和
+    reign_start_bce: 728
+    reign_end_bce: 720
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Returned throne to 宣公's son 与夷 on death.
+  - id: 宋殇公
+    posthumous_name: 殇公
+    given_name: 与夷
+    reign_start_bce: 719
+    reign_end_bce: 711
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Killed by 华督.
+  - id: 宋庄公
+    posthumous_name: 庄公
+    given_name: 冯
+    reign_start_bce: 710
+    reign_end_bce: 692
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: 穆公's son; installed after 殇公 killed.
+  - id: 宋湣公
+    posthumous_name: 湣公
+    given_name: 捷
+    reign_start_bce: 691
+    reign_end_bce: 682
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Killed by 南宫万 (a powerful general). Sometimes written 宋闵公.
+  - id: 宋前废公
+    posthumous_name: ""
+    given_name: 游
+    reign_start_bce: 682
+    reign_end_bce: 682
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: 子游 — briefly installed by 南宫万; killed within months. No 谥号.
+  - id: 宋桓公
+    posthumous_name: 桓公
+    given_name: 御说
+    reign_start_bce: 681
+    reign_end_bce: 651
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: Father of 宋襄公.
+  - id: 宋襄公
+    posthumous_name: 襄公
+    given_name: 兹甫
+    reign_start_bce: 650
+    reign_end_bce: 637
+    sources:
+      - 《史记·宋微子世家》
+      - 《左传·僖公二十二年》
+    confidence: high
+    notes: |
+      Sometimes counted as one of 春秋五霸. 泓之战 (638 BCE) — famous "宋襄之仁"
+      defeat by 楚. Hosted 重耳 briefly during exile.
+  - id: 宋成公
+    posthumous_name: 成公
+    given_name: 王臣
+    reign_start_bce: 636
+    reign_end_bce: 620
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋后废公
+    posthumous_name: ""
+    given_name: 御
+    reign_start_bce: 620
+    reign_end_bce: 620
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: 子御 — brief reign; killed. No 谥号. Sometimes called 宋昭公 in some sources.
+  - id: 宋昭公一
+    posthumous_name: 昭公
+    given_name: 杵臼
+    reign_start_bce: 619
+    reign_end_bce: 611
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: First 宋昭公; distinct from later 宋昭公 (得).
+  - id: 宋文公
+    posthumous_name: 文公
+    given_name: 鲍
+    reign_start_bce: 610
+    reign_end_bce: 589
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋共公
+    posthumous_name: 共公
+    given_name: 瑕
+    reign_start_bce: 588
+    reign_end_bce: 576
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋平公
+    posthumous_name: 平公
+    given_name: 成
+    reign_start_bce: 575
+    reign_end_bce: 532
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋元公
+    posthumous_name: 元公
+    given_name: 佐
+    reign_start_bce: 531
+    reign_end_bce: 517
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: ""
+  - id: 宋景公
+    posthumous_name: 景公
+    given_name: 头曼
+    reign_start_bce: 516
+    reign_end_bce: 469
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: 48-year reign. Given name sometimes written 栾.
+  - id: 宋昭公二
+    posthumous_name: 昭公
+    given_name: 得
+    reign_start_bce: 468
+    reign_end_bce: 404
+    sources:
+      - 《史记·宋微子世家》
+    confidence: medium
+    notes: |
+      Distinct from earlier 宋昭公 (杵臼). Long 65-year reign — dates vary across
+      sources by 1-2 years.
+  - id: 宋悼公
+    posthumous_name: 悼公
+    given_name: 购由
+    reign_start_bce: 403
+    reign_end_bce: 396
+    sources:
+      - 《史记·宋微子世家》
+    confidence: medium
+    notes: ""
+  - id: 宋休公
+    posthumous_name: 休公
+    given_name: 田
+    reign_start_bce: 395
+    reign_end_bce: 373
+    sources:
+      - 《史记·宋微子世家》
+    confidence: medium
+    notes: ""
+  - id: 宋辟公
+    posthumous_name: 辟公
+    given_name: 辟兵
+    reign_start_bce: 372
+    reign_end_bce: 370
+    sources:
+      - 《史记·宋微子世家》
+    confidence: medium
+    notes: ""
+  - id: 宋剔成君
+    posthumous_name: ""
+    given_name: 剔成
+    reign_start_bce: 369
+    reign_end_bce: 329
+    sources:
+      - 《史记·宋微子世家》
+    confidence: medium
+    notes: |
+      Title 君 not 公 (战国 era). Usurped throne; eventually expelled by brother 偃 in 329.
+  - id: 宋康王
+    posthumous_name: 康王
+    given_name: 偃
+    reign_start_bce: 328
+    reign_end_bce: 286
+    sources:
+      - 《史记·宋微子世家》
+    confidence: high
+    notes: |
+      Styled as 王 (around 318 BCE). 宋 destroyed by 齐 (with 楚 + 魏 cooperation)
+      in 286 BCE.

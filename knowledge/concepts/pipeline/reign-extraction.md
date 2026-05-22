@@ -36,6 +36,10 @@ See `.claude/skills/changjuan-extract-reigns/system-prompt.md` for the full sche
 - The skill marks `confidence: low` on uncertain entries — review those first.
 - The user is the source of truth for date corrections; the skill is a draft.
 
+### Phase 4 batch exception
+
+Phase 4 Task 5 drafted all 9 worklist states (sta:zheng, sta:wei, sta:qi, sta:jin, sta:qin, sta:song, sta:chen, sta:cai, sta:shen) in a single batch commit because the slash-skill was freshly scaffolded and not loaded in the active session. Content was generated inline by the active agent following the same system-prompt.md rules. The curator review burden is the same; only the commit shape differs. Any corrections land as `fix(reigns)` entries (one per correction batch).
+
 ## What would invalidate this article
 
 - The skill becomes deterministic (parses a structured corpus instead of using LLM knowledge).

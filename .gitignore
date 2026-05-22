@@ -1,6 +1,11 @@
-# Project-local data (generated; not source)
-data/
-!data/exports/
+# Project-local data — generated subdirs are ignored; curated subdirs are not.
+# (Cannot use `!data/X/` exceptions when data/ itself is ignored; explicit per-subdir.)
+data/changjuan.sqlite
+data/corpus.sqlite
+data/extractions/
+data/logs/
+data/qa/
+data/readable/
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

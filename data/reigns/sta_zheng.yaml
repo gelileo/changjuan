@@ -1,0 +1,238 @@
+state_id: sta:zheng
+state_name: 郑
+sources:
+  - 《史记·郑世家》
+  - 《左传》
+rulers:
+  - id: 郑武公
+    posthumous_name: 武公
+    given_name: 掘突
+    reign_start_bce: 770
+    reign_end_bce: 744
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: |
+      Succeeded 郑桓公 (友) who died with 周幽王 in 犬戎之乱 of 771 BCE.
+      武公 escorted 周平王 east to 雒邑 and served as 周 minister.
+  - id: 郑庄公
+    posthumous_name: 庄公
+    given_name: 寤生
+    reign_start_bce: 743
+    reign_end_bce: 701
+    sources:
+      - 《史记·郑世家》
+      - 《左传·隐公元年》
+    confidence: high
+    notes: |
+      Famous early-春秋 ruler. Conflict with 周桓王 culminated in 繻葛之战 (707 BCE).
+      Brother 共叔段 rebellion (722 BCE) opens 《左传》.
+  - id: 郑昭公
+    posthumous_name: 昭公
+    given_name: 忽
+    reign_start_bce: 700
+    reign_end_bce: 700
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: |
+      First reign — briefly succeeded 庄公 in 700 BCE but expelled by 祭仲 the same year.
+      Restored later (see entry below for second reign 696-695 BCE).
+  - id: 郑厉公一
+    posthumous_name: 厉公
+    given_name: 突
+    reign_start_bce: 700
+    reign_end_bce: 697
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: |
+      First reign — installed by 宋庄公 + 祭仲 in place of 昭公. Expelled in 697 BCE.
+      Restored later (see entry below for second reign 679-673 BCE).
+  - id: 郑昭公二
+    posthumous_name: 昭公
+    given_name: 忽
+    reign_start_bce: 696
+    reign_end_bce: 695
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Restored after 厉公一 expelled. Killed by 高渠弥 in 695 BCE.
+  - id: 郑子亹
+    posthumous_name: ""
+    given_name: 亹
+    reign_start_bce: 694
+    reign_end_bce: 694
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: |
+      Installed by 高渠弥 after 昭公 killed. Murdered by 齐襄公 at 首止 the same year.
+      No 谥号; referenced as 子亹 in 《左传》.
+  - id: 郑子婴
+    posthumous_name: ""
+    given_name: 婴
+    reign_start_bce: 693
+    reign_end_bce: 680
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: |
+      Installed after 子亹 murdered. Reigned 14 years before 厉公 (突) restored.
+      No 谥号; referenced as 子婴 in 《左传》.
+  - id: 郑厉公二
+    posthumous_name: 厉公
+    given_name: 突
+    reign_start_bce: 679
+    reign_end_bce: 673
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Restored after second exile period. Died 673 BCE.
+  - id: 郑文公
+    posthumous_name: 文公
+    given_name: 踕
+    reign_start_bce: 672
+    reign_end_bce: 628
+    sources:
+      - 《史记·郑世家》
+      - 《左传·僖公》
+    confidence: high
+    notes: |
+      45-year reign. Hosted 重耳 during his exile briefly; refused to honor him properly,
+      which led to 晋 enmity. Featured in 城濮之战 (632 BCE) prelude.
+  - id: 郑穆公
+    posthumous_name: 穆公
+    given_name: 兰
+    reign_start_bce: 627
+    reign_end_bce: 606
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑灵公
+    posthumous_name: 灵公
+    given_name: 夷
+    reign_start_bce: 605
+    reign_end_bce: 605
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Killed by 公子归生 in 605 BCE — "染指于鼎" incident.
+  - id: 郑襄公
+    posthumous_name: 襄公
+    given_name: 坚
+    reign_start_bce: 604
+    reign_end_bce: 587
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑悼公
+    posthumous_name: 悼公
+    given_name: 沸
+    reign_start_bce: 586
+    reign_end_bce: 585
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑成公
+    posthumous_name: 成公
+    given_name: 睔
+    reign_start_bce: 584
+    reign_end_bce: 571
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑釐公
+    posthumous_name: 釐公
+    given_name: 恽
+    reign_start_bce: 570
+    reign_end_bce: 566
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Sometimes written 郑僖公.
+  - id: 郑简公
+    posthumous_name: 简公
+    given_name: 嘉
+    reign_start_bce: 565
+    reign_end_bce: 530
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: 子产 (公孙侨) was chief minister during much of this reign.
+  - id: 郑定公
+    posthumous_name: 定公
+    given_name: 宁
+    reign_start_bce: 529
+    reign_end_bce: 514
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑献公
+    posthumous_name: 献公
+    given_name: 虿
+    reign_start_bce: 513
+    reign_end_bce: 501
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑声公
+    posthumous_name: 声公
+    given_name: 胜
+    reign_start_bce: 500
+    reign_end_bce: 463
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑哀公
+    posthumous_name: 哀公
+    given_name: 易
+    reign_start_bce: 462
+    reign_end_bce: 455
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑共公
+    posthumous_name: 共公
+    given_name: 丑
+    reign_start_bce: 454
+    reign_end_bce: 424
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑幽公
+    posthumous_name: 幽公
+    given_name: 已
+    reign_start_bce: 423
+    reign_end_bce: 423
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Killed by 韩武子 (韩启章) the same year. Sometimes written 郑幽侯.
+  - id: 郑繻公
+    posthumous_name: 繻公
+    given_name: 骀
+    reign_start_bce: 422
+    reign_end_bce: 396
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: ""
+  - id: 郑康公
+    posthumous_name: 康公
+    given_name: 乙
+    reign_start_bce: 395
+    reign_end_bce: 375
+    sources:
+      - 《史记·郑世家》
+    confidence: high
+    notes: Last 郑 ruler; 韩哀侯 destroyed 郑 in 375 BCE.

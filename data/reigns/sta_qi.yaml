@@ -1,0 +1,271 @@
+state_id: sta:qi
+state_name: 齐
+sources:
+  - 《史记·齐太公世家》
+  - 《史记·田敬仲完世家》
+  - 《左传》
+rulers:
+  - id: 齐庄公一
+    posthumous_name: 庄公
+    given_name: 购
+    reign_start_bce: 794
+    reign_end_bce: 731
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      Long pre-East-Zhou-into-Eastern-Zhou reign. Distinguished from later 齐庄公 (光).
+  - id: 齐釐公
+    posthumous_name: 釐公
+    given_name: 禄甫
+    reign_start_bce: 730
+    reign_end_bce: 698
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: Sometimes written 齐僖公.
+  - id: 齐襄公一
+    posthumous_name: 襄公
+    given_name: 诸儿
+    reign_start_bce: 697
+    reign_end_bce: 686
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      Murdered by 公孙无知 (堂弟). Famous for 文姜 (incest with sister, 鲁桓公's wife).
+  - id: 齐前废公
+    posthumous_name: ""
+    given_name: 无知
+    reign_start_bce: 686
+    reign_end_bce: 685
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: 公孙无知 — usurped; killed within months. No 谥号.
+  - id: 齐桓公
+    posthumous_name: 桓公
+    given_name: 小白
+    reign_start_bce: 685
+    reign_end_bce: 643
+    sources:
+      - 《史记·齐太公世家》
+      - 《左传·庄公九年》
+    confidence: high
+    notes: |
+      First of 春秋五霸. Assisted by 管仲 (字管夷吾). 葵丘之会 (651 BCE).
+      Reign ended 643 BCE in starvation amid succession chaos.
+  - id: 齐无诡
+    posthumous_name: ""
+    given_name: 无诡
+    reign_start_bce: 643
+    reign_end_bce: 642
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: Killed in 642 BCE shortly after assuming throne. No 谥号.
+  - id: 齐孝公
+    posthumous_name: 孝公
+    given_name: 昭
+    reign_start_bce: 642
+    reign_end_bce: 633
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      Restored to throne with help of 宋襄公 (during the famous 泓之战 era).
+  - id: 齐昭公
+    posthumous_name: 昭公
+    given_name: 潘
+    reign_start_bce: 632
+    reign_end_bce: 613
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: ""
+  - id: 齐懿公
+    posthumous_name: 懿公
+    given_name: 商人
+    reign_start_bce: 612
+    reign_end_bce: 609
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: Murdered by 邴蜀 + 阎职.
+  - id: 齐惠公
+    posthumous_name: 惠公
+    given_name: 元
+    reign_start_bce: 608
+    reign_end_bce: 599
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: ""
+  - id: 齐顷公
+    posthumous_name: 顷公
+    given_name: 无野
+    reign_start_bce: 598
+    reign_end_bce: 582
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      鞍之战 (589 BCE) loss against 晋 — 齐 hegemony decline marker.
+  - id: 齐灵公
+    posthumous_name: 灵公
+    given_name: 环
+    reign_start_bce: 581
+    reign_end_bce: 554
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: ""
+  - id: 齐庄公二
+    posthumous_name: 庄公
+    given_name: 光
+    reign_start_bce: 553
+    reign_end_bce: 548
+    sources:
+      - 《史记·齐太公世家》
+      - 《左传·襄公二十五年》
+    confidence: high
+    notes: Murdered by 崔杼. Distinct from earlier 齐庄公 (购).
+  - id: 齐景公
+    posthumous_name: 景公
+    given_name: 杵臼
+    reign_start_bce: 547
+    reign_end_bce: 490
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      Long 58-year reign. 晏婴 (晏子) chief minister; 孔子 visited 齐 during this reign.
+  - id: 齐晏孺子
+    posthumous_name: ""
+    given_name: 荼
+    reign_start_bce: 489
+    reign_end_bce: 489
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: Killed by 田乞 in succession crisis. No 谥号.
+  - id: 齐悼公
+    posthumous_name: 悼公
+    given_name: 阳生
+    reign_start_bce: 488
+    reign_end_bce: 485
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: ""
+  - id: 齐简公
+    posthumous_name: 简公
+    given_name: 壬
+    reign_start_bce: 484
+    reign_end_bce: 481
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: Killed by 田常 in 481 BCE — marks effective 田氏 takeover.
+  - id: 齐平公
+    posthumous_name: 平公
+    given_name: 骜
+    reign_start_bce: 480
+    reign_end_bce: 456
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: 田氏 holds real power; 齐 ruler is figurehead.
+  - id: 齐宣公
+    posthumous_name: 宣公
+    given_name: 积
+    reign_start_bce: 455
+    reign_end_bce: 405
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: ""
+  - id: 齐康公
+    posthumous_name: 康公
+    given_name: 贷
+    reign_start_bce: 404
+    reign_end_bce: 379
+    sources:
+      - 《史记·齐太公世家》
+    confidence: high
+    notes: |
+      Last 姜 clan 齐 ruler. 田和 received recognition as 齐侯 in 386 BCE; 康公
+      exiled to 海上. Death 379 BCE ends 姜齐 line.
+  - id: 田齐太公
+    posthumous_name: 太公
+    given_name: 和
+    reign_start_bce: 386
+    reign_end_bce: 384
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      First 田氏 ruler of 齐 (田和). Marks transition to 田齐 dynasty. Some sources
+      date his "official" reign to 386 BCE (周天子 recognition) but he had de facto
+      power earlier.
+  - id: 田齐桓公
+    posthumous_name: 桓公
+    given_name: 午
+    reign_start_bce: 374
+    reign_end_bce: 357
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      Distinct from earlier 齐桓公 (姜小白). Some sources record him as 田午;
+      called 田齐桓公 to disambiguate.
+  - id: 齐威王
+    posthumous_name: 威王
+    given_name: 因齐
+    reign_start_bce: 356
+    reign_end_bce: 320
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: First 齐 ruler to officially style as 王 (around 334 BCE).
+  - id: 齐宣王
+    posthumous_name: 宣王
+    given_name: 辟疆
+    reign_start_bce: 319
+    reign_end_bce: 301
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      Famous for 稷下学宫. 孟子 visited 齐 multiple times during this reign.
+  - id: 齐湣王
+    posthumous_name: 湣王
+    given_name: 地
+    reign_start_bce: 300
+    reign_end_bce: 284
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      齐 nearly destroyed by 燕乐毅 in 284 BCE; 湣王 killed at 莒.
+  - id: 齐襄王二
+    posthumous_name: 襄王
+    given_name: 法章
+    reign_start_bce: 283
+    reign_end_bce: 265
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      Restored 齐 with help of 田单 from 即墨. Distinct from earlier 齐襄公 (诸儿).
+  - id: 齐王建
+    posthumous_name: ""
+    given_name: 建
+    reign_start_bce: 264
+    reign_end_bce: 221
+    sources:
+      - 《史记·田敬仲完世家》
+    confidence: high
+    notes: |
+      Last 齐 ruler; surrendered to 秦 in 221 BCE without resistance. No 谥号
+      (referenced as 齐王建).
