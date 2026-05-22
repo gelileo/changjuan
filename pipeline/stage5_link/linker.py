@@ -88,6 +88,7 @@ def link_run(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, int]:
         stats["candidates_processed"] += 1
 
         if cand_id in already_matched:
+            stats["skipped"] += 1
             continue
 
         me = _load_candidate(conn, cand_id)

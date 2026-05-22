@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] fix(stage5): link_run stats reconciliation invariant (Phase 3 Task 8 fix)
+
+The `already_matched` short-circuit in `link_run` was counting siblings in `candidates_processed` but not bumping `skipped`. Invariant `candidates_processed == auto_merges + queued + skipped` was violated by 1 per cross-run merge. Fixed and asserted in `test_cross_run_chain_resolution`.
+
+no knowledge impact: bug fix; behavior unchanged for the two non-stats outputs.
+
 ## [2026-05-21] feat(stage5): link_run orchestrator + variants denormalization (Phase 3 Task 8)
 
 Added `pipeline/stage5_link/linker.py::link_run(conn, run_id)` — Stage 5 orchestrator. Walks candidate_persons for the run, scores each against its candidate pool, dispatches by threshold (auto_merge writes match_target_id + audit; queue writes merge_candidates; skip leaves no trace). Cross-run sibling matches recorded as match_target_id pointing at the sibling candidate id; Stage 7's chain helper (Task 10) resolves to canonical at load time.

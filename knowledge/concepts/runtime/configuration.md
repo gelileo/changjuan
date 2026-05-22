@@ -61,6 +61,8 @@ All threshold values are placeholders and *must* be recalibrated against measure
 
 `pipeline/stage5_link/linker.py::link_run` is now implemented (Task 8). It reads `LINKER_AUTO_MERGE_THRESHOLD` and `LINKER_QUEUE_THRESHOLD` from `pipeline.config` to dispatch candidates. No new configuration constants were added. `link_run` is re-exported from `pipeline.stage5_link.__init__` so callers use `from pipeline.stage5_link import link_run`. The `_denormalize_variants` bridge helper runs at entry and requires no configuration.
 
+**Phase 3 Task 8 fix:** The `already_matched` sibling short-circuit now correctly bumps `stats["skipped"]` before `continue`, preserving `candidates_processed == auto_merges + queued + skipped`. No configuration change.
+
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.

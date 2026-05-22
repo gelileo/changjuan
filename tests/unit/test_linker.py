@@ -185,7 +185,7 @@ def test_cross_run_chain_resolution(conn: sqlite3.Connection) -> None:
         variants=[("重耳", "本名")],
     )
 
-    link_run(conn, "run:1")
+    stats = link_run(conn, "run:1")
     matched = conn.execute(
         "SELECT id, match_target_id FROM candidate_persons WHERE pipeline_run_id='run:1' "
         "AND match_target_id IS NOT NULL"
@@ -194,6 +194,15 @@ def test_cross_run_chain_resolution(conn: sqlite3.Connection) -> None:
     matched_id, target = matched[0]
     assert target in ("cand:per:run:1:p1", "cand:per:run:1:p2")
     assert target != matched_id
+
+    # Stats reconciliation: 2 processed = 1 auto_merge + 1 sibling-skip
+    assert stats["candidates_processed"] == 2
+    assert stats["auto_merges"] == 1
+    assert stats["skipped"] == 1
+    assert stats["queued"] == 0
+    assert stats["candidates_processed"] == (
+        stats["auto_merges"] + stats["queued"] + stats["skipped"]
+    )
 
 
 def test_returns_stats_dict(conn: sqlite3.Connection) -> None:

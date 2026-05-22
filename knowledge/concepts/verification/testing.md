@@ -356,7 +356,7 @@ Key formula invariant (spec §4): temporal bonus/penalty (+0.10 compatible, −0
 - `test_auto_merge_writes_match_target_id_and_audit` — strong(+0.50) + state_same(+0.20) + social_same(+0.10) = 0.80 ≥ 0.75 → `match_target_id` written + `audit_log` row with `actor='link@v1'`.
 - `test_queue_writes_merge_candidates_row` — strong(+0.50) + state one_null(±0) = 0.50, in [0.40, 0.75) → `merge_candidates` row written with `kind='person'`, `status='open'`.
 - `test_skip_leaves_no_trace` — no variant overlap (hard veto, score=0.0) → nothing written, `skipped=1`.
-- `test_cross_run_chain_resolution` — two same-run sibling candidates sharing names; first alphabetically is processed, scores 0.80 against the sibling → `match_target_id` points at the sibling candidate id; sibling is added to `already_matched` set and skipped.
+- `test_cross_run_chain_resolution` — two same-run sibling candidates sharing names; first alphabetically is processed, scores 0.80 against the sibling → `match_target_id` points at the sibling candidate id; sibling is added to `already_matched` set and skipped. Also asserts the stats reconciliation invariant: `candidates_processed (2) == auto_merges (1) + queued (0) + skipped (1)`.
 - `test_returns_stats_dict` — empty run → stats dict has exactly the four expected keys.
 - `test_variants_denormalized_from_variants_json` — seeds candidate with `variants_json` only (Phase 2 stage 3 pattern); asserts `candidate_person_variants` rows are created by `_denormalize_variants` before scoring.
 
