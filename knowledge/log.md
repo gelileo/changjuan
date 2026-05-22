@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-21] feat(config): Phase 3 linker thresholds (auto=0.75, queue=0.40) (Phase 3 Task 5)
+
+Added `LINKER_AUTO_MERGE_THRESHOLD = 0.75` and `LINKER_QUEUE_THRESHOLD = 0.40` to `pipeline/config.py`. Stage 5 linker (lands in Tasks 7-8) dispatches by these thresholds. Initial v1 calibration rationale documented in the config.py comment block (recalibration history pattern matches Phase 2's `GOLDEN_PR_THRESHOLDS`).
+
+Articles touched: knowledge/concepts/runtime/configuration.md.
+
 ## [2026-05-21] golden: tighten 召公奭↔召虎 temporal gap to actually trigger conflict (Phase 3 Task 4 fix)
 
 Bumped 召虎 birth_date.year_bce from 800 to 790 in `tests/golden/merge_regression.yaml`. The scorer's temporal-conflict gap is strictly `> 150`; the original 150-year gap fell through to "compatible" and the pair landed in QUEUE rather than SKIP. With 790, the gap is 160 → conflict triggers, matching spec §4's walkthrough.

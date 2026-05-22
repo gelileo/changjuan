@@ -71,3 +71,19 @@ GOLDEN_PR_THRESHOLDS: dict[str, dict[str, float]] = {
     "state": {"precision": 0.95, "recall": 0.90},
     "relation": {"precision": 0.65, "recall": 0.65},
 }
+
+# Phase 3 — Stage 5 (linker) thresholds
+#
+# Dispatch logic in pipeline/stage5_link/linker.py::link_run:
+#   score >= LINKER_AUTO_MERGE_THRESHOLD → auto-merge (writes match_target_id)
+#   LINKER_QUEUE_THRESHOLD <= score < auto → queue (writes merge_candidates row)
+#   score < LINKER_QUEUE_THRESHOLD       → skip (candidate creates new canonical at load)
+#
+# Recalibration history:
+#   - 2026-05-21 (initial, Phase 3 Task 5): auto=0.75, queue=0.40.
+#     Why auto=0.75: strong variant (+0.50) + state agreement (+0.20) = 0.70,
+#     just under threshold; ≥1 additional positive (+0.10) bumps to 0.80 = auto-merge.
+#     Why queue=0.40: partial variant (+0.20) + state agreement (+0.20) = 0.40
+#     exactly at threshold = minimum to land in the queue for human review.
+LINKER_AUTO_MERGE_THRESHOLD: float = 0.75
+LINKER_QUEUE_THRESHOLD: float = 0.40

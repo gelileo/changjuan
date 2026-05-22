@@ -10,6 +10,7 @@ references:
 affects:
   - pipeline/config.py
   - pipeline/cli.py
+  - pipeline/stage5_link/**
 ---
 
 # Runtime Configuration
@@ -34,11 +35,19 @@ As of Task 12, the following Phase 2 constants are defined:
 - **`QA_SAMPLE_FLOOR`** / **`QA_SAMPLE_CEILING`** (`int`): Absolute bounds on sample size (in claims). Default floor: 30, ceiling: 250.
 - **`GOLDEN_PR_THRESHOLDS`** (`dict[str, dict[str, float]]`): Precision/recall gates for golden Ch.1 evaluation, per entity kind (person, event, place, state, relation). Initial values were placeholders; recalibrated after the v2 baseline (Task 29.4): `relation.precision` lowered from 0.75 → 0.65 (v2 measured 0.6984, set symmetric with recall threshold for margin). All other thresholds unchanged — v2 cleared them by wide margins. The remaining relation-precision gap is over-inferred edges that stage-5 linker is the right place to consolidate (Phase 3 work, flagged in `PHASE2_DEFERRED`). The recalibration rationale + history lives as a comment block immediately above the dict in `pipeline/config.py`.
 
+## Phase 3 Constants (Stage 5 Linker)
+
+As of Task 5, the following Phase 3 constants are defined:
+
+- **`LINKER_AUTO_MERGE_THRESHOLD`** (`float`): Minimum scorer score for automatic merging. Candidates scoring at or above this value have `match_target_id` written immediately (auto-merge path). Initial v1 value: `0.75`. Rationale: strong variant match (+0.50) + state agreement (+0.20) = 0.70 falls just under; one additional positive signal (+0.10) = 0.80 clears the threshold — safe margin for auto-merge.
+- **`LINKER_QUEUE_THRESHOLD`** (`float`): Minimum score to be queued for human review (writes a `merge_candidates` row). Candidates scoring below this skip the queue and create a new canonical record at load time. Initial v1 value: `0.40`. Rationale: partial variant (+0.20) + state agreement (+0.20) = 0.40 is the minimal evidence worth a human second look. Dispatch logic lives in `pipeline/stage5_link/linker.py::link_run` (lands in Tasks 7–8). Full calibration rationale and recalibration history are documented in the comment block immediately above the constants in `pipeline/config.py` — follow the same pattern as `GOLDEN_PR_THRESHOLDS`.
+
 ## Usage
 
 - **Stage 3 (extraction)**: Task 22 reads `EXTRACTION_DIR` and sample constants.
 - **QA (sampling)**: Task 31 uses `QA_MISMATCH_THRESHOLD`, sample bounds, and fraction.
 - **CLI (golden-eval)**: Task 29 gates the command on `GOLDEN_PR_THRESHOLDS`.
+- **Stage 5 (linker)**: `LINKER_AUTO_MERGE_THRESHOLD` and `LINKER_QUEUE_THRESHOLD` drive the dispatch dial in `pipeline/stage5_link/linker.py::link_run` (lands in Tasks 7–8).
 
 ## Design Notes
 

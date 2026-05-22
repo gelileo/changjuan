@@ -28,3 +28,10 @@ def test_phase2_constants_exist() -> None:
         for metric in ("precision", "recall"):
             v = config.GOLDEN_PR_THRESHOLDS[kind][metric]
             assert 0 < v <= 1
+
+
+def test_phase3_linker_thresholds_exist() -> None:
+    from pipeline import config
+
+    assert 0 < config.LINKER_AUTO_MERGE_THRESHOLD <= 1
+    assert 0 < config.LINKER_QUEUE_THRESHOLD < config.LINKER_AUTO_MERGE_THRESHOLD
