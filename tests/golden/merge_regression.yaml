@@ -1,0 +1,26 @@
+# Merge Regression Set — Phase 3 Stage 5 (linker) validation
+#
+# Two top-level lists of person pairs. The linker's @pytest.mark.regression
+# test (tests/integration/test_link_regression.py) asserts:
+#   - every same_person_pairs entry scores >= LINKER_AUTO_MERGE_THRESHOLD
+#   - every different_person_pairs entry scores < LINKER_AUTO_MERGE_THRESHOLD
+#
+# Each pair carries:
+#   rationale  — one-sentence explanation (why this pair is same / different)
+#   source     — citation (chapter or external text, e.g., "《史记·晋世家》")
+#   person_a   — full Person record (canonical_name, variants[], state_id, ...)
+#   person_b   — full Person record (same shape)
+#
+# Person record shape mirrors the canonical schema. Fields:
+#   canonical_name  (required)
+#   variants        (optional list of {variant, kind})
+#   state_id        (optional, e.g., "sta:jin")
+#   social_category (optional, enum: royalty / noble / official / military /
+#                    religious / clergy / commoner / servant / foreign / mythic / unknown)
+#   clan_name       (optional)
+#   birth_date      (optional, structured Date dict)
+#   death_date      (optional, structured Date dict)
+
+same_person_pairs: []
+
+different_person_pairs: []

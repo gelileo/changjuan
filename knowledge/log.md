@@ -1,5 +1,14 @@
 # Build Log
 
+## [2026-05-21] golden: scaffold merge_regression.yaml + README (Phase 3 Task 2)
+
+Created `tests/golden/merge_regression.yaml` (empty lists) + curation
+conventions in `tests/golden/merge_regression_README.md`. Phase 3 Stage 5
+(linker) validates against this set; the @pytest.mark.regression test
+(Task 13) asserts every entry scores in the expected bucket.
+
+Articles touched: none (scaffold + conventions doc only).
+
 ## [2026-05-21] schema: add candidate_persons.match_target_id (Phase 3 Task 1)
 
 Added `match_target_id TEXT` (nullable, no FK) to `candidate_persons` in
