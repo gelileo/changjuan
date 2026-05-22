@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-22] test(integration): link + load Ch.1 fixture preserves 13 persons (Phase 3 Task 14)
+
+@pytest.mark.golden integration test. Runs extract-load → link → load against the frozen `tests/fixtures/ch01-extraction-v1.yaml` and asserts exactly 13 canonical persons result — the Ch.1 golden count. Catches over-aggressive linker, broken candidate pool, or broken match_target_id integration as a single end-to-end regression.
+
+During implementation, discovered and fixed a pre-existing bug in `load_candidate_persons`: `candidate_persons.state_id` stores the local extraction id (e.g. `'s1'`), but `persons.state_id` is a `REFERENCES states(id)` FK. The fix adds `_build_candidate_state_id_map` which joins `candidate_states` to `states` by name to resolve local ids to canonical ids before inserting each person. Tests that call `load_candidate_persons` directly must now also call `load_candidate_states` first (places → states → persons FK order).
+
+Full suite: 214 passed.
+
+Articles touched: concepts/verification/testing.md, concepts/pipeline/load-and-merge.md.
+
 ## [2026-05-22] feat(test): @pytest.mark.regression linker regression-set assertion (Phase 3 Task 13)
 
 Added `tests/integration/test_link_regression.py` with two regression tests that pin the linker's behavior on the curated 10-pair regression set:

@@ -23,6 +23,8 @@ def _create_person(
     person_id: str,
     c: sqlite3.Row,
     pipeline_run_id: str,
+    *,
+    resolved_state_id: str | None = None,
 ) -> None:
     conn.execute(
         """
@@ -38,7 +40,7 @@ def _create_person(
             c["birth_date_json"],
             c["death_date_json"],
             c["notes"],
-            c["state_id"],
+            resolved_state_id if resolved_state_id is not None else c["state_id"],
             c["clan_name"],
             c["confidence"],
             pipeline_run_id,
@@ -160,6 +162,8 @@ def _merge_scalar_fields(
     person_id: str,
     c: sqlite3.Row,
     pipeline_run_id: str,
+    *,
+    resolved_state_id: str | None = None,
 ) -> None:
     fields_sql = ", ".join(_PERSON_SCALAR_FIELDS)
     existing = conn.execute(
@@ -167,7 +171,11 @@ def _merge_scalar_fields(
         (person_id,),
     ).fetchone()
     for field in _PERSON_SCALAR_FIELDS:
-        new_val = c[field]
+        new_val = (
+            resolved_state_id
+            if (field == "state_id" and resolved_state_id is not None)
+            else c[field]
+        )
         if new_val is None:
             continue
         old_val = existing[field]
@@ -282,6 +290,31 @@ def _resolve_canonical_for_candidate_id(
     return str(row["id"])
 
 
+def _build_candidate_state_id_map(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, str]:
+    """Return a mapping from local extraction state id (e.g. 's1') to canonical state id
+    (e.g. 'sta:周') for all candidate_states in this run.
+
+    candidate_persons.state_id stores the local extraction id (e.g. 's1').  The full
+    candidate id is 'cand:sta:{pipeline_run_id}:{local_id}'.  load_candidate_states must
+    have already run (states table must be populated) before this is called.
+    """
+    result: dict[str, str] = {}
+    # candidate_states.id format: 'cand:sta:{pipeline_run_id}:{local_id}'
+    # Extract the local_id suffix to build the reverse map.
+    prefix = f"cand:sta:{pipeline_run_id}:"
+    rows = conn.execute(
+        "SELECT cs.id, s.id FROM candidate_states cs "
+        "JOIN states s ON s.name = cs.name "
+        "WHERE cs.pipeline_run_id = ?",
+        (pipeline_run_id,),
+    ).fetchall()
+    for cand_id, canonical_id in rows:
+        if cand_id.startswith(prefix):
+            local_id = cand_id[len(prefix) :]
+            result[local_id] = canonical_id
+    return result
+
+
 def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
     """Promote candidate_persons rows into canonical persons with field-level merge.
 
@@ -289,7 +322,15 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     by person_variants.variant. Creates a new Person if no match found.
     Variants from the extraction (variants_json) are written to person_variants
     idempotently so that successive runs accumulate without duplicating.
+
+    Requires load_candidate_states (and load_candidate_places) to have already run
+    so that persons.state_id FK constraints are satisfiable.  The local extraction
+    state id (e.g. 's1') stored in candidate_persons.state_id is resolved to the
+    canonical state id (e.g. 'sta:周') via the candidate_states→states join.
     """
+    # Build local-id → canonical-id map for states referenced by this run's candidates.
+    state_id_map = _build_candidate_state_id_map(conn, pipeline_run_id)
+
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
         "state_id, clan_name, confidence, chunk_id, quote, variants_json, match_target_id "
@@ -300,6 +341,22 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     affected = 0
     local_canonical_map: dict[str, str] = {}
     for c in candidates:
+        # Resolve candidate state_id (a local extraction id like 's1') to the canonical
+        # state id (e.g. 'sta:周').  If the state_id already contains ':' it is already
+        # canonical and is passed through unchanged.  None stays None.
+        raw_state_id: str | None = c["state_id"]
+        if raw_state_id is not None and ":" not in raw_state_id:
+            resolved_state_id: str | None = state_id_map.get(raw_state_id)
+            if resolved_state_id is None:
+                log.warning(
+                    "candidate state_id not resolved to a canonical state; "
+                    "persons.state_id will be set to NULL for this candidate",
+                    candidate_id=c["id"],
+                    raw_state_id=raw_state_id,
+                )
+        else:
+            resolved_state_id = raw_state_id
+
         # Phase 3: honor match_target_id if Stage 5 set it.
         target_id_raw = c["match_target_id"]
         existing_id: str | None = None
@@ -329,10 +386,12 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
             if existing_id_row is not None:
                 h = hashlib.sha256(c["canonical_name"].encode("utf-8")).hexdigest()[:6]
                 person_id = f"{person_id}-{h}"
-            _create_person(conn, person_id, c, pipeline_run_id)
+            _create_person(conn, person_id, c, pipeline_run_id, resolved_state_id=resolved_state_id)
         else:
             person_id = existing_id
-            _merge_scalar_fields(conn, person_id, c, pipeline_run_id)
+            _merge_scalar_fields(
+                conn, person_id, c, pipeline_run_id, resolved_state_id=resolved_state_id
+            )
 
         # Record in map for cross-run chain resolution by later siblings in this pass.
         local_canonical_map[c["id"]] = person_id

@@ -389,6 +389,18 @@ Score values in tests are calibrated against the actual scorer formula; the queu
 
 The tests load via `tests.golden.regression_loader.load_regression_set` (Task 3) and call `pipeline.stage5_link.scoring.person_match_score` (Task 6) directly — no database or pipeline stages are involved. The `regression` marker is registered in `pyproject.toml`. Tests run as part of the default `pytest -q` invocation (no explicit exclusion in `addopts`). Scoring validation was performed before committing: all 5 same-pairs score ≥ 0.75; all 5 different-pairs score < 0.75.
 
+## Phase 3 link + load golden integration test (Task 14)
+
+`tests/integration/test_link_ch01.py` is the end-to-end Phase 3 gate test. Marked `@pytest.mark.golden`. It:
+
+1. Copies `data/corpus.sqlite` into a `tmp_path` database (skips if absent).
+2. Calls `load_extraction` against `tests/fixtures/ch01-extraction-v1.yaml`.
+3. Calls `link_run` and asserts `stats["auto_merges"] == 0` — all 13 Ch.1 candidates are distinct persons, so no auto-merges should fire within a single chapter's candidate set.
+4. Calls `load_candidate_places`, `load_candidate_states`, then `load_candidate_persons` (FK order required by the schema — states must exist before persons).
+5. Asserts `COUNT(*) FROM persons == 13` — the Ch.1 golden's count.
+
+This test catches three failure modes in one pass: over-aggressive linker (auto_merges > 0), broken candidate pool (wrong candidates fed to linker), and broken `match_target_id` integration (wrong person count after load). The `load_candidate_states`-before-`load_candidate_persons` ordering revealed and fixed a pre-existing bug: `candidate_persons.state_id` stores the local extraction id (e.g. `'s1'`), but `persons.state_id` is a FK to `states.id`. The fix adds `_build_candidate_state_id_map` to `load_candidate_persons`, which resolves local ids to canonical ids via a `candidate_states JOIN states ON name` lookup.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

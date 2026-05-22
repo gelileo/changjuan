@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons)
 status: thin
 load_bearing: true
 references:
@@ -17,6 +17,12 @@ affects:
 ## What this is
 
 Stage 7 (`pipeline/stage7_load.py`) is the boundary between the candidate staging area and the canonical knowledge graph. It promotes `candidate_persons` rows into `persons`, applying field-level merge semantics when a candidate matches an existing canonical record.
+
+## Load ordering contract (FK safety)
+
+`load_candidate_persons` has a hard dependency on `load_candidate_states` (and `load_candidate_places`) having already run for the same `pipeline_run_id`. The `persons.state_id` column is a `REFERENCES states(id)` FK. The staging table stores the raw local extraction id (e.g. `'s1'`) in `candidate_persons.state_id`, not the canonical `'sta:周'`. `load_candidate_persons` now calls `_build_candidate_state_id_map` before iterating candidates; this function joins `candidate_states` against `states` by name to build a `{local_id → canonical_id}` map, which is applied when creating or merging each person's `state_id`. If a local id cannot be resolved (e.g. because `load_candidate_states` was skipped), a `structlog` warning is emitted and `persons.state_id` is set to `NULL` rather than crashing.
+
+The canonical CLI `load` command already runs in the correct order (places → states → persons → events → relations). Integration tests that call `load_candidate_persons` directly must call `load_candidate_states` first.
 
 ## Matching rules (Phase 3: match_target_id-first)
 
