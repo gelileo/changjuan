@@ -2,7 +2,7 @@
 title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
-updated: 2026-05-22
+updated: 2026-05-23
 implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders)
 status: thin
 load_bearing: true
@@ -194,6 +194,10 @@ Candidate relation tables use `candidate_*_id` column names (e.g. `candidate_eve
 ### Confidence and provenance
 
 Candidate relation tables do not carry a `confidence` column. All promoted rows receive `confidence=0.9` and `provenance='auto'`.
+
+## `person_relations` populated (Phase 6 Task C1)
+
+Before Phase 6, `person_relations` stayed at 0 rows because stage 3 wrote empty-string `kind` values into `candidate_person_relations` (the loader read a non-existent `relation_kind` field instead of the actual `kind_detail` field — see `concepts/pipeline/extraction.md`). `load_candidate_person_relations` filters rows whose `kind` is not in `_VALID_PERSON_RELATION_KINDS`, so every record was silently dropped. With the one-line fix at `pipeline/stage3_extract.py:377` the candidate rows now carry real kinds and stage 7 promotes them. The contradiction detection for directional kinds (`parent`, `child`, `killed_by`, `ruler`, `minister`, `mentor`) is now exercised for the first time on real data — expect some new rows in the `conflicts` table after the Phase 6 Task C2 backfill.
 
 ## What would invalidate this article
 

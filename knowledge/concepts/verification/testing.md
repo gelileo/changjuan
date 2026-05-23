@@ -568,6 +568,12 @@ Total test count after Phase 6 Task A4: **278**.
 
 Total test count after Phase 6 Task A5: **279**.
 
+## Phase 6 Task C1 — person_relations backfill integration test
+
+`tests/integration/test_person_relations_backfill.py` adds one new test that exercises the fixed `pipeline/stage3_extract.py` field-name bug end-to-end. The test loads the cached `data/extractions/ch01/extract-v2.yaml` against a tmp-path canonical DB plus the live `data/corpus.sqlite`, asserts `candidate_person_relations` rows are produced with real kinds (`parent`, `ally`, `mentor`, `spouse`, `killed_by`), and asserts no empty-string kinds leak through. Skipped via `@pytest.mark.skipif` when either the extraction YAML or the corpus DB is absent.
+
+Total test count after Phase 6 Task C1: **280**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

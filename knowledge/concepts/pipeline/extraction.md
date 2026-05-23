@@ -2,7 +2,7 @@
 title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
-updated: 2026-05-21
+updated: 2026-05-23
 implemented: Task 38 (variants_json stored in candidate_persons)
 status: thin
 load_bearing: true
@@ -141,6 +141,10 @@ boundary.
 ## Prompt iteration
 
 The skill's `system-prompt.md` evolves between versions; each prompt revision is a new directory under `.claude/skills/changjuan-extract*/`. The Python-side validator + extraction schema do not change between prompt versions — they're the stable contract the prompt iterates against. See `concepts/pipeline/incremental.md` for the iteration-history log (v1, v2, …) and the per-version goals.
+
+## `kind_detail` vs `kind` for person_relation entries (Phase 6 Task C1)
+
+The extractor emits `person_relation` entries with two `kind`-ish fields: a top-level `kind: person_relation` (the type discriminator that routes the record in `load_extraction`) and a per-record `kind_detail: parent | child | spouse | sibling | mentor | ruler | minister | ally | rival | killed_by | clan_member`. The `kind_detail` value is what becomes `candidate_person_relations.kind` and eventually `person_relations.kind`. Before Phase 6, `load_extraction` mistakenly read `r["relation_kind"]` (a field that does not exist in the schema), defaulting to `""`. Empty kinds pass the candidate-side INSERT but stage 7 (`load_candidate_person_relations`) silently skips them via the `_VALID_PERSON_RELATION_KINDS` filter — so `person_relations` stayed at 0 rows. The fix at `pipeline/stage3_extract.py:377` reads `r["kind_detail"]` instead. The canonical CHECK constraint vocabulary (in `pipeline/schemas/canonical_schema.sql`) is the source of truth for which `kind_detail` values are accepted downstream.
 
 ## What would invalidate this article
 

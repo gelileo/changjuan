@@ -374,7 +374,7 @@ def load_extraction(
                 (
                     from_cand,
                     to_cand,
-                    r.get("relation_kind", ""),
+                    r.get("kind_detail", ""),
                     date_json,
                     pipeline_run_id,
                 ),

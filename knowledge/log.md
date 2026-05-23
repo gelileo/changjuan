@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] fix(stage3): Phase 6 Task C1 — read kind_detail (not relation_kind) for person_relations
+
+- Phase 6 Task C1: stage3 loader reads kind_detail (was relation_kind); person_relations no longer 0.
+- Articles touched: concepts/pipeline/extraction.md, concepts/pipeline/load-and-merge.md, concepts/verification/testing.md.
+
 ## [2026-05-23] feat(cli): Phase 6 Task A5 — changjuan link --ignore-rejections flag
 
 - Phase 6 Task A5: changjuan link --ignore-rejections flag.
