@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-23] chore(walk): Phase 6 Track B walk completed
+
+- 94 candidates triaged in ~94 minutes (one session, 11:46 → 13:20 local). Mean ~60s/candidate. Disposition: 89 accept, 5 edit-accept, 0 reject, 0 split, 0 deferred.
+- Final state: `merge_candidates.status='merged'` for all 94; 0 open. `persons=75`, `person_variants=73`, `person_relations=28`, `conflicts=24`, `rejected_merges=0`.
+- Walk friction surfaced 4 fixes that landed in-budget (3) + 1 polish (1, openly over by 1 LOC item) and 1 break-fix (live `audit_log` CHECK migration). 9 Phase 7 candidates recorded in the retro.
+- Retro finalized at `docs/superpowers/retros/2026-05-23-phase6-walk.md`.
+
 ## [2026-05-23] fix(curation): walk polish #4 — edit-mode button label flips
 
 - The two-stage "Edit & accept" reused the same button label for both states; curators didn't realize the second click commits. Label now flips to "✓ Confirm edits" + caption hint in edit mode.
