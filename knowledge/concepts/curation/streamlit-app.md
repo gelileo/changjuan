@@ -67,3 +67,16 @@ Renders a 108-cell chapter coverage grid using inline CSS (`_GRID_CSS`) and a si
 ### `records.render_pair`
 
 Side-by-side candidate-vs-canonical field renderer. Computes a `list[FieldDiff]` for the five tracked fields (`canonical_name`, `gender`, `clan_name`, `state_id`, `notes`). Each diff carries a badge (`same` / `one_null` / `disagree`) that drives background colour on the rendered spans. In `edit_mode=True`, the canonical column renders `st.text_input` widgets instead of readonly spans and returns an `edits: dict[str, Any]` with changed fields; in read-only mode returns `None`. `surface_features_json` is rendered as a `st.caption`; `llm_judgment_json` is rendered inside a `st.expander`.
+
+## Home screen and stub pages (Phase 5 Task 9)
+
+`curation/app.py` is the Streamlit entry point (`streamlit run curation/app.py`). It sets page config, shows the chapter coverage grid (gated on `CORPUS_PATH.exists()`), renders three queue links, and provides a disabled search box (Phase 6).
+
+Queue rendering:
+- **Merge candidates** — `st.page_link("pages/1_Merge_candidates.py", ...)` with open-count badge via `open_merge_candidates(DB_PATH)`. Target page is created in Task 10; Streamlit emits a warning until then.
+- **Conflicts** — greyed-out HTML div, no link (Phase 6 stub).
+- **Low confidence** — greyed-out HTML div with `low_confidence_count(DB_PATH)` badge (Phase 6 stub).
+
+`curation/pages/2_Conflicts.py` and `curation/pages/3_Low_confidence.py` are Phase 6 stub pages. Each calls `st.set_page_config` and renders a single `st.warning` explaining the deferral. Streamlit's multipage convention requires no `__init__.py` in `pages/`.
+
+`streamlit-shortcuts` (v1.2.1) added as a project dependency for Task 10 keyboard shortcuts.

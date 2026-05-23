@@ -1,5 +1,21 @@
 # Build Log
 
+## [2026-05-22] feat(curation): home screen + stub pages (Phase 5 Task 9)
+
+Creates `curation/app.py` (Streamlit home screen), `curation/pages/2_Conflicts.py`,
+and `curation/pages/3_Low_confidence.py` (Phase 6 stubs). Adds `streamlit-shortcuts`
+(v1.2.1) as a project dependency.
+
+Home screen: chapter coverage grid (gated on corpus.sqlite presence), three queue
+links (merge-candidates active, conflicts + low-confidence greyed Phase 6 stubs),
+disabled search box. `pages/1_Merge_candidates.py` target not yet created (Task 10);
+Streamlit emits a runtime warning but boots cleanly (HTTP 200 confirmed).
+
+mypy --strict clean on all 9 curation/ source files. No type: ignore comments needed.
+
+Articles updated: curation/streamlit-app.md (home screen + stub pages section),
+runtime/configuration.md (streamlit-shortcuts note), log.md.
+
 ## [2026-05-22] feat(curation): rendering components (Phase 5 Task 8)
 
 Creates `curation/components/` package with three pure-rendering Streamlit primitives:
