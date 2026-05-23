@@ -157,15 +157,35 @@ def main() -> None:
     edits_captured: dict[str, Any] | None = None
 
     def render_left() -> None:
-        cit_id_row = (
-            sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
-            .execute(
+        # Phase 5.1 read-side: candidate_a_id is typically a candidate_persons row
+        # which carries chunk_id + quote directly. entity_citations is canonical-only
+        # and won't have rows for candidate ids, so try the candidate row first.
+        with sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True) as conn:
+            conn.row_factory = sqlite3.Row
+            cp = conn.execute(
+                "SELECT chunk_id, quote FROM candidate_persons WHERE id = ?",
+                (current.candidate_a_id,),
+            ).fetchone()
+        if cp is not None:
+            st.write(cp["quote"])
+            with sqlite3.connect(f"file:{CORPUS_PATH}?mode=ro", uri=True) as corpus_conn:
+                corpus_conn.row_factory = sqlite3.Row
+                chunk_row = corpus_conn.execute(
+                    "SELECT text FROM chunks WHERE id = ?",
+                    (cp["chunk_id"],),
+                ).fetchone()
+            if chunk_row is not None:
+                with st.expander("± 2 paragraphs"):
+                    st.write(chunk_row["text"])
+            return
+
+        # Escape-hatch: candidate_a is in persons (Phase 5.1) — use entity_citations.
+        with sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True) as conn:
+            cit_id_row = conn.execute(
                 "SELECT citation_id FROM entity_citations "
                 "WHERE entity_kind = 'person' AND entity_id = ? LIMIT 1",
                 (current.candidate_a_id,),
-            )
-            .fetchone()
-        )
+            ).fetchone()
         if cit_id_row is None:
             st.write("(no citation linked to candidate)")
             return

@@ -118,3 +118,7 @@ The `edit_mode` boolean lives in `st.session_state["edit_mode"]`. When `True`, `
 ### `_load_person` dual-table lookup (Phase 6 walk fix #1)
 
 `_load_person` in `pages/1_Merge_candidates.py` previously queried only the `persons` table. After Phase 5.1 established that `merge_candidates.candidate_a_id` typically references `candidate_persons.id`, the A column on the review screen rendered every field as `-` because the lookup returned no row. The helper now falls back to `candidate_persons` when `persons` misses — mirroring the dual-table pattern in `pipeline.stage5_link.merge._load_reject_payload`. Counted against the Track B friction-fix budget (1/3 used).
+
+### `render_left` reads citation from candidate_persons row (Phase 6 walk fix #2)
+
+The evidence column previously queried `entity_citations WHERE entity_kind = 'person' AND entity_id = candidate_a_id`, but `entity_citations` is populated only for canonical entities. Candidate rows carry `chunk_id` and `quote` directly on `candidate_persons`, so the column rendered "(no citation linked to candidate)" for every candidate. `render_left` now reads `chunk_id` + `quote` from the candidate row first (the typical Phase 5.1 case) and looks up the chunk text from `corpus.sqlite`; it falls back to the original `entity_citations` path only when the id is in `persons` (the escape-hatch case). Budget: 2/3 used.

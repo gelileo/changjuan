@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] fix(curation): walk fix #2 — render_left reads citation from candidate_persons
+
+- Evidence column showed "(no citation linked to candidate)" for every candidate because `entity_citations` is canonical-only and lookups by `candidate_a_id` always missed. `render_left` now reads `chunk_id` + `quote` directly from the `candidate_persons` row and resolves the chunk text from `corpus.sqlite`. Falls back to the original `entity_citations` path only for the persons-side escape-hatch case.
+- Counted against Track B friction-fix budget (2/3 used).
+- Articles touched: concepts/curation/streamlit-app.md.
+
 ## [2026-05-23] fix(curation): walk fix #1 — _load_person dual-table fallback
 
 - Phase 5 UI's `_load_person` only queried `persons`. A-side fields rendered as `-` because `candidate_a_id` typically references `candidate_persons` (Phase 5.1 reality). Mirrors `_load_reject_payload`'s dual-table pattern.
