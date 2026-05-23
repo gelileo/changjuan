@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-23] fix(load): `_build_event_id` counter-loop collision guard
+
+- Ch.6 smoke load failed with `IntegrityError: UNIQUE constraint failed: events.id` when three new 战 events at different places (老挑 / 郜城 / 防城) loaded in one pipeline run. The prior SHA-256 6-char suffix was deterministic from the slug — every collision hashed to the same suffix.
+- Replaced with an incrementing counter (`-2`, `-3`, …) that loops until the id is free. Removed unused `hashlib` import from `pipeline/stage7_load/events.py`.
+- New regression test `test_collision_guard_handles_multiple_distinct_places_same_type` in `tests/unit/test_stage7_load_events.py` reproduces the original failure and locks the fix.
+- Persons / places / states loaders intentionally keep the SHA-256 suffix: their hash input is the candidate's full *name*, which differs across distinct candidates that happen to slugify the same — so they don't share the events-specific collision pathology.
+- Articles touched: concepts/pipeline/load-and-merge.md, concepts/verification/testing.md.
+
 ## [2026-05-23] feat(config): Phase 6.5 — lower LINKER_AUTO_MERGE_THRESHOLD 0.75 → 0.70
 
 - Walk-the-94 evidence: 90 of 94 queued candidates scored exactly 0.70 (strong variant + same state + one_null elsewhere), all true positives accepted by the curator without edits. At the new threshold the same combination auto-merges; the 4 outliers at 0.40/0.50 (the genuinely ambiguous cases) still hit the queue.

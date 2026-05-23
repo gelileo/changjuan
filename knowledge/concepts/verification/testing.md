@@ -201,12 +201,13 @@ These tests use no fixtures — just direct function calls with hand-constructed
 
 ## Stage 7 load_candidate_events tests
 
-`tests/unit/test_stage7_load_events.py` (Phase 2 Task 18) exercises `pipeline.stage7_load.load_candidate_events`. A `_seed_candidate_event` helper inserts a minimal `candidate_events` row (using `chunk_id`/`quote` matching the canonical schema). `primary_place_id` defaults to `None` to avoid FK constraint failures (the events table references `places(id)`). Four tests:
+`tests/unit/test_stage7_load_events.py` (Phase 2 Task 18) exercises `pipeline.stage7_load.load_candidate_events`. A `_seed_candidate_event` helper inserts a minimal `candidate_events` row (using `chunk_id`/`quote` matching the canonical schema). `primary_place_id` defaults to `None` to avoid FK constraint failures (the events table references `places(id)`). Five tests:
 
 - `test_creates_canonical_event_on_first_load` — seeds one candidate, calls `load_candidate_events`, asserts one `events` row and the correct `type`.
 - `test_same_match_key_collapses` — two runs with the same `(type, year_bce, primary_place_id)` key, second adds `outcome='晋胜'`; asserts exactly one `events` row with `outcome` filled in via null-fill merge.
 - `test_date_merge_point_beats_range` — first run seeds `uncertainty='range'` at confidence 0.9; second run seeds `uncertainty='point'` at confidence 0.85; asserts the canonical `date_json` has `uncertainty='point'` (more-precise wins).
 - `test_conflict_emitted_on_scalar_disagreement` — `outcome='晋胜'` at confidence 0.9 vs `outcome='楚胜'` at confidence 0.88 (delta 0.02 < threshold 0.1); asserts at least one `conflicts` row with `subject_kind='event'` and `field='outcome'`.
+- `test_collision_guard_handles_multiple_distinct_places_same_type` (Phase 6.5 follow-on, Ch.6 smoke regression) — seeds three canonical places and three candidate events sharing `type='战'` and null `year_bce` but distinct `primary_place_id` values, in one run; asserts `load_candidate_events` returns 3 and all three events land with distinct ids. Locks the counter-loop collision guard (`-2`, `-3`, …) that replaced the deterministic SHA-256 6-char suffix in `_build_event_id`.
 
 The `canonical` fixture uses `open_canonical_db` with `tmp_path`, identical to the places/states tests pattern.
 

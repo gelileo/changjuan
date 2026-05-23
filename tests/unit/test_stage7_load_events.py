@@ -109,3 +109,47 @@ def test_conflict_emitted_on_scalar_disagreement(canonical: sqlite3.Connection) 
     assert len(conflicts) >= 1
     fields_with_conflict = [c[0] for c in conflicts]
     assert "outcome" in fields_with_conflict
+
+
+def test_collision_guard_handles_multiple_distinct_places_same_type(
+    canonical: sqlite3.Connection,
+) -> None:
+    """Three candidates with the same type but distinct (year, place) tuples must
+    all create distinct canonical events.
+
+    Regression: the original hash-suffix guard returned a deterministic
+    `hashlib.sha256(slug)[:6]` and broke when more than one new event shared the
+    same slug — every collision produced the same suffix, raising
+    `sqlite3.IntegrityError: UNIQUE constraint failed: events.id`. Surfaced by
+    Ch.6 smoke (战@老挑 / 战@郜城 / 战@防城 in one pipeline run).
+    """
+    # Seed canonical places so primary_place_id FK is satisfiable.
+    for pid, name in [("pla:laotiao", "老挑"), ("pla:gaocheng", "郜城"), ("pla:fangcheng", "防城")]:
+        canonical.execute(
+            "INSERT INTO places (id, name, type, confidence, provenance, pipeline_run_id) "
+            "VALUES (?, ?, ?, 0.9, 'auto', 'run:fixture')",
+            (pid, name, "城"),
+        )
+    canonical.commit()
+
+    _seed_candidate_event(
+        canonical, run_id="run:1", chunk_id="chk:a", year_bce=None, primary_place_id="pla:laotiao"
+    )
+    _seed_candidate_event(
+        canonical, run_id="run:1", chunk_id="chk:b", year_bce=None, primary_place_id="pla:gaocheng"
+    )
+    _seed_candidate_event(
+        canonical, run_id="run:1", chunk_id="chk:c", year_bce=None, primary_place_id="pla:fangcheng"
+    )
+
+    n = load_candidate_events(canonical, "run:1")
+    assert n == 3
+
+    rows = canonical.execute(
+        "SELECT id, primary_place_id FROM events WHERE type='战' ORDER BY id"
+    ).fetchall()
+    assert len(rows) == 3
+    ids = [r[0] for r in rows]
+    assert len(set(ids)) == 3, f"event ids must be distinct: {ids}"
+    places = sorted(r[1] for r in rows)
+    assert places == ["pla:fangcheng", "pla:gaocheng", "pla:laotiao"]

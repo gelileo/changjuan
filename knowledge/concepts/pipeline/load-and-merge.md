@@ -114,7 +114,9 @@ Scalar fields merged: `type`, `ruling_clan`, `founded_date_json`, `ended_date_js
 
 `year_bce` is extracted from the candidate's `date_json` column via Python JSON parsing (`_year_bce_from_date_json`). SQLite `json_extract` is used in the match query to locate an existing event by composite key.
 
-**ID format:** `evt:<slug>-<year>bce` when a year is present (e.g. `evt:战-632bce`); `evt:<slug>` when no year. Slug is derived from `type` via `_slugify`. SHA-256 6-char suffix collision guard applies as with persons/places/states.
+**ID format:** `evt:<slug>-<year>bce` when a year is present (e.g. `evt:战-632bce`); `evt:<slug>` when no year. Slug is derived from `type` via `_slugify`.
+
+**Collision guard (Phase 6.5):** if the base id already exists in `events`, `_build_event_id` appends an incrementing counter — `-2`, `-3`, ... — until it finds a free id. The persons / places / states loaders use a deterministic SHA-256 hex suffix because they hash the candidate's full *name* (which differs across candidates with the same slug). Events can't use that approach: the hash input is the slug itself (since the composite key collapses year), so multiple new events sharing one slug — e.g. several `战` events at different places in one run — would all collide on the same suffix. Surfaced by Ch.6 smoke (战@老挑 / 战@郜城 / 战@防城). Counter-loop fix landed with `test_collision_guard_handles_multiple_distinct_places_same_type` locking the contract.
 
 **Scalar fields merged:** `type`, `outcome`, `summary`, `primary_place_id`. These use the same merge rule as persons: skip if None; set unconditionally if existing is None; emit Conflict if curated; apply `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold for auto provenance — emit Conflict if new confidence is not clearly higher.
 

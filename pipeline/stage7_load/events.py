@@ -16,7 +16,6 @@ Slug collision guard: append 6-char SHA-256 suffix if needed.
 
 from __future__ import annotations
 
-import hashlib
 import json as _json
 import sqlite3
 import uuid
@@ -175,16 +174,25 @@ def _year_bce_from_date_json(date_json: str | None) -> int | None:
 
 
 def _build_event_id(conn: sqlite3.Connection, event_type: str, year_bce: int | None) -> str:
-    """Build a slug-based event id and guard against collisions."""
+    """Build a slug-based event id, appending an incrementing counter on collision.
+
+    The base form is ``evt:{slug}`` (or ``evt:{slug}-{year_bce}bce`` when dated);
+    if that id already exists, we try ``-2``, ``-3``, ... until we find a free
+    one. A deterministic SHA256 suffix was used previously but collided when
+    multiple new events shared the same base id within one pipeline run (e.g.
+    several 战 events at different places) — every candidate hashed to the same
+    suffix, breaking the second INSERT. See `concepts/pipeline/load-and-merge.md`.
+    """
     slug = _slugify(event_type)
     if year_bce is not None:
-        event_id = f"evt:{slug}-{year_bce}bce"
+        base = f"evt:{slug}-{year_bce}bce"
     else:
-        event_id = f"evt:{slug}"
-    # Collision guard
-    if conn.execute("SELECT 1 FROM events WHERE id = ?;", (event_id,)).fetchone() is not None:
-        h = hashlib.sha256(event_id.encode("utf-8")).hexdigest()[:6]
-        event_id = f"{event_id}-{h}"
+        base = f"evt:{slug}"
+    event_id = base
+    n = 2
+    while conn.execute("SELECT 1 FROM events WHERE id = ?;", (event_id,)).fetchone() is not None:
+        event_id = f"{base}-{n}"
+        n += 1
     return event_id
 
 
