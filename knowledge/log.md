@@ -1,5 +1,20 @@
 # Build Log
 
+## [2026-05-22] feat(curation): curation/db.py read helpers (Phase 5 Task 7)
+
+Creates `curation/__init__.py` (package docstring) and `curation/db.py`
+(read-only data-fetching layer for the curation Streamlit app).
+Adds `LOW_CONFIDENCE_THRESHOLD: float = 0.55` to `pipeline/config.py`.
+
+Public API: `open_merge_candidates`, `coverage_stats`, `low_confidence_count`,
+`chapter_citation_context` (miss-safe). All connections use `?mode=ro` URI.
+Five unit tests in `tests/unit/test_curation_db.py`. Full suite: 261 tests.
+mypy --strict clean on `curation/db.py`.
+
+Articles updated: curation/streamlit-app.md (thin → in-progress),
+runtime/configuration.md (LOW_CONFIDENCE_THRESHOLD added),
+verification/testing.md (curation DB tests documented), log.md.
+
 ## [2026-05-22] feat(stage5): split_person manual escape hatch (Phase 5 Task 6)
 
 Implements `split_person(conn, person_id, *, variants_to_extract, note=None)`.

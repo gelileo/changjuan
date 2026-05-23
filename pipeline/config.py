@@ -87,3 +87,12 @@ GOLDEN_PR_THRESHOLDS: dict[str, dict[str, float]] = {
 #     exactly at threshold = minimum to land in the queue for human review.
 LINKER_AUTO_MERGE_THRESHOLD: float = 0.75
 LINKER_QUEUE_THRESHOLD: float = 0.40
+
+# Phase 5 — curation app
+#
+# Confidence below this value marks an extracted field as "low-confidence"
+# and surfaces it in the curation app's third review queue.
+# Initial v1 value: 0.55.  Rationale: scores in [0.55, 0.70) are technically
+# "plausible" but below the pipeline's default acceptance band; a curator can
+# confirm or reject them in <30 s.  Scores below 0.55 are treated as noise.
+LOW_CONFIDENCE_THRESHOLD: float = 0.55

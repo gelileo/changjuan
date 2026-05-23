@@ -2,7 +2,7 @@
 title: Automation-first pipeline architecture
 type: concept
 area: pipeline
-updated: 2026-05-21
+updated: 2026-05-22
 status: thin
 load_bearing: true
 references:
@@ -70,3 +70,4 @@ re-introducing the bug.
 - `--chapters N..M` flag on every stage for dry runs; nothing requires "full corpus" mode to run.
 - `pipeline/config.py::GOLDEN_PR_THRESHOLDS` gates `changjuan golden-eval` per entity kind. Recalibrated after v2 baseline (Task 29.4): relation.precision lowered 0.75 → 0.65 (v2 measured 0.6984); all others unchanged. See `concepts/runtime/configuration.md` for the full table + recalibration history.
 - `pipeline/config.py::LINKER_AUTO_MERGE_THRESHOLD` (0.75) and `LINKER_QUEUE_THRESHOLD` (0.40) are the Phase 3 dispatch dial for Stage 5 linker (`pipeline/stage5_link/linker.py::link_run`, lands in Tasks 7–8). Scores at or above auto → write `match_target_id`; between queue and auto → write `merge_candidates` row; below queue → candidate creates a new canonical at load. See `concepts/runtime/configuration.md` for v1 calibration rationale.
+- `pipeline/config.py::LOW_CONFIDENCE_THRESHOLD` (0.55) added in Phase 5 Task 7. Read by `curation.db.low_confidence_count` to surface low-confidence candidate facts in the curation app's third review queue. No pipeline stage reads this constant; it is curation-layer only.

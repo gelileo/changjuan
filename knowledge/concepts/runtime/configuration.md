@@ -3,7 +3,7 @@ title: Runtime Configuration
 type: concept
 area: runtime
 updated: 2026-05-22
-note: Phase 5 Task 6 — split_person implemented (no config change).
+note: Phase 5 Task 7 — LOW_CONFIDENCE_THRESHOLD added for curation app.
 status: mature
 load_bearing: true
 references:
@@ -93,3 +93,9 @@ Phase 5 Task 6 implements `split_person`; no new configuration constants are add
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.
 
 `candidate_pool` is re-exported from `pipeline.stage5_link.__init__` (added Task 7 fix) so callers can import it as `from pipeline.stage5_link import candidate_pool` without reaching into the sub-module directly. No configuration impact.
+
+## Phase 5 Constants (Curation app)
+
+As of Task 7, the following Phase 5 constant is defined:
+
+- **`LOW_CONFIDENCE_THRESHOLD`** (`float`): Confidence floor below which an extracted field is surfaced in the curation app's "low-confidence extractions" review queue. Initial v1 value: `0.55`. Rationale: scores in [0.55, 0.70) are technically plausible but below the pipeline's default acceptance band; a curator can confirm or reject them in under 30 seconds. Scores below 0.55 are treated as noise. Read by `curation.db.low_confidence_count` to query `candidate_facts`.

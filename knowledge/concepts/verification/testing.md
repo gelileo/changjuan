@@ -461,6 +461,18 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
 - Task 5 brings the suite to 19 tests covering `reject_merge` and `defer_merge`: `test_reject_merge_flips_status` (status → 'rejected', `resolved_at` set, result carries `mc_id` and `note`), `test_reject_merge_writes_audit_log` (`change_kind='merge_rejected'`, `after_json={"note":...}`), `test_reject_merge_stale_raises` (`StaleMergeCandidateError` when status != 'open'), and `test_defer_merge_is_noop` (full-DB snapshot before/after asserts no rows changed).
 - Task 6 brings the suite to 22 tests covering `split_person` (the manual escape hatch): `test_split_person_creates_new_row_with_variants` (new persons row minted, variant re-pointed to new id), `test_split_person_writes_audit_log` (`change_kind='split'`, `entity_id` = new person's id), and `test_split_person_unknown_variant_raises` (`SplitValidationError` when variant not on source row). Phase 5a (the load-bearing merge module) is complete.
 
+## Curation DB read-helper tests (Phase 5 Task 7)
+
+`tests/unit/test_curation_db.py` exercises the five public helpers in `curation.db`. An `empty_db` fixture creates a `tmp_path`-based canonical database via `connect` + `apply_schema(CANONICAL_SCHEMA)`. Five tests:
+
+- `test_open_merge_candidates_filters_status` — inserts two `merge_candidates` rows (`'open'` and `'merged'`); asserts only the open row is returned and `mc_id == 'mc:1'`. Note: `merge_candidates.candidate_a_id`/`candidate_b_id` are plain TEXT with no FK — persons rows are not required.
+- `test_open_merge_candidates_sorted_by_created_at` — inserts two open rows in reverse timestamp order; asserts `open_merge_candidates` returns them sorted oldest-first.
+- `test_coverage_stats_returns_108_rows` — builds a synthetic `corpus.sqlite` with 108 `documents` rows (one per chapter, `corpus='dongzhoulieguozhi'`); asserts `coverage_stats` returns exactly 108 `ChapterStatus` rows, all with `extracted=False`.
+- `test_low_confidence_count_handles_empty_db` — asserts `low_confidence_count` returns `0` when `candidate_facts` table is absent (exercises the `OperationalError` fallback).
+- `test_chapter_citation_context_miss_returns_placeholder` — builds an empty corpus DB; asserts `chapter_citation_context("cite:does-not-exist", ...)` returns `ChapterContext(text="(citation not found)")` without raising.
+
+The corpus corpus CHECK constraint requires `corpus IN ('dongzhoulieguozhi', 'zuozhuan', 'shiji')` — tests use `'dongzhoulieguozhi'` (not the short alias `'dzlgz'`). These tests use no real filesystem paths and no LLM calls.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

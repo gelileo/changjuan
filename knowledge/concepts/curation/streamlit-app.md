@@ -2,8 +2,8 @@
 title: Curation app — Streamlit retrospective review
 type: concept
 area: curation
-updated: 2026-05-20
-status: thin
+updated: 2026-05-22
+status: in-progress
 load_bearing: false
 references:
   - concepts/pipeline/architecture.md
@@ -37,3 +37,17 @@ Every curator decision writes an `audit_log` row with `change_kind='set'` or `ch
 ## Phase 1 status
 
 Not yet implemented. `curation/__init__.py` is a placeholder. The curation app is a Phase 2 build target. This article exists so the `curation/**/*.py` drift-check mapping resolves to a valid article from the first Phase 2 commit touching `curation/`.
+
+## DB access layer (Phase 5 Task 7)
+
+`curation/db.py` provides the read-only data-fetching layer for the curation app. All connections are opened via a `_ro_connect` context manager using the `?mode=ro` URI flag — writes are prohibited at the SQLite level. The module exports:
+
+- **`MergeCandidateRow`** — frozen dataclass for rows from `merge_candidates` (mc_id, kind, candidate_a_id, candidate_b_id, score, surface_features_json, llm_judgment_json, created_at).
+- **`ChapterStatus`** — frozen dataclass for chapter extraction coverage (chapter_num, title, extracted bool, latest_run_id).
+- **`ChapterContext`** — frozen dataclass for a resolved citation with surrounding paragraph context (citation_id, text, span_start, span_end, paragraphs list).
+- **`open_merge_candidates(db_path)`** — returns all `status='open'` merge candidates sorted by `created_at ASC`.
+- **`coverage_stats(db_path, *, corpus_path=None)`** — reads all chapters from `corpus.sqlite` (defaults to `db_path.parent/corpus.sqlite`) and cross-references with `pipeline_runs` where `stage='extract'` and `scope_json` contains a `chapter_num` or `chapter` key. Returns 108 `ChapterStatus` rows for a complete corpus.
+- **`low_confidence_count(db_path)`** — counts `candidate_facts` rows with `confidence < LOW_CONFIDENCE_THRESHOLD` (0.55). Returns 0 on `OperationalError` (table absent in early-stage databases).
+- **`chapter_citation_context(citation_id, *, corpus_path, ...)`** — resolves a citation to its source paragraph via a `citations JOIN chunks` query. Returns `ChapterContext(text="(citation not found)")` on miss — non-blocking per spec §5.
+
+No Streamlit imports are present in this module; it is pure data access.
