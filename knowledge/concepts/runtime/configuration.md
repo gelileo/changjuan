@@ -99,3 +99,5 @@ Phase 5 Task 6 implements `split_person`; no new configuration constants are add
 As of Task 7, the following Phase 5 constant is defined:
 
 - **`LOW_CONFIDENCE_THRESHOLD`** (`float`): Confidence floor below which an extracted field is surfaced in the curation app's "low-confidence extractions" review queue. Initial v1 value: `0.55`. Rationale: scores in [0.55, 0.70) are technically plausible but below the pipeline's default acceptance band; a curator can confirm or reject them in under 30 seconds. Scores below 0.55 are treated as noise. Read by `curation.db.low_confidence_count` to query `candidate_facts`.
+
+streamlit added as Phase 5 Task 8 dependency.

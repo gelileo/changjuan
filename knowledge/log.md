@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-05-22] feat(curation): rendering components (Phase 5 Task 8)
+
+Creates `curation/components/` package with three pure-rendering Streamlit primitives:
+- `shell.render_shell` — 40/40/20 three-column review-screen layout.
+- `coverage_grid.render_coverage_grid` — 108-cell chapter extraction coverage grid.
+- `records.render_pair` — side-by-side candidate-vs-canonical field renderer with
+  field-level diff badges (same / one_null / disagree) and optional edit mode.
+
+No state, no DB writes. Adds `streamlit` as a project dependency.
+mypy --strict clean on all 6 `curation/` source files. Full suite: 261 tests.
+
+Articles updated: curation/streamlit-app.md (Components section added),
+runtime/configuration.md (streamlit dependency note), log.md.
+
 ## [2026-05-22] feat(curation): curation/db.py read helpers (Phase 5 Task 7)
 
 Creates `curation/__init__.py` (package docstring) and `curation/db.py`

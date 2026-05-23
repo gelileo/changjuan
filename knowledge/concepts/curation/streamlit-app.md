@@ -51,3 +51,19 @@ Not yet implemented. `curation/__init__.py` is a placeholder. The curation app i
 - **`chapter_citation_context(citation_id, *, corpus_path, ...)`** — resolves a citation to its source paragraph via a `citations JOIN chunks` query. Returns `ChapterContext(text="(citation not found)")` on miss — non-blocking per spec §5.
 
 No Streamlit imports are present in this module; it is pure data access.
+
+## Components (Phase 5 Task 8)
+
+`curation/components/` contains three pure-rendering primitives that the Streamlit pages (Tasks 9–10) compose. None carry state, write to the DB, or import from `curation.db` beyond type hints.
+
+### `shell.render_shell`
+
+Three-column layout (40 / 40 / 20 ratio) for the review screen. Accepts three callables (`render_left`, `render_center`, `render_right`); each callable owns its column's content. Column headers are injected as HTML divs with the class `curation-label` (`EVIDENCE`, `CANDIDATE PAIR`, `DECISION`).
+
+### `coverage_grid.render_coverage_grid`
+
+Renders a 108-cell chapter coverage grid using inline CSS (`_GRID_CSS`) and a single HTML string assembled from `list[ChapterStatus]`. Green cells (`.coverage-cell.extracted`) represent chapters with at least one completed extraction run; grey cells represent pending chapters. A `st.caption` line below the grid shows the extracted / total count.
+
+### `records.render_pair`
+
+Side-by-side candidate-vs-canonical field renderer. Computes a `list[FieldDiff]` for the five tracked fields (`canonical_name`, `gender`, `clan_name`, `state_id`, `notes`). Each diff carries a badge (`same` / `one_null` / `disagree`) that drives background colour on the rendered spans. In `edit_mode=True`, the canonical column renders `st.text_input` widgets instead of readonly spans and returns an `edits: dict[str, Any]` with changed fields; in read-only mode returns `None`. `surface_features_json` is rendered as a `st.caption`; `llm_judgment_json` is rendered inside a `st.expander`.
