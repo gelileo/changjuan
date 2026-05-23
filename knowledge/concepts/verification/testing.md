@@ -447,6 +447,14 @@ All five are unit tests using `tmp_path`; no real corpus access.
 
 The `states` table uses `name` (not `canonical_name`) — confirmed against `pipeline/schemas/canonical_schema.sql`.
 
+### Phase 5 — curator UI
+
+- `tests/unit/test_stage5_merge.py` — unit tests for the decision actions
+  (`accept_merge`, `reject_merge`, `defer_merge`, `split_person`). Atomicity
+  is verified by full-DB snapshot before/after on every error branch.
+- `tests/fixtures/curation/seed_merge_db.py` — tiny synthetic DB seeder
+  used by the merge unit tests.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

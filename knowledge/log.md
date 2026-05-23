@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): merge.py skeleton + first failing test (Phase 5 Task 1)
+
+Scaffolds `pipeline/stage5_link/merge.py` with dataclasses, error classes,
+and four `NotImplementedError` function stubs. Adds the seeded-DB fixture
+under `tests/fixtures/curation/`. First failing test asserts `accept_merge`
+returns a `MergeResult` for the happy path — fails with NotImplementedError
+as expected.
+
 ## [2026-05-22] Phase 4 complete — multi-chapter runs (Ch.2-5) + reign-table expansion shipped
 
 Phase 4 unlocks chapters 2-5 of 东周列国志. The pipeline (extract → link → load) now handles non-鲁/周 reign anchors via per-state YAML reign tables in `data/reigns/`. Four new chapters extracted, linked, and loaded end-to-end. Spot-check QA accepted with documented calibration. Ch.1 golden P/R still green (non-regression).

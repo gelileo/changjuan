@@ -69,6 +69,10 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 
 **Stats reconciliation invariant (Phase 3 Task 8 fix):** `link_run` returns a stats dict where `candidates_processed == auto_merges + queued + skipped`. The `already_matched` short-circuit (skipping same-run siblings that already became a match target) now correctly bumps `skipped` before continuing, so the invariant holds for cross-run sibling merges.
 
+## merge_candidates consumer — merge.py (Phase 5 Task 1)
+
+`pipeline/stage5_link/merge.py` is the first Phase 5 module that will **consume** `merge_candidates` rows. It exposes `accept_merge`, `reject_merge`, `defer_merge`, `split_person` — the decision actions invoked by the curator UI. When `accept_merge` lands (Task 2) it will write to `persons`, `person_variants`, `event_participants`, and `audit_log` in one transaction. The data-model impact is documented in the Phase 5 design spec (`docs/superpowers/specs/2026-05-22-phase5-curator-ui-design.md` §3, §4). Task 1 ships stubs only.
+
 ## candidate_persons.match_target_id (Phase 3)
 
 `candidate_persons.match_target_id` is a nullable TEXT column added in Phase 3 Task 1. It is populated by Stage 5 (linker, see `concepts/pipeline/linking.md`) after the linker identifies a canonical or sibling-candidate identity for this record. The value may be either a canonical `persons.id` slug (e.g. `per:jin-wen-gong`) or the `id` of a sibling `candidate_persons` row from the same pipeline run that the linker has decided is the same entity. Stage 7 honors this column during the candidate-promotion pass: when `match_target_id` is set, Stage 7 routes the candidate's data into the identified target record via field-merge logic and uses the target's `canonical_name` as the fallback name rather than minting a new slug. No foreign-key constraint is applied — an FK would reject rows whose target is a sibling candidate not yet promoted to canonical at insert time (spec §6 anti-pattern: "no FK on match_target_id").

@@ -119,6 +119,14 @@ Two mechanisms together prevent double-counting:
 
 Cross-run pairs (current candidate vs. existing canonical) are handled straightforwardly: the target_id is already a `per:` id, and Stage 7 queries `persons` directly.
 
+## Merge actions (Phase 5)
+
+`pipeline.stage5_link.merge` provides the decision actions invoked by the
+curator UI: `accept_merge`, `reject_merge`, `defer_merge`, `split_person`.
+Each function takes a sqlite Connection and performs its DB writes in a
+single transaction. The audit_log row is atomic with the data change.
+Detailed semantics live in the Phase 5 design spec (`docs/superpowers/specs/2026-05-22-phase5-curator-ui-design.md` §3, §4).
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.
