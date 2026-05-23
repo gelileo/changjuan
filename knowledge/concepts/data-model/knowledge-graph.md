@@ -2,9 +2,9 @@
 title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
-updated: 2026-05-22
-note: Phase 5 Task 6 — split_person implemented; persons INSERT requires confidence + provenance defaults.
-status: thin
+updated: 2026-05-23
+note: Phase 6 Task A1 — rejected_merges table added for curator reject-memory.
+status: mature
 load_bearing: true
 references:
   - concepts/pipeline/architecture.md
@@ -99,3 +99,7 @@ Phase 5 Task 5 adds `'merge_rejected'` to the `audit_log.change_kind` CHECK cons
 ## candidate_persons.match_target_id set by accept_merge (Phase 5.1)
 
 Phase 5.1: when `accept_merge` handles a `candidate_persons`-side A candidate, it sets `candidate_persons.match_target_id = canonical_id` on the merged row instead of deleting it. This marks the historical extraction record as resolved without destroying it. Stage 7 already reads `match_target_id` during the promotion pass; a curator-set value here is semantically identical to a linker-set one.
+
+### rejected_merges (Phase 6 Track A)
+
+`rejected_merges(canonical_id, candidate_fingerprint, rejected_at, audit_log_id)` persists curator rejections so the linker can skip previously-rejected pairs on future runs. Primary key is `(canonical_id, candidate_fingerprint)` — a composite that uniquely identifies "this canonical person was judged NOT the same entity as this candidate". `canonical_id` references `persons(id)` (the surviving canonical record); `candidate_fingerprint` is a stable 16-hex hash derived from candidate-side data only (name + sorted variant set), computed at reject time from whichever table the candidate lives in (`candidate_persons` or `persons`, per Phase 5.1). `audit_log_id` is a soft FK to `audit_log(id)` linking back to the `merge_rejected` audit row written by `reject_merge`. A secondary index on `candidate_fingerprint` alone allows efficient lookup by fingerprint without knowing the canonical id in advance.

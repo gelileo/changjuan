@@ -362,6 +362,23 @@ CREATE TABLE IF NOT EXISTS merge_candidates (
     resolved_at         TEXT
 );
 
+-- Phase 6: persist curator rejections so the linker never re-flags the same pair.
+-- canonical_id  → persons.id (the survivor in the rejected pair).
+-- candidate_fingerprint → stable 16-hex hash of (name, sorted(set(variants))),
+--                         computed at reject time from whichever table candidate A
+--                         lives in (candidate_persons or persons, per Phase 5.1).
+-- audit_log_id  → linked audit row (FK is soft; audit_log.id is TEXT).
+CREATE TABLE IF NOT EXISTS rejected_merges (
+    canonical_id          TEXT NOT NULL REFERENCES persons(id),
+    candidate_fingerprint TEXT NOT NULL,
+    rejected_at           TEXT NOT NULL,
+    audit_log_id          TEXT REFERENCES audit_log(id),
+    PRIMARY KEY (canonical_id, candidate_fingerprint)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rejected_merges_fingerprint
+    ON rejected_merges (candidate_fingerprint);
+
 CREATE TABLE IF NOT EXISTS qa_samples (
     id              TEXT PRIMARY KEY,
     pipeline_run_id TEXT NOT NULL,

@@ -523,6 +523,12 @@ Three tests added for the Phase 5.1 `candidate_persons`-side A path in `accept_m
 
 Total test count after Phase 5.1: **265**.
 
+## Phase 6 Task A1 — rejected_merges schema test
+
+`tests/unit/test_canonical_schema.py::test_rejected_merges_table_exists` (Phase 6 Task A1) is a targeted schema test for the new `rejected_merges` table. It applies `CANONICAL_SCHEMA` to an in-memory SQLite database, then asserts the table exists with the correct columns (`canonical_id`, `candidate_fingerprint`, `PRIMARY KEY`) and that the `idx_rejected_merges_fingerprint` secondary index was created. This test follows the same apply-then-assert pattern as the existing canonical schema tests in the file.
+
+Total test count after Phase 6 Task A1: **267** (was 265; +1 here, +1 in a concurrent task if any).
+
 ## What would invalidate this article
 
 - Adding a second test runner.

@@ -1,5 +1,9 @@
 # Build Log
 
+## [2026-05-23] feat(schema): add rejected_merges table (Phase 6 Task A1)
+
+- Phase 6 Task A1: added rejected_merges table for curator reject-memory.
+
 ## [2026-05-23] feat(stage5): accept_merge handles candidate_persons-side A (Phase 5.1)
 
 `merge_candidates.candidate_a_id` in the live DB references `candidate_persons.id`, not

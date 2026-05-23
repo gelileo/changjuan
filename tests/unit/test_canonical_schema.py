@@ -115,3 +115,28 @@ def test_audit_log_field_history_query(tmp_path: Path) -> None:
     assert rows[0]["field"] == "birth_year"
     assert rows[0]["confidence"] == 0.6
     assert rows[0]["source"] == "extract@v1"
+
+
+def test_rejected_merges_table_exists() -> None:
+    """Phase 6: rejected_merges is part of the canonical schema."""
+    import sqlite3
+
+    from pipeline.db import apply_schema
+    from pipeline.schemas import CANONICAL_SCHEMA
+
+    conn = sqlite3.connect(":memory:")
+    apply_schema(conn, CANONICAL_SCHEMA)
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='rejected_merges'"
+    ).fetchone()
+    assert row is not None, "rejected_merges table missing from schema"
+    ddl = row[0]
+    assert "canonical_id" in ddl
+    assert "candidate_fingerprint" in ddl
+    assert "PRIMARY KEY" in ddl
+
+    idx = conn.execute(
+        "SELECT name FROM sqlite_master "
+        "WHERE type='index' AND name='idx_rejected_merges_fingerprint'"
+    ).fetchone()
+    assert idx is not None, "fingerprint index missing"
