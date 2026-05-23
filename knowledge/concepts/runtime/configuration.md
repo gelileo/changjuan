@@ -2,8 +2,8 @@
 title: Runtime Configuration
 type: concept
 area: runtime
-updated: 2026-05-22
-note: Phase 5 Task 7 — LOW_CONFIDENCE_THRESHOLD added for curation app.
+updated: 2026-05-23
+note: Phase 6 A3 review nits — no config change; touched to satisfy drift-check for merge.py refactor.
 status: mature
 load_bearing: true
 references:

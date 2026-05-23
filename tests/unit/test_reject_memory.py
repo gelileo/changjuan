@@ -81,7 +81,7 @@ def test_reject_writes_rejected_merges_row() -> None:
     reject_merge(conn, mc_id, note="not the same person")
 
     rows = conn.execute(
-        "SELECT canonical_id, candidate_fingerprint, audit_log_id " "FROM rejected_merges"
+        "SELECT canonical_id, candidate_fingerprint, audit_log_id FROM rejected_merges"
     ).fetchall()
     assert len(rows) == 1
     row = rows[0]
@@ -110,6 +110,8 @@ def test_reject_is_idempotent_on_duplicate() -> None:
 
     count = conn.execute("SELECT COUNT(*) FROM rejected_merges").fetchone()[0]
     assert count == 1  # second insert hit INSERT OR IGNORE
+    audit_count = conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0]
+    assert audit_count == 2, "both rejections should still produce audit rows"
 
 
 def test_reject_from_persons_side_candidate_a() -> None:

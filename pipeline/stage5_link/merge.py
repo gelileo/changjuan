@@ -491,6 +491,42 @@ def accept_merge(
     )
 
 
+def _load_reject_payload(
+    conn: sqlite3.Connection, cand_a_id: str, cand_b_id: str
+) -> tuple[str, list[str], str]:
+    """Return (name, variants, canonical_id_for_rejected_merges) for reject_merge.
+
+    Phase 5.1 dual-table reality:
+      - Typical: A in candidate_persons; B in persons.
+        → name from candidate_persons.canonical_name
+        → variants from candidate_persons.variants_json
+        → canonical_id = B (persons.id)
+      - Escape-hatch: A in persons; B in persons.
+        → name from persons.canonical_name
+        → variants from person_variants
+        → canonical_id = A (the rejected pair means "don't merge B into A")
+    """
+    cp = conn.execute(
+        "SELECT canonical_name, variants_json FROM candidate_persons WHERE id = ?",
+        (cand_a_id,),
+    ).fetchone()
+    if cp is not None:
+        raw = cp["variants_json"]
+        variants: list[str] = []
+        if raw:
+            parsed = json.loads(raw)
+            variants = [v["variant"] for v in parsed if isinstance(v, dict) and "variant" in v]
+        return cp["canonical_name"], variants, cand_b_id
+
+    p = conn.execute("SELECT canonical_name FROM persons WHERE id = ?", (cand_a_id,)).fetchone()
+    if p is None:
+        raise MergeError(f"candidate_a_id {cand_a_id!r} not found in candidate_persons or persons")
+    variant_rows = conn.execute(
+        "SELECT variant FROM person_variants WHERE person_id = ?", (cand_a_id,)
+    ).fetchall()
+    return p["canonical_name"], [r["variant"] for r in variant_rows], cand_a_id
+
+
 def reject_merge(
     conn: sqlite3.Connection,
     mc_id: str,
@@ -544,42 +580,6 @@ def reject_merge(
         (canonical_id, fingerprint, now, audit_id),
     )
     return RejectResult(mc_id=mc_id, note=note)
-
-
-def _load_reject_payload(
-    conn: sqlite3.Connection, cand_a_id: str, cand_b_id: str
-) -> tuple[str, list[str], str]:
-    """Return (name, variants, canonical_id_for_rejected_merges) for reject_merge.
-
-    Phase 5.1 dual-table reality:
-      - Typical: A in candidate_persons; B in persons.
-        → name from candidate_persons.canonical_name
-        → variants from candidate_persons.variants_json
-        → canonical_id = B (persons.id)
-      - Escape-hatch: A in persons; B in persons.
-        → name from persons.canonical_name
-        → variants from person_variants
-        → canonical_id = A (the rejected pair means "don't merge B into A")
-    """
-    cp = conn.execute(
-        "SELECT canonical_name, variants_json FROM candidate_persons WHERE id = ?",
-        (cand_a_id,),
-    ).fetchone()
-    if cp is not None:
-        raw = cp["variants_json"]
-        variants: list[str] = []
-        if raw:
-            parsed = json.loads(raw)
-            variants = [v["variant"] for v in parsed if isinstance(v, dict) and "variant" in v]
-        return cp["canonical_name"], variants, cand_b_id
-
-    p = conn.execute("SELECT canonical_name FROM persons WHERE id = ?", (cand_a_id,)).fetchone()
-    if p is None:
-        raise MergeError(f"candidate_a_id {cand_a_id!r} not found in candidate_persons or persons")
-    variant_rows = conn.execute(
-        "SELECT variant FROM person_variants WHERE person_id = ?", (cand_a_id,)
-    ).fetchall()
-    return p["canonical_name"], [r["variant"] for r in variant_rows], cand_a_id
 
 
 def defer_merge(conn: sqlite3.Connection, mc_id: str) -> None:

@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-22
+updated: 2026-05-23
 status: mature
 load_bearing: false
 references:

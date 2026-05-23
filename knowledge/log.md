@@ -3,7 +3,7 @@
 ## [2026-05-23] feat(stage5): Phase 6 Task A3 — reject_merge writes rejected_merges; dual-table candidate-A handled
 
 - Phase 6 Task A3: reject_merge writes rejected_merges row; dual-table candidate-A handled.
-- Articles touched: concepts/pipeline/linking.md, concepts/data-model/knowledge-graph.md, concepts/runtime/configuration.md.
+- Articles touched: concepts/pipeline/linking.md, concepts/data-model/knowledge-graph.md, concepts/runtime/configuration.md, concepts/verification/testing.md.
 
 ## [2026-05-23] feat(stage5): Phase 6 Task A2 — added candidate_fingerprint helper
 

@@ -2,8 +2,8 @@
 title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
-updated: 2026-05-22
-implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module)
+updated: 2026-05-23
+implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention)
 status: thin
 load_bearing: true
 references:

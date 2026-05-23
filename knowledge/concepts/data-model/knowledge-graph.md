@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-05-23
-note: Phase 6 Task A1 — rejected_merges table added for curator reject-memory.
+note: Phase 6 A3 review nits — _load_reject_payload moved before reject_merge; no schema change.
 status: mature
 load_bearing: true
 references:
