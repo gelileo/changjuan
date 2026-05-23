@@ -535,6 +535,20 @@ Total test count after Phase 6 Task A1: **267** (was 265; +1 here, +1 in a concu
 
 Total test count after Phase 6 Task A2: **273**.
 
+## Phase 6 Task A3 — reject_merge rejected_merges unit tests
+
+`tests/unit/test_reject_memory.py` adds 3 unit tests for the `rejected_merges` side effect of `reject_merge`:
+
+- `test_reject_writes_rejected_merges_row` — seeds a `candidate_persons`-side candidate A and a `persons`-side canonical B, calls `reject_merge`, asserts one `rejected_merges` row with correct `canonical_id`, `candidate_fingerprint` (computed via `candidate_fingerprint("申侯", ["申侯","申伯"])`), and a non-null `audit_log_id` that references a real `merge_rejected` audit row.
+- `test_reject_is_idempotent_on_duplicate` — seeds two open `merge_candidates` rows pointing at the same `(canonical_id, fingerprint)` pair; calls `reject_merge` twice; asserts `COUNT(*) FROM rejected_merges == 1` (the second INSERT OR IGNORE was silently ignored).
+- `test_reject_from_persons_side_candidate_a` — seeds candidate A in `persons` + `person_variants` (escape-hatch case); asserts `rejected_merges.canonical_id == 'p:A'` (the pair means "don't merge B into A").
+
+All three tests use `_fresh_db()` (`:memory:` + `CANONICAL_SCHEMA`), no fixtures, no I/O.
+
+`tests/integration/test_curator_smoke.py` gains `_migrate_rejected_merges(db_path)` — an idempotent migration helper that adds the Phase 6 `rejected_merges` table and its index to the live-DB copy. Called from the `db_copy` fixture alongside the existing `_migrate_audit_log_check`. This was required because the smoke test's live DB was created before Phase 6 and lacked the table.
+
+Total test count after Phase 6 Task A3: **276**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

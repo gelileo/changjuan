@@ -80,6 +80,31 @@ def _migrate_audit_log_check(db_path: Path) -> None:
         conn.close()
 
 
+def _migrate_rejected_merges(db_path: Path) -> None:
+    """Add the Phase 6 rejected_merges table if missing.
+
+    Idempotent — CREATE TABLE IF NOT EXISTS plus the matching index.
+    """
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS rejected_merges (
+                canonical_id          TEXT NOT NULL REFERENCES persons(id),
+                candidate_fingerprint TEXT NOT NULL,
+                rejected_at           TEXT NOT NULL,
+                audit_log_id          TEXT REFERENCES audit_log(id),
+                PRIMARY KEY (canonical_id, candidate_fingerprint)
+            );
+            CREATE INDEX IF NOT EXISTS idx_rejected_merges_fingerprint
+                ON rejected_merges (candidate_fingerprint);
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @pytest.fixture
 def db_copy(tmp_path: Path) -> Path:
     if not LIVE_DB.exists():
@@ -87,6 +112,7 @@ def db_copy(tmp_path: Path) -> Path:
     dst = tmp_path / "smoke.sqlite"
     shutil.copy(LIVE_DB, dst)
     _migrate_audit_log_check(dst)
+    _migrate_rejected_merges(dst)
     return dst
 
 

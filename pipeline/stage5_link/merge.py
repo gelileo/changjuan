@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from pipeline.stage5_link.fingerprint import candidate_fingerprint
+
 # Tables that _row_snapshot is permitted to read.
 _SNAPSHOTTABLE_TABLES: frozenset[str] = frozenset({"persons", "events", "places", "states"})
 
@@ -495,29 +497,89 @@ def reject_merge(
     *,
     note: str | None = None,
 ) -> RejectResult:
-    """Mark a merge_candidates row as rejected with an optional curator note."""
-    mc_row = conn.execute("SELECT status FROM merge_candidates WHERE id = ?", (mc_id,)).fetchone()
+    """Mark a merge_candidates row as rejected and persist a rejected_merges row.
+
+    Phase 6: the rejected_merges row is the linker's filter against re-flagging.
+    Candidate A may live in either candidate_persons (typical) or persons
+    (escape-hatch case from Phase 5.1) — both paths are handled here.
+    """
+    mc_row = conn.execute(
+        "SELECT status, candidate_a_id, candidate_b_id FROM merge_candidates WHERE id = ?",
+        (mc_id,),
+    ).fetchone()
     if mc_row is None:
         raise MergeError(f"no merge_candidates row with id={mc_id!r}")
     if mc_row["status"] != "open":
         raise StaleMergeCandidateError(f"merge_candidates {mc_id!r} status is {mc_row['status']!r}")
 
+    cand_a_id = mc_row["candidate_a_id"]
+    cand_b_id = mc_row["candidate_b_id"]
+
+    # Phase 5.1 dual-table detection: candidate A can be in either table.
+    name, variants, canonical_id = _load_reject_payload(conn, cand_a_id, cand_b_id)
+    fingerprint = candidate_fingerprint(name, variants)
+
+    audit_id = _new_audit_id()
+    now = _now_iso()
+
     conn.execute(
         "UPDATE merge_candidates SET status = 'rejected', resolved_at = ? WHERE id = ?",
-        (_now_iso(), mc_id),
+        (now, mc_id),
     )
     conn.execute(
         "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
         "before_json, after_json, actor, at) "
         "VALUES (?, 'merge_candidate', ?, NULL, 'merge_rejected', '{}', ?, 'curator', ?)",
         (
-            _new_audit_id(),
+            audit_id,
             mc_id,
-            json.dumps({"note": note}, ensure_ascii=False),
-            _now_iso(),
+            json.dumps({"note": note, "fingerprint": fingerprint}, ensure_ascii=False),
+            now,
         ),
     )
+    conn.execute(
+        "INSERT OR IGNORE INTO rejected_merges "
+        "(canonical_id, candidate_fingerprint, rejected_at, audit_log_id) "
+        "VALUES (?, ?, ?, ?)",
+        (canonical_id, fingerprint, now, audit_id),
+    )
     return RejectResult(mc_id=mc_id, note=note)
+
+
+def _load_reject_payload(
+    conn: sqlite3.Connection, cand_a_id: str, cand_b_id: str
+) -> tuple[str, list[str], str]:
+    """Return (name, variants, canonical_id_for_rejected_merges) for reject_merge.
+
+    Phase 5.1 dual-table reality:
+      - Typical: A in candidate_persons; B in persons.
+        → name from candidate_persons.canonical_name
+        → variants from candidate_persons.variants_json
+        → canonical_id = B (persons.id)
+      - Escape-hatch: A in persons; B in persons.
+        → name from persons.canonical_name
+        → variants from person_variants
+        → canonical_id = A (the rejected pair means "don't merge B into A")
+    """
+    cp = conn.execute(
+        "SELECT canonical_name, variants_json FROM candidate_persons WHERE id = ?",
+        (cand_a_id,),
+    ).fetchone()
+    if cp is not None:
+        raw = cp["variants_json"]
+        variants: list[str] = []
+        if raw:
+            parsed = json.loads(raw)
+            variants = [v["variant"] for v in parsed if isinstance(v, dict) and "variant" in v]
+        return cp["canonical_name"], variants, cand_b_id
+
+    p = conn.execute("SELECT canonical_name FROM persons WHERE id = ?", (cand_a_id,)).fetchone()
+    if p is None:
+        raise MergeError(f"candidate_a_id {cand_a_id!r} not found in candidate_persons or persons")
+    variant_rows = conn.execute(
+        "SELECT variant FROM person_variants WHERE person_id = ?", (cand_a_id,)
+    ).fetchall()
+    return p["canonical_name"], [r["variant"] for r in variant_rows], cand_a_id
 
 
 def defer_merge(conn: sqlite3.Connection, mc_id: str) -> None:

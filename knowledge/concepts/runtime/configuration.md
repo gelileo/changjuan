@@ -91,6 +91,10 @@ Phase 5 Task 6 implements `split_person`; no new configuration constants are add
 
 Phase 5.1 adds no configuration constants. The `_LOCAL_STATE_ID_RE` regex (`^s\d+$`) is a module-level constant in `pipeline/stage5_link/merge.py` (not in `pipeline/config.py`) because it is a hard data-shape rule, not a tunable threshold.
 
+## reject_merge rejected_merges write (Phase 6 Task A3)
+
+Phase 6 Task A3 extends `reject_merge` to write a `rejected_merges` row; no new configuration constants are added. The function remains threshold-free and operates entirely via DB state.
+
 ## Phase 6 Task A2 — candidate_fingerprint (no configuration constants)
 
 `pipeline/stage5_link/fingerprint.candidate_fingerprint` is configuration-free: SHA-1/16-hex/sorted-set-dedup are hard-coded design decisions (see Phase 6 spec §3.2), not tuneable thresholds.
