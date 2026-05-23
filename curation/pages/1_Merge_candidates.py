@@ -252,7 +252,11 @@ def main() -> None:
         if st.button("a · Accept merge", use_container_width=True):
             _do_accept(current.mc_id)
             st.rerun()
-        if st.button("e · Edit & accept", use_container_width=True):
+        # Two-stage button: first click enters edit mode, second click commits with edits.
+        # Label flips to make the active mode obvious — without this, the same "Edit & accept"
+        # label appears for both states and curators don't realize the second click commits.
+        edit_label = "e · ✓ Confirm edits" if edit_mode else "e · Edit & accept"
+        if st.button(edit_label, use_container_width=True):
             if edit_mode and edits_captured is not None:
                 _do_accept(current.mc_id, edits=edits_captured)
                 st.session_state["edit_mode"] = False
@@ -260,6 +264,8 @@ def main() -> None:
             else:
                 st.session_state["edit_mode"] = True
                 st.rerun()
+        if edit_mode:
+            st.caption("✏️ Edit mode active — modify the center column, then click ✓ Confirm.")
         if st.button("r · Reject", use_container_width=True):
             _do_reject(current.mc_id)
             st.rerun()

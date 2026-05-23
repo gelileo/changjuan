@@ -126,3 +126,7 @@ The evidence column previously queried `entity_citations WHERE entity_kind = 'pe
 ### Recent-decisions sidebar (Phase 6 walk fix #3)
 
 `_render_history_sidebar` in `pages/1_Merge_candidates.py` reads the last 20 merge-related `audit_log` rows (`change_kind IN ('merge', 'merge_rejected', 'split', 'edit')`) and renders them in `st.sidebar` as timestamped captions. Lets the curator confirm what just landed and spot accidental wrong-target decisions during a long walk. Read-only, no schema change, no `merge.py` API change. Budget: 3/3 used.
+
+### Edit-mode button-label flip (Phase 6 walk polish #4)
+
+The "Edit & accept" two-stage flow shares the same `e` button for "enter edit mode" and "commit edits". Without a visible mode indicator, curators don't realize the second click commits. The button label now flips to "e · ✓ Confirm edits" when `edit_mode` is True, and a small caption ("✏️ Edit mode active — modify the center column, then click ✓ Confirm") appears below the action panel. ~10 LOC; over the strict ≤3-fix budget by one polish item — counted in the retro as `4/3 (polish only)`.

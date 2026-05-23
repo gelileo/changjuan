@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] fix(curation): walk polish #4 — edit-mode button label flips
+
+- The two-stage "Edit & accept" reused the same button label for both states; curators didn't realize the second click commits. Label now flips to "✓ Confirm edits" + caption hint in edit mode.
+- ~10 LOC. Over the strict ≤3-fix walk budget by one polish item (budget intent was "no new features"; this is clarity, not features).
+- Articles touched: concepts/curation/streamlit-app.md.
+
 ## [2026-05-23] chore(db): migrate live audit_log CHECK constraint to Phase 5/6 vocabulary
 
 - Phase 5 added `'edit'`, `'merge_rejected'`, and `'merge_collision_resolved'` to `audit_log.change_kind` in `canonical_schema.sql`, but the existing live DB at `data/changjuan.sqlite` (created pre-Phase 5) kept the original CHECK constraint. The smoke test masked this with an in-test migration helper. Surfaced when the curator tried "Edit & accept" during the Phase 6 walk and `INSERT INTO audit_log ... change_kind = 'edit'` failed.
