@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] refactor(test): A1 review nits — drop redundant imports, use connect(), tighten heading
+
+- `tests/unit/test_canonical_schema.py`: removed local re-imports of `sqlite3`, `apply_schema`, `CANONICAL_SCHEMA` from `test_rejected_merges_table_exists`; switched from `sqlite3.connect(":memory:")` to `connect()` + `tmp_path`; added `"rejected_merges"` to `EXTRA_TABLES`.
+- `knowledge/concepts/data-model/knowledge-graph.md`: promoted `### rejected_merges` to `##`.
+- Articles touched: `concepts/verification/testing.md`.
+
 ## [2026-05-23] feat(schema): add rejected_merges table (Phase 6 Task A1)
 
 - Phase 6 Task A1: added rejected_merges table for curator reject-memory.

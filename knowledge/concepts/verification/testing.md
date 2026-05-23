@@ -53,7 +53,7 @@ Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into 
 
 ## Canonical schema tests
 
-Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` creates all entity and relation tables (Task 9), all candidate and bookkeeping tables plus the `field_history` view (Task 10), and that `person_relations.kind` accepts `clan_member` without a constraint violation. The `test_audit_log_field_history_query` test inserts a field-level `audit_log` row and reads it back through the `field_history` view, asserting the `{value, confidence}` extraction is correct.
+Tests in `tests/unit/test_canonical_schema.py` verify that `CANONICAL_SCHEMA` creates all entity and relation tables (Task 9), all candidate and bookkeeping tables plus the `field_history` view (Task 10), and that `person_relations.kind` accepts `clan_member` without a constraint violation. The `test_audit_log_field_history_query` test inserts a field-level `audit_log` row and reads it back through the `field_history` view, asserting the `{value, confidence}` extraction is correct. `test_rejected_merges_table_exists` (Phase 6 Task A1) verifies the `rejected_merges` table and its `idx_rejected_merges_fingerprint` index are created, and that the DDL contains the required columns (`canonical_id`, `candidate_fingerprint`, `PRIMARY KEY`). `EXTRA_TABLES` now includes `"rejected_merges"` so `test_canonical_schema_creates_candidate_and_bookkeeping_tables` covers it. All schema tests use the project `connect()` helper with `tmp_path`, not `sqlite3.connect(":memory:")` directly.
 
 ## Date parser tests
 
