@@ -458,6 +458,7 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
 - Task 3 brings the suite to 12 tests covering PK-collision branches.
 - Task 3 follow-up (review minors) adds `test_accept_merge_event_participants_collision_tie_keeps_canonical`, bringing the suite to 13 tests; this test locks in the canonical-wins-on-tie rule.
 - Task 4 brings the suite to 15 tests covering `accept_merge` with curator `edits`: `test_accept_merge_with_edits_applies_field_change` (edits={clan_name:"姬"} → row updated, `fields_edited==1`) and `test_accept_merge_with_edits_writes_field_level_audit` (edits={notes:...} → field-level `audit_log` row with `change_kind='edit'` and §5-shaped `before_json`/`after_json`).
+- Task 5 brings the suite to 19 tests covering `reject_merge` and `defer_merge`: `test_reject_merge_flips_status` (status → 'rejected', `resolved_at` set, result carries `mc_id` and `note`), `test_reject_merge_writes_audit_log` (`change_kind='merge_rejected'`, `after_json={"note":...}`), `test_reject_merge_stale_raises` (`StaleMergeCandidateError` when status != 'open'), and `test_defer_merge_is_noop` (full-DB snapshot before/after asserts no rows changed).
 
 ## What would invalidate this article
 

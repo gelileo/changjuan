@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): reject_merge + defer_merge (Phase 5 Task 5)
+
+Implements `reject_merge` (flips status → 'rejected', sets resolved_at, writes
+`audit_log` row with `change_kind='merge_rejected'` and `after_json={"note":...}`)
+and `defer_merge` (no-op — cursor advances in Streamlit memory only).
+Schema CHECK constraint extended to include 'merge_rejected'.
+Unit test suite grows from 15 → 19. Mypy clean.
+
 ## [2026-05-22] feat(stage5): accept_merge edits + field-level audit_log (Phase 5 Task 4)
 
 Curator can pass `edits={field: value}` to apply to canonical pre-fold.

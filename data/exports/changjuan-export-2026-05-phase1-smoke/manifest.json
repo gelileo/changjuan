@@ -1,0 +1,27 @@
+{
+  "version": "2026-05-phase1-smoke",
+  "schema_version": 1,
+  "generated_at": "2026-05-20T14:03:39.889481+00:00",
+  "counts": {
+    "persons": 1,
+    "person_variants": 0,
+    "states": 0,
+    "state_capitals": 0,
+    "places": 0,
+    "events": 0,
+    "event_participants": 0,
+    "event_places": 0,
+    "event_relations": 0,
+    "person_relations": 0,
+    "person_states": 0,
+    "entity_citations": 0,
+    "conflicts": 0,
+    "audit_log": 1,
+    "pipeline_runs": 0,
+    "merge_candidates": 0,
+    "qa_samples": 0
+  },
+  "source_corpus_editions": {
+    "dongzhoulieguozhi": "dongzhoulieguozhi/json (upstream repo)"
+  }
+}

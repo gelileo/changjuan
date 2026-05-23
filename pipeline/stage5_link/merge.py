@@ -436,12 +436,36 @@ def reject_merge(
     note: str | None = None,
 ) -> RejectResult:
     """Mark a merge_candidates row as rejected with an optional curator note."""
-    raise NotImplementedError  # implemented in Task 5
+    mc_row = conn.execute("SELECT status FROM merge_candidates WHERE id = ?", (mc_id,)).fetchone()
+    if mc_row is None:
+        raise MergeError(f"no merge_candidates row with id={mc_id!r}")
+    if mc_row["status"] != "open":
+        raise StaleMergeCandidateError(f"merge_candidates {mc_id!r} status is {mc_row['status']!r}")
+
+    conn.execute(
+        "UPDATE merge_candidates SET status = 'rejected', resolved_at = ? WHERE id = ?",
+        (_now_iso(), mc_id),
+    )
+    conn.execute(
+        "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+        "before_json, after_json, actor, at) "
+        "VALUES (?, 'merge_candidate', ?, NULL, 'merge_rejected', '{}', ?, 'curator', ?)",
+        (
+            _new_audit_id(),
+            mc_id,
+            json.dumps({"note": note}, ensure_ascii=False),
+            _now_iso(),
+        ),
+    )
+    return RejectResult(mc_id=mc_id, note=note)
 
 
 def defer_merge(conn: sqlite3.Connection, mc_id: str) -> None:
-    """No-op from the DB's perspective. Curator advances the cursor in-memory."""
-    raise NotImplementedError  # implemented in Task 5
+    """No DB writes — curator's cursor advances in Streamlit memory only.
+
+    Kept as a function so the UI layer has a uniform shape for all five actions.
+    """
+    return None
 
 
 def split_person(

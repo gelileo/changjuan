@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -16,6 +17,8 @@ from pipeline.stage5_link.merge import (
     MergeResult,
     StaleMergeCandidateError,
     accept_merge,
+    defer_merge,
+    reject_merge,
 )
 from tests.fixtures.curation.seed_merge_db import (
     add_entity_citations_duplicate,
@@ -255,3 +258,69 @@ def test_accept_merge_event_participants_collision_tie_keeps_canonical(
     assert len(rows) == 1
     assert rows[0]["person_id"] == "per:test:canonical"
     assert rows[0]["confidence"] == 0.9
+
+
+def test_reject_merge_flips_status(seeded_db: tuple[Path, str]) -> None:
+    db_path, mc_id = seeded_db
+    with connect(db_path) as conn:
+        result = reject_merge(conn, mc_id, note="different people")
+    assert result.mc_id == mc_id
+    assert result.note == "different people"
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT status, resolved_at FROM merge_candidates WHERE id = ?",
+            (mc_id,),
+        ).fetchone()
+    assert row["status"] == "rejected"
+    assert row["resolved_at"] is not None
+    # Note: merge_candidates has no curator_note column. The note lives on
+    # the audit_log row (asserted in test_reject_merge_writes_audit_log below).
+
+
+def test_reject_merge_writes_audit_log(seeded_db: tuple[Path, str]) -> None:
+    db_path, mc_id = seeded_db
+    with connect(db_path) as conn:
+        reject_merge(conn, mc_id, note="different people")
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT change_kind, before_json, after_json FROM audit_log "
+            "WHERE change_kind = 'merge_rejected'"
+        ).fetchone()
+    assert row is not None
+    after = json.loads(row["after_json"])
+    assert after["note"] == "different people"
+
+
+def test_reject_merge_stale_raises(seeded_db: tuple[Path, str]) -> None:
+    db_path, mc_id = seeded_db
+    with connect(db_path) as conn:
+        conn.execute("UPDATE merge_candidates SET status='rejected' WHERE id = ?", (mc_id,))
+    with connect(db_path) as conn:
+        with pytest.raises(StaleMergeCandidateError):
+            reject_merge(conn, mc_id)
+
+
+def test_defer_merge_is_noop(seeded_db: tuple[Path, str]) -> None:
+    db_path, mc_id = seeded_db
+    # Snapshot the full DB before/after; assert equality.
+    before = _dump(db_path)
+    with connect(db_path) as conn:
+        defer_merge(conn, mc_id)
+    after = _dump(db_path)
+    assert before == after
+
+
+def _dump(db_path: Path) -> dict[str, list[tuple[Any, ...]]]:
+    """Full-DB snapshot for atomicity assertions. Returns table -> rows."""
+    out: dict[str, list[tuple[Any, ...]]] = {}
+    with connect(db_path) as conn:
+        tables = [
+            r["name"]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' " "AND name NOT LIKE 'sqlite_%'"
+            )
+        ]
+        for table in tables:
+            rows = conn.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
+            out[table] = [tuple(r) for r in rows]
+    return out

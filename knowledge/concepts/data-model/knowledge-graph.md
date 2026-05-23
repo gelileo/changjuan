@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-05-22
-note: Task 3 follow-up fixes tie-break + audit-completeness minors in merge.py (no schema change).
+note: Phase 5 Task 5 — audit_log.change_kind CHECK extended with 'merge_rejected'.
 status: thin
 load_bearing: true
 references:

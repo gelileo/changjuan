@@ -1,0 +1,27 @@
+{
+  "version": "phase2-prep-20260521T203851",
+  "schema_version": 1,
+  "generated_at": "2026-05-22T00:38:54.821062+00:00",
+  "counts": {
+    "audit_log": 0,
+    "conflicts": 0,
+    "entity_citations": 0,
+    "event_participants": 0,
+    "event_places": 0,
+    "event_relations": 0,
+    "events": 0,
+    "merge_candidates": 0,
+    "person_relations": 0,
+    "person_states": 0,
+    "person_variants": 0,
+    "persons": 0,
+    "pipeline_runs": 4,
+    "places": 0,
+    "qa_samples": 0,
+    "state_capitals": 0,
+    "states": 0
+  },
+  "source_corpus_editions": {
+    "dongzhoulieguozhi": "dongzhoulieguozhi/json (upstream repo)"
+  }
+}

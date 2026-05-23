@@ -3,7 +3,7 @@ title: Runtime Configuration
 type: concept
 area: runtime
 updated: 2026-05-22
-note: Task 3 follow-up fixes tie-break + audit-completeness minors in merge.py (no config change).
+note: Phase 5 Task 5 — reject_merge + defer_merge added (no config change).
 status: mature
 load_bearing: true
 references:

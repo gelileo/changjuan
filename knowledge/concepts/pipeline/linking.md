@@ -159,6 +159,19 @@ Editable fields: `gender`, `birth_date_json`, `death_date_json`, `notes`,
 `state_id`, `clan_name`, `canonical_name`. Other field names raise
 `MergeError`.
 
+### `reject_merge` and `defer_merge`
+
+`reject_merge(conn, mc_id, *, note=None)` flips `merge_candidates.status` to
+`'rejected'`, sets `resolved_at`, and writes an `audit_log` row with
+`change_kind='merge_rejected'` and `after_json={"note": <note>}`.
+
+`defer_merge(conn, mc_id)` is a no-op from the DB's perspective — the
+curator's cursor advances in Streamlit memory. Kept as a function so the
+UI dispatch layer is uniform.
+
+Reject-memory (preventing the next linker run from re-flagging a rejected
+pair) is deferred to Phase 6.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.
