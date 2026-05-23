@@ -31,8 +31,8 @@ def _create_person(
         """
         INSERT INTO persons
             (id, canonical_name, gender, birth_date_json, death_date_json, notes,
-             state_id, clan_name, confidence, provenance, pipeline_run_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'auto', ?);
+             state_id, clan_name, social_category, confidence, provenance, pipeline_run_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'auto', ?);
         """,
         (
             person_id,
@@ -43,6 +43,7 @@ def _create_person(
             c["notes"],
             resolved_state_id if resolved_state_id is not None else c["state_id"],
             c["clan_name"],
+            c["social_category"],
             c["confidence"],
             pipeline_run_id,
         ),
@@ -309,7 +310,8 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
 
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-        "state_id, clan_name, confidence, chunk_id, quote, variants_json, match_target_id "
+        "state_id, clan_name, social_category, confidence, chunk_id, quote, "
+        "variants_json, match_target_id "
         "FROM candidate_persons WHERE pipeline_run_id = ? ORDER BY id;",
         (pipeline_run_id,),
     )

@@ -14,6 +14,7 @@ _PERSON_SCALAR_FIELDS = (
     "notes",
     "state_id",
     "clan_name",
+    "social_category",
 )
 
 _PRECISION_RANK: dict[str, int] = {"point": 3, "circa": 2, "range": 1}

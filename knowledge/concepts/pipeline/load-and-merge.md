@@ -51,7 +51,7 @@ Every canonical record carries `provenance ∈ {auto, curated}`. The load stage 
 
 ## Scalar merge rules
 
-When a candidate matches an existing Person, each scalar field (`gender`, `birth_date_json`, `death_date_json`, `notes`, `state_id`, `clan_name`) is merged independently:
+When a candidate matches an existing Person, each scalar field (`gender`, `birth_date_json`, `death_date_json`, `notes`, `state_id`, `clan_name`, `social_category`) is merged independently:
 
 - **Skip if candidate value is None** — no change.
 - **Skip if old == new** — already in sync. For `*_json` fields, equality is checked semantically (deserialize both JSON strings and compare as Python dicts/lists via `_scalars_equal`), so different key orderings of the same object do not produce a spurious Conflict.

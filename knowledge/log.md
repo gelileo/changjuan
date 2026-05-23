@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-23] fix(load): propagate `persons.social_category` through stage 7
+
+- Surfaced by Ch.6 post-load audit: all 82 canonical persons had `social_category=NULL` despite every candidate (415 rows) populating it. Three sites in the stage-7 persons loader silently dropped the column:
+  - `pipeline/stage7_load/helpers.py::_PERSON_SCALAR_FIELDS` — tuple missing `social_category`, so the merge path never considered it.
+  - `pipeline/stage7_load/persons.py::_create_person` — `INSERT INTO persons (...)` listed every other shared column but not this one.
+  - `pipeline/stage7_load/persons.py::load_candidate_persons` — the `SELECT` from `candidate_persons` didn't fetch `social_category` either, so it never reached the row dict the merge/create paths consume.
+- Added `social_category` to all three; new tests `test_load_propagates_social_category_on_create` and `test_load_fills_null_social_category_on_merge` lock the contract.
+- Backfilled the 82 existing canonicals from each person's highest-confidence candidate (tiebreaker: most-recent `created_at`); audit_log entries recorded under synthetic `pipeline_runs` row `run:backfill-social-category-*` with actor `backfill@social-category-v1`. Distribution: royalty 34, official 27, noble 9, commoner 4, military 4, servant 2, unknown 1, foreign 1. Pre-backfill DB snapshot at `data/changjuan.sqlite.pre-social-backfill-bak`.
+- Articles touched: concepts/pipeline/load-and-merge.md, concepts/verification/testing.md.
+
 ## [2026-05-23] fix(load): `_build_event_id` counter-loop collision guard
 
 - Ch.6 smoke load failed with `IntegrityError: UNIQUE constraint failed: events.id` when three new 战 events at different places (老挑 / 郜城 / 防城) loaded in one pipeline run. The prior SHA-256 6-char suffix was deterministic from the slug — every collision hashed to the same suffix.

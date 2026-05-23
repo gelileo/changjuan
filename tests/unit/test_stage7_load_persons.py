@@ -349,3 +349,54 @@ def test_merge_json_field_same_content_different_key_order_no_conflict(tmp_path:
     assert (
         set_events == []
     ), "same JSON content with different key order must not produce a set audit-log event"
+
+
+def test_load_propagates_social_category_on_create(tmp_path: Path) -> None:
+    """Regression: candidate's social_category must land on the canonical person.
+
+    The original loader omitted `social_category` from both the SELECT and the
+    INSERT, so canonical `persons.social_category` was always NULL despite
+    extractions setting it on every candidate. Surfaced by Ch.6 smoke audit.
+    """
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, social_category, confidence,"
+            "  pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:1', '重耳', 'royalty', 0.95, 'run:1',"
+            "  'chk:dzl:1:0', 'fixture quote');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+        row = conn.execute(
+            "SELECT social_category FROM persons WHERE canonical_name='重耳';"
+        ).fetchone()
+    assert row is not None
+    assert row["social_category"] == "royalty"
+
+
+def test_load_fills_null_social_category_on_merge(tmp_path: Path) -> None:
+    """A later candidate with social_category set must backfill a NULL on the
+    existing canonical row (same null-fill rule as gender / state_id)."""
+    with connect(tmp_path / "changjuan.sqlite") as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # First load: candidate without social_category
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:1', '重耳', 0.95, 'run:1', 'chk:dzl:1:0', 'q1');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:1")
+        # Second load: candidate with social_category populated
+        conn.execute(
+            "INSERT INTO candidate_persons"
+            " (id, canonical_name, social_category, confidence,"
+            "  pipeline_run_id, chunk_id, quote)"
+            " VALUES ('cper:2', '重耳', 'royalty', 0.92, 'run:2',"
+            "  'chk:dzl:1:5', 'q2');"
+        )
+        load_candidate_persons(conn, pipeline_run_id="run:2")
+        row = conn.execute(
+            "SELECT social_category FROM persons WHERE canonical_name='重耳';"
+        ).fetchone()
+    assert row["social_category"] == "royalty"
