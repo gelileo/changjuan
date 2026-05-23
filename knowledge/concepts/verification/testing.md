@@ -587,6 +587,10 @@ The first test is the load-bearing regression for the duplicate-row problem obse
 
 Total test count after Phase 6 Task A6: **282** (281 passed + 1 pre-existing curator-smoke failure).
 
+## `_migrate_audit_log_check` FK preservation (Phase 6 follow-up)
+
+The Phase 5 smoke test helper `_migrate_audit_log_check` does the standard SQLite "table rename trick" to widen the `audit_log.change_kind` CHECK constraint. Since SQLite 3.26 the default behavior of `ALTER TABLE … RENAME TO` is to *also* rewrite foreign-key references in OTHER tables — so once `rejected_merges` was added in Phase 6 with `audit_log_id REFERENCES audit_log(id)`, the rename silently mutated that FK to `audit_log_old(id)`, which then broke at the next `DROP audit_log_old`. The helper now wraps the rename in `PRAGMA legacy_alter_table=ON` / `OFF` so FK references in sibling tables are preserved verbatim. Total test count: **282** (now 282 passing).
+
 ## What would invalidate this article
 
 - Adding a second test runner.

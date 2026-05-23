@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] fix(test): smoke-test audit_log migration preserves rejected_merges FK
+
+- Smoke test's `_migrate_audit_log_check` was rewriting `rejected_merges.audit_log_id` FK from `audit_log` → `audit_log_old` during the RENAME trick (SQLite default behavior since 3.26). When `audit_log_old` was dropped, the FK pointed at a nonexistent table; `reject_merge` then failed with `no such table: audit_log_old`. Fixed by wrapping the RENAME in `PRAGMA legacy_alter_table=ON/OFF`.
+- Articles touched: concepts/verification/testing.md.
+
 ## [2026-05-23] feat(stage5): Phase 6 Task A6 — linker skips emission of pairs already in open merge_candidates queue
 
 - Phase 6 Task A6: linker skips emission of pairs already in open merge_candidates queue.

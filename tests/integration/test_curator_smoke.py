@@ -57,6 +57,11 @@ def _migrate_audit_log_check(db_path: Path) -> None:
         existing = conn.execute("SELECT sql FROM sqlite_master WHERE name='audit_log'").fetchone()
         if existing and "'edit'" in existing[0] and "'merge_rejected'" in existing[0]:
             return  # already migrated
+        # Prevent SQLite from rewriting FK references in OTHER tables
+        # (e.g. rejected_merges.audit_log_id REFERENCES audit_log(id)) during the
+        # RENAME — without this, the FK silently becomes REFERENCES audit_log_old(id)
+        # and breaks the moment audit_log_old is dropped below.
+        conn.execute("PRAGMA legacy_alter_table=ON")
         conn.execute("ALTER TABLE audit_log RENAME TO audit_log_old")
         conn.execute(f"""
             CREATE TABLE audit_log (
@@ -75,6 +80,7 @@ def _migrate_audit_log_check(db_path: Path) -> None:
         """)
         conn.execute("INSERT INTO audit_log SELECT * FROM audit_log_old")
         conn.execute("DROP TABLE audit_log_old")
+        conn.execute("PRAGMA legacy_alter_table=OFF")
         conn.commit()
     finally:
         conn.close()
