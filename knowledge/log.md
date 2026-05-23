@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] fix(curation): walk fix #1 — _load_person dual-table fallback
+
+- Phase 5 UI's `_load_person` only queried `persons`. A-side fields rendered as `-` because `candidate_a_id` typically references `candidate_persons` (Phase 5.1 reality). Mirrors `_load_reject_payload`'s dual-table pattern.
+- Counted against Track B friction-fix budget (1/3 used).
+- Articles touched: concepts/curation/streamlit-app.md.
+
 ## [2026-05-23] fix(curation): streamlit-shortcuts ≥1.3 API migration — add_keyboard_shortcuts → add_shortcuts
 
 - The shipped Phase 5 curator page failed to import on a fresh `uv sync` because `streamlit-shortcuts` renamed `add_keyboard_shortcuts(dict)` to `add_shortcuts(**kwargs)` between the Phase 5 ship version (1.2.1) and the currently-installed version. Curator UI was broken at the merge-candidates page. Migration: one import + one call site updated in `curation/pages/1_Merge_candidates.py`.

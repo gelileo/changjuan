@@ -56,7 +56,16 @@ def _reload() -> None:
 
 
 def _load_person(conn: sqlite3.Connection, person_id: str) -> dict[str, Any]:
+    """Load a person row from either canonical persons or candidate_persons.
+
+    Phase 5.1 dual-table reality: a merge_candidates.candidate_a_id typically
+    references candidate_persons.id (not persons.id). The original Phase 5 UI
+    only queried persons, so A-side fields all rendered as '-'. Mirror the same
+    dual-table fallback used by pipeline.stage5_link.merge._load_reject_payload.
+    """
     row = conn.execute("SELECT * FROM persons WHERE id = ?", (person_id,)).fetchone()
+    if row is None:
+        row = conn.execute("SELECT * FROM candidate_persons WHERE id = ?", (person_id,)).fetchone()
     return dict(row) if row else {"id": person_id}
 
 
