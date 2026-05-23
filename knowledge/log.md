@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): split_person manual escape hatch (Phase 5 Task 6)
+
+Implements `split_person(conn, person_id, *, variants_to_extract, note=None)`.
+Mints a new person row with `confidence=1.0, provenance='curated'` and moves
+the listed variants from the source row. Raises `SplitValidationError` on
+unknown variants. Relations stay on the source row. Writes `audit_log` row
+with `change_kind='split'`. Unit test suite grows from 19 → 22.
+Phase 5a (the load-bearing merge module) is complete.
+
+Articles updated: linking.md, knowledge-graph.md, configuration.md,
+testing.md, log.md.
+
 ## [2026-05-22] feat(stage5): reject_merge + defer_merge (Phase 5 Task 5)
 
 Implements `reject_merge` (flips status → 'rejected', sets resolved_at, writes

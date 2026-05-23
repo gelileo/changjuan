@@ -3,7 +3,7 @@ title: Runtime Configuration
 type: concept
 area: runtime
 updated: 2026-05-22
-note: Phase 5 Task 5 — reject_merge + defer_merge added (no config change).
+note: Phase 5 Task 6 — split_person implemented (no config change).
 status: mature
 load_bearing: true
 references:
@@ -79,6 +79,14 @@ Phase 5 Task 3 extends `accept_merge` with four collision-resolution helpers; no
 ## `accept_merge` edits handling (Phase 5 Task 4)
 
 Phase 5 Task 4 extends `accept_merge` with an `edits` parameter; no new configuration constants are added. The `_ALLOWED_EDIT_FIELDS` frozenset is a module-level constant in `pipeline/stage5_link/merge.py` (not in `pipeline/config.py`) because it is a hard contract on permitted curator operations, not a tunable threshold.
+
+## `reject_merge` + `defer_merge` (Phase 5 Task 5)
+
+Phase 5 Task 5 implements `reject_merge` and `defer_merge`; no new configuration constants are added. `defer_merge` is a no-op. `reject_merge` updates `merge_candidates.status` and writes an `audit_log` row; both functions operate entirely via DB state.
+
+## `split_person` (Phase 5 Task 6)
+
+Phase 5 Task 6 implements `split_person`; no new configuration constants are added. The function is threshold-free — all logic is deterministic (validate variants exist, mint new id, update rows, write audit_log). The `confidence=1.0` and `provenance='curated'` defaults for the minted person row are hard-coded business decisions, not tunable values. Phase 5a (the load-bearing merge module) is now complete.
 
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 

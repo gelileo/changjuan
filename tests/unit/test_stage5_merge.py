@@ -15,10 +15,12 @@ import pytest
 from pipeline.db import connect
 from pipeline.stage5_link.merge import (
     MergeResult,
+    SplitValidationError,
     StaleMergeCandidateError,
     accept_merge,
     defer_merge,
     reject_merge,
+    split_person,
 )
 from tests.fixtures.curation.seed_merge_db import (
     add_entity_citations_duplicate,
@@ -324,3 +326,53 @@ def _dump(db_path: Path) -> dict[str, list[tuple[Any, ...]]]:
             rows = conn.execute(f"SELECT * FROM {table} ORDER BY 1").fetchall()
             out[table] = [tuple(r) for r in rows]
     return out
+
+
+def test_split_person_creates_new_row_with_variants(seeded_db: tuple[Path, str]) -> None:
+    db_path, _ = seeded_db
+    # Add a second variant to the canonical row so we have something to peel off.
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO person_variants (id, person_id, variant, kind) "
+            "VALUES ('pv:test:c:2', 'per:test:canonical', '姬靖', '本名')"
+        )
+    with connect(db_path) as conn:
+        result = split_person(
+            conn,
+            "per:test:canonical",
+            variants_to_extract=["姬靖"],
+            note="peeling off an incorrectly-merged identity",
+        )
+    assert result.source_person_id == "per:test:canonical"
+    assert result.new_person_id.startswith("per:")
+    assert result.variants_moved == ["姬靖"]
+    # The peeled variant should now point at the new person.
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT person_id FROM person_variants WHERE variant = '姬靖'"
+        ).fetchone()
+    assert row["person_id"] == result.new_person_id
+
+
+def test_split_person_writes_audit_log(seeded_db: tuple[Path, str]) -> None:
+    db_path, _ = seeded_db
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO person_variants (id, person_id, variant, kind) "
+            "VALUES ('pv:test:c:2', 'per:test:canonical', '姬靖', '本名')"
+        )
+    with connect(db_path) as conn:
+        result = split_person(conn, "per:test:canonical", variants_to_extract=["姬靖"])
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT change_kind, entity_id FROM audit_log WHERE change_kind = 'split'"
+        ).fetchone()
+    assert row is not None
+    assert row["entity_id"] == result.new_person_id
+
+
+def test_split_person_unknown_variant_raises(seeded_db: tuple[Path, str]) -> None:
+    db_path, _ = seeded_db
+    with connect(db_path) as conn:
+        with pytest.raises(SplitValidationError):
+            split_person(conn, "per:test:canonical", variants_to_extract=["不存在"])

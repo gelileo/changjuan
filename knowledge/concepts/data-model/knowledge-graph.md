@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-05-22
-note: Phase 5 Task 5 — audit_log.change_kind CHECK extended with 'merge_rejected'.
+note: Phase 5 Task 6 — split_person implemented; persons INSERT requires confidence + provenance defaults.
 status: thin
 load_bearing: true
 references:
@@ -87,3 +87,11 @@ Phase 5 Task 3 adds `'merge_collision_resolved'` to the `audit_log.change_kind` 
 ## audit_log.change_kind expansion (Phase 5 Task 4)
 
 Phase 5 Task 4 adds `'edit'` to the `audit_log.change_kind` CHECK constraint. This value is written when a curator passes `edits={field: value}` to `accept_merge`. Each edited field produces one field-level `audit_log` row with `change_kind='edit'`, `before_json` and `after_json` both in the §5 shape `{value, confidence, source_excerpt}`. The full allowed set is now: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`, `edit`.
+
+## Phase 5 Task 5 audit_log.change_kind expansion
+
+Phase 5 Task 5 adds `'merge_rejected'` to the `audit_log.change_kind` CHECK constraint. Written by `reject_merge`. The full allowed set is: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`, `edit`, `merge_rejected`.
+
+## persons INSERT defaults for split_person (Phase 5 Task 6)
+
+`split_person` mints a new `persons` row. The table requires `confidence REAL NOT NULL` and `provenance TEXT NOT NULL CHECK (provenance IN ('auto','curated'))`. Since the split is a curator-initiated assertion of a distinct identity, sensible defaults are `confidence=1.0` and `provenance='curated'`. The `canonical_name` is set to the first peeled variant; the curator edits it later via the curation UI. The `audit_log` row uses `change_kind='split'` (already in the CHECK constraint since the original schema).

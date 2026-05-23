@@ -3,7 +3,7 @@ title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
 updated: 2026-05-22
-implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution)
+implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module)
 status: thin
 load_bearing: true
 references:
@@ -171,6 +171,21 @@ UI dispatch layer is uniform.
 
 Reject-memory (preventing the next linker run from re-flagging a rejected
 pair) is deferred to Phase 6.
+
+### `split_person` (manual escape hatch)
+
+`split_person(conn, person_id, *, variants_to_extract, note=None)` creates
+a new person row and moves the listed variants from the source row to it.
+Relations on the source row stay put — the new row starts relation-less.
+Validates that all listed variants exist on the source row; raises
+`SplitValidationError` otherwise.
+
+The new person row is minted with `confidence=1.0` and `provenance='curated'`
+(the curator is asserting a distinct identity) and takes its `canonical_name`
+from the first peeled variant. The curator can edit these via the curation UI.
+An `audit_log` row with `change_kind='split'` is written, with `before_json`
+capturing the source person snapshot and `after_json` carrying the new id,
+source id, peeled variants, and optional note.
 
 ## What would invalidate this article
 

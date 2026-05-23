@@ -475,8 +475,63 @@ def split_person(
     variants_to_extract: list[str],
     note: str | None = None,
 ) -> SplitResult:
-    """Peel listed variants into a new person row. Source-row relations stay put."""
-    raise NotImplementedError  # implemented in Task 6
+    """Peel listed variants off the source row into a new person row.
+
+    Relations on the source row stay put — the new row starts relation-less.
+    The curator can fix relations via the conflicts queue or future undo flow.
+    """
+    source = _row_snapshot(conn, "persons", person_id)
+    if source is None:
+        raise MergeError(f"no person row with id={person_id!r}")
+    existing_variants = {
+        r["variant"]
+        for r in conn.execute(
+            "SELECT variant FROM person_variants WHERE person_id = ?", (person_id,)
+        )
+    }
+    missing = [v for v in variants_to_extract if v not in existing_variants]
+    if missing:
+        raise SplitValidationError(f"variants not on source row: {missing!r}")
+
+    new_id = f"per:split:{uuid.uuid4().hex[:12]}"
+    # New row inherits canonical_name = first peeled variant; curator can edit later.
+    # confidence=1.0 and provenance='curated' are the sensible defaults for a
+    # curator-initiated split: the curator is asserting this is a distinct person.
+    conn.execute(
+        "INSERT INTO persons (id, canonical_name, confidence, provenance) VALUES (?, ?, ?, ?)",
+        (new_id, variants_to_extract[0], 1.0, "curated"),
+    )
+    for v in variants_to_extract:
+        conn.execute(
+            "UPDATE person_variants SET person_id = ? " "WHERE person_id = ? AND variant = ?",
+            (new_id, person_id, v),
+        )
+
+    conn.execute(
+        "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+        "before_json, after_json, actor, at) "
+        "VALUES (?, 'person', ?, NULL, 'split', ?, ?, 'curator', ?)",
+        (
+            _new_audit_id(),
+            new_id,
+            json.dumps(source, ensure_ascii=False),
+            json.dumps(
+                {
+                    "id": new_id,
+                    "source_person_id": person_id,
+                    "variants": variants_to_extract,
+                    "note": note,
+                },
+                ensure_ascii=False,
+            ),
+            _now_iso(),
+        ),
+    )
+    return SplitResult(
+        source_person_id=person_id,
+        new_person_id=new_id,
+        variants_moved=list(variants_to_extract),
+    )
 
 
 # ---------------------------------------------------------------------------
