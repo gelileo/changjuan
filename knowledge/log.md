@@ -1,5 +1,23 @@
 # Build Log
 
+## [2026-05-22] test(curation): end-to-end smoke + scripts/curator-smoke (Phase 5 Task 11)
+
+Creates `tests/integration/test_curator_smoke.py` and `scripts/curator-smoke`.
+
+Two fixture helpers in the test:
+- `_migrate_audit_log_check` — upgrades the live DB's `audit_log` CHECK
+  constraint to accept Phase 5's new `change_kind` values
+  (`merge_collision_resolved`, `edit`, `merge_rejected`). The live DB was
+  created before Phase 5 and rejects these values. Migration uses the
+  sqlite rename trick; idempotent.
+- `_promote_merge_candidates_to_persons` — inserts open merge candidate A-side
+  rows (which live in `candidate_persons`) into `persons` with their original
+  IDs, enabling `accept_merge` to find them. Idempotent via `INSERT OR IGNORE`.
+
+Smoke result: `accepted=11, rejected=10, deferred=10, skipped_conflicts=0,
+skipped_not_found=0` against the 31-row live queue.
+Full suite: 262 tests (261 + 1).
+
 ## [2026-05-22] feat(curation): merge-candidates review screen (Phase 5 Task 10)
 
 Creates `curation/pages/1_Merge_candidates.py` — the workhorse curator review page.

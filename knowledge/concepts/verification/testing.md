@@ -473,6 +473,44 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
 
 The corpus corpus CHECK constraint requires `corpus IN ('dongzhoulieguozhi', 'zuozhuan', 'shiji')` — tests use `'dongzhoulieguozhi'` (not the short alias `'dzlgz'`). These tests use no real filesystem paths and no LLM calls.
 
+## Curator smoke test (Phase 5 Task 11)
+
+`tests/integration/test_curator_smoke.py` — end-to-end exercise of
+`accept_merge`, `reject_merge`, and `defer_merge` against a `tmp_path`
+copy of the live DB (`data/changjuan.sqlite`).
+
+The `db_copy` fixture:
+1. Copies the live DB to `tmp_path/smoke.sqlite`.
+2. Calls `_migrate_audit_log_check` — upgrades the old `audit_log` CHECK
+   constraint (which predates Phase 5) to accept the new `change_kind`
+   values `'merge_collision_resolved'`, `'edit'`, and `'merge_rejected'`.
+   Migration uses the sqlite rename trick (rename → create new →
+   INSERT SELECT → drop old). Idempotent.
+3. Calls `_promote_merge_candidates_to_persons` — inserts the
+   `candidate_persons` rows referenced by open `merge_candidates` into
+   the `persons` table with their original IDs. This is necessary because
+   the live DB's `merge_candidates.candidate_a_id` references
+   `candidate_persons.id` (candidates not yet fully loaded), but
+   `accept_merge` looks up candidate_a_id in `persons`. Promotion inserts
+   with `provenance='auto'` and `state_id=NULL` (local extraction ids
+   like `'s1'` are not valid FK references to `states`). Idempotent via
+   `INSERT OR IGNORE`.
+
+The single test `test_curator_smoke_resolves_all_open_candidates`:
+- Reads all open merge candidates via `open_merge_candidates`.
+- Cycles accept/reject/defer across all 31 rows (modulo 3).
+- Catches `MergeConflictError` (field disagreement — rare on real data)
+  and `MergeError` (candidate not found after an earlier accept removed
+  it) as graceful skips rather than test failures.
+- Asserts `remaining open == deferred + skipped_*` (no unreported drops).
+- Asserts zero orphan FKs across all 5 person-FK columns.
+- Asserts `audit_log` row count >= accepted + rejected.
+
+`scripts/curator-smoke` is the thin pytest wrapper for this test.
+
+Smoke result on 2026-05-22 live data (31 candidates):
+`accepted=11, rejected=10, deferred=10, skipped_conflicts=0, skipped_not_found=0`.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
