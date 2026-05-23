@@ -9,11 +9,15 @@ spec §5) correct.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+
+# Tables that _row_snapshot is permitted to read.
+_SNAPSHOTTABLE_TABLES: frozenset[str] = frozenset({"persons", "events", "places", "states"})
 
 
 class MergeError(Exception):
@@ -77,7 +81,133 @@ def accept_merge(
 
     See spec §3 for the full algorithm. All work happens in one transaction.
     """
-    raise NotImplementedError  # implemented in Task 2
+    # Edits are processed in Task 4. For Task 2, edits must be None or empty.
+    if edits:
+        raise NotImplementedError("edits handled in Task 4")
+
+    cur = conn.execute(
+        "SELECT id, candidate_a_id, candidate_b_id, status " "FROM merge_candidates WHERE id = ?",
+        (mc_id,),
+    )
+    mc_row = cur.fetchone()
+    if mc_row is None:
+        raise MergeError(f"no merge_candidates row with id={mc_id!r}")
+    if mc_row["status"] != "open":
+        raise StaleMergeCandidateError(f"merge_candidates {mc_id!r} status is {mc_row['status']!r}")
+
+    candidate_id = mc_row["candidate_a_id"]
+    canonical_id = mc_row["candidate_b_id"]
+
+    # Snapshots for audit_log.
+    candidate_snapshot = _row_snapshot(conn, "persons", candidate_id)
+    if candidate_snapshot is None:
+        raise MergeError(f"candidate person {candidate_id!r} not found")
+    canonical_snapshot_before = _row_snapshot(conn, "persons", canonical_id)
+    if canonical_snapshot_before is None:
+        raise MergeError(f"canonical person {canonical_id!r} not found")
+
+    # 3. Field-level fold: NULL canonical slots filled from candidate.
+    nullable_fields = (
+        "gender",
+        "birth_date_json",
+        "death_date_json",
+        "notes",
+        "state_id",
+        "clan_name",
+    )
+    field_updates: dict[str, Any] = {}
+    for field_name in nullable_fields:
+        cand_val = candidate_snapshot.get(field_name)
+        can_val = canonical_snapshot_before.get(field_name)
+        if cand_val is None or cand_val == can_val:
+            continue
+        if can_val is None:
+            field_updates[field_name] = cand_val
+        else:
+            raise MergeConflictError(field_name, cand_val, can_val)
+    if field_updates:
+        set_clause = ", ".join(f"{f} = ?" for f in field_updates)
+        conn.execute(
+            f"UPDATE persons SET {set_clause} WHERE id = ?",
+            (*field_updates.values(), canonical_id),
+        )
+
+    # 4. Variant fold (UNIQUE(person_id, variant, kind) makes this collision-safe).
+    existing = {
+        (r["variant"], r["kind"])
+        for r in conn.execute(
+            "SELECT variant, kind FROM person_variants WHERE person_id = ?", (canonical_id,)
+        )
+    }
+    variants_added = 0
+    candidate_variants = conn.execute(
+        "SELECT id, variant, kind FROM person_variants WHERE person_id = ?", (candidate_id,)
+    ).fetchall()
+    for v in candidate_variants:
+        if (v["variant"], v["kind"]) in existing:
+            conn.execute("DELETE FROM person_variants WHERE id = ?", (v["id"],))
+            continue
+        conn.execute(
+            "UPDATE person_variants SET person_id = ? WHERE id = ?", (canonical_id, v["id"])
+        )
+        variants_added += 1
+
+    # 5. FK retarget across the 5 person-FK columns. Task 3 adds collision handling;
+    #    for Task 2 the seeded fixture has no collisions, so naive UPDATE suffices.
+    relations_retargeted = 0
+    relations_retargeted += conn.execute(
+        "UPDATE event_participants SET person_id = ? WHERE person_id = ?",
+        (canonical_id, candidate_id),
+    ).rowcount
+    relations_retargeted += conn.execute(
+        "UPDATE person_relations SET from_person_id = ? WHERE from_person_id = ?",
+        (canonical_id, candidate_id),
+    ).rowcount
+    relations_retargeted += conn.execute(
+        "UPDATE person_relations SET to_person_id = ? WHERE to_person_id = ?",
+        (canonical_id, candidate_id),
+    ).rowcount
+    relations_retargeted += conn.execute(
+        "UPDATE person_states SET person_id = ? WHERE person_id = ?",
+        (canonical_id, candidate_id),
+    ).rowcount
+    relations_retargeted += conn.execute(
+        "UPDATE entity_citations SET entity_id = ? "
+        "WHERE entity_kind = 'person' AND entity_id = ?",
+        (canonical_id, candidate_id),
+    ).rowcount
+
+    # 6. Delete candidate row. person_variants with person_id=candidate_id are gone
+    #    (all either moved or deleted in step 4).
+    conn.execute("DELETE FROM persons WHERE id = ?", (candidate_id,))
+
+    # 7. Flip merge_candidates status.
+    conn.execute(
+        "UPDATE merge_candidates SET status = 'merged', resolved_at = ? WHERE id = ?",
+        (_now_iso(), mc_id),
+    )
+
+    # 8. Audit log — record-level row only in Task 2; field-level rows for edits in Task 4.
+    canonical_snapshot_after = _row_snapshot(conn, "persons", canonical_id)
+    conn.execute(
+        "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+        "before_json, after_json, actor, at) VALUES (?, 'person', ?, NULL, 'merge', ?, ?, ?, ?)",
+        (
+            _new_audit_id(),
+            canonical_id,
+            json.dumps(candidate_snapshot, ensure_ascii=False),
+            json.dumps(canonical_snapshot_after, ensure_ascii=False),
+            "curator",
+            _now_iso(),
+        ),
+    )
+
+    return MergeResult(
+        canonical_id=canonical_id,
+        variants_added=variants_added,
+        relations_retargeted=relations_retargeted,
+        fields_edited=0,
+    )
 
 
 def reject_merge(
@@ -120,6 +250,8 @@ def _new_audit_id() -> str:
 
 
 def _row_snapshot(conn: sqlite3.Connection, table: str, row_id: str) -> dict[str, Any] | None:
+    if table not in _SNAPSHOTTABLE_TABLES:
+        raise MergeError(f"refusing to snapshot from {table!r}")
     cur = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (row_id,))
     row = cur.fetchone()
     return dict(row) if row else None

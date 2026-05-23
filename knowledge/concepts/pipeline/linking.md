@@ -127,6 +127,14 @@ Each function takes a sqlite Connection and performs its DB writes in a
 single transaction. The audit_log row is atomic with the data change.
 Detailed semantics live in the Phase 5 design spec (`docs/superpowers/specs/2026-05-22-phase5-curator-ui-design.md` §3, §4).
 
+### `accept_merge` algorithm
+
+In one transaction: validate `status='open'`, fold NULL canonical slots
+from candidate (raise on non-NULL disagreement), fold variants (UNIQUE
+constraint dedups), retarget the 5 person-FK columns, delete candidate
+row, flip `merge_candidates` status, write record-level audit_log row.
+Spec §3 has the full step-by-step.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.

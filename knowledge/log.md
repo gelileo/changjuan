@@ -1,5 +1,14 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): accept_merge happy path (Phase 5 Task 2)
+
+Implements the no-edits, no-collisions accept_merge path. 7 unit tests
+green. NULL canonical fields are filled from candidate; variants are
+folded via UNIQUE constraint; FKs retargeted across event_participants,
+person_relations (both columns), person_states, and entity_citations
+where entity_kind='person'. audit_log row written with the candidate
+snapshot as `before_json` and the post-merge canonical as `after_json`.
+
 ## [2026-05-22] feat(stage5): merge.py skeleton + first failing test (Phase 5 Task 1)
 
 Scaffolds `pipeline/stage5_link/merge.py` with dataclasses, error classes,

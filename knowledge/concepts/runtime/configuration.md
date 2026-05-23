@@ -67,6 +67,10 @@ All threshold values are placeholders and *must* be recalibrated against measure
 
 `pipeline/stage5_link/merge.py` (Phase 5 Task 1) adds the decision-action stubs: `accept_merge`, `reject_merge`, `defer_merge`, `split_person`. No new configuration constants are introduced — the merge functions take explicit DB connections and MC ids; there are no tuneable thresholds beyond those already defined (`LINKER_*`). Full implementation lands in subsequent tasks.
 
+## `accept_merge` implementation (Phase 5 Task 2)
+
+Phase 5 Task 2 implements the `accept_merge` happy path; no new configuration constants are added — the function remains threshold-free and operates entirely via DB state.
+
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.
