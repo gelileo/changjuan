@@ -529,6 +529,12 @@ Total test count after Phase 5.1: **265**.
 
 Total test count after Phase 6 Task A1: **267** (was 265; +1 here, +1 in a concurrent task if any).
 
+## Phase 6 Task A2 — fingerprint unit tests
+
+`tests/unit/test_fingerprint.py` adds 7 unit tests for `candidate_fingerprint`: determinism, length/charset, variant-order insensitivity, duplicate-variant insensitivity, new-variant sensitivity, name-change sensitivity, and empty-variants validity. All tests are pure (no DB, no I/O).
+
+Total test count after Phase 6 Task A2: **273**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

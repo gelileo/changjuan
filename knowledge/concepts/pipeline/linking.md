@@ -202,6 +202,10 @@ In the live DB, `merge_candidates.candidate_a_id` points at `candidate_persons.i
 
 The integration smoke's `_promote_merge_candidates_to_persons` workaround has been removed; `accept_merge` handles `candidate_persons`-side A natively.
 
+### Reject-memory fingerprint
+
+`pipeline/stage5_link/fingerprint.py` exposes `candidate_fingerprint(name, variants) → str` — a 16-hex SHA-1 hash that serves as the stability key for the `rejected_merges` table. The fingerprint is computed from candidate-side data only: `json.dumps({"name": name, "variants": sorted(set(variants))})` encoded as UTF-8 and truncated to 16 hex characters. Sorting and deduplication of variants make the fingerprint order-insensitive and dedup-insensitive, so re-extraction runs that permute variant order or emit duplicate entries produce the same hash and the rejection remains effective. A genuinely new variant (new evidence) changes the sorted set and therefore the fingerprint; the rejection no longer suppresses the pair and the linker re-surfaces it for review. The name is included as a separate key so that two candidates sharing the same variant set but differing in canonical name produce different fingerprints.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.
@@ -212,3 +216,4 @@ The integration smoke's `_promote_merge_candidates_to_persons` workaround has be
 - Changing `match_target_id` semantics in Stage 7 (e.g. supporting cross-run `cand:` references).
 - Adding new scoring dimensions beyond the five listed above.
 - Changing the `already_matched` strategy (e.g. symmetric pair exclusion instead of target-side exclusion).
+- Changing the fingerprint algorithm (hash function, length, or normalization strategy).

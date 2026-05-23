@@ -91,6 +91,10 @@ Phase 5 Task 6 implements `split_person`; no new configuration constants are add
 
 Phase 5.1 adds no configuration constants. The `_LOCAL_STATE_ID_RE` regex (`^s\d+$`) is a module-level constant in `pipeline/stage5_link/merge.py` (not in `pipeline/config.py`) because it is a hard data-shape rule, not a tunable threshold.
 
+## Phase 6 Task A2 — candidate_fingerprint (no configuration constants)
+
+`pipeline/stage5_link/fingerprint.candidate_fingerprint` is configuration-free: SHA-1/16-hex/sorted-set-dedup are hard-coded design decisions (see Phase 6 spec §3.2), not tuneable thresholds.
+
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.

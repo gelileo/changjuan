@@ -88,6 +88,10 @@ Phase 5 Task 3 adds `'merge_collision_resolved'` to the `audit_log.change_kind` 
 
 Phase 5 Task 4 adds `'edit'` to the `audit_log.change_kind` CHECK constraint. This value is written when a curator passes `edits={field: value}` to `accept_merge`. Each edited field produces one field-level `audit_log` row with `change_kind='edit'`, `before_json` and `after_json` both in the §5 shape `{value, confidence, source_excerpt}`. The full allowed set is now: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`, `edit`.
 
+## Phase 6 Task A2 — candidate_fingerprint helper
+
+`pipeline/stage5_link/fingerprint.candidate_fingerprint` computes the 16-hex SHA-1 key stored in `rejected_merges.candidate_fingerprint`. See `concepts/pipeline/linking.md §Reject-memory fingerprint` for the normalization contract.
+
 ## Phase 5 Task 5 audit_log.change_kind expansion
 
 Phase 5 Task 5 adds `'merge_rejected'` to the `audit_log.change_kind` CHECK constraint. Written by `reject_merge`. The full allowed set is: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`, `edit`, `merge_rejected`.
