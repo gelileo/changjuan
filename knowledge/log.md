@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-23] chore(db): migrate live audit_log CHECK constraint to Phase 5/6 vocabulary
+
+- Phase 5 added `'edit'`, `'merge_rejected'`, and `'merge_collision_resolved'` to `audit_log.change_kind` in `canonical_schema.sql`, but the existing live DB at `data/changjuan.sqlite` (created pre-Phase 5) kept the original CHECK constraint. The smoke test masked this with an in-test migration helper. Surfaced when the curator tried "Edit & accept" during the Phase 6 walk and `INSERT INTO audit_log ... change_kind = 'edit'` failed.
+- Ran the standard rename trick (`PRAGMA legacy_alter_table=ON` to preserve `rejected_merges.audit_log_id` FK) inline against the live DB. 566 rows preserved. Backup at `data/changjuan.sqlite.pre-audit-migration-bak`.
+- Treated as break-fix (Phase 5 deferred a one-shot migration; we just ran it). Not counted against friction budget.
+- no knowledge impact: operational schema migration; the new CHECK constraint set was already documented in canonical_schema.sql.
+
 ## [2026-05-23] feat(curation): walk fix #3 — recent-decisions sidebar
 
 - `_render_history_sidebar` reads the last 20 merge-related `audit_log` rows and renders them in `st.sidebar`. Lets the curator confirm landed decisions and spot accidents during the walk.
