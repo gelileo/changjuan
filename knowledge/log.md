@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] fix(test): curator_smoke skips when live DB has no open candidates
+
+- The smoke test assumed the live DB always has open `merge_candidates` to exercise (the original 31). After Track B's walk closed all 94, the test asserted `len(rows) > 0` and failed. Switched to `pytest.skip(...)` with a message pointing to the Phase 7 refactor (self-seeded fixture rows independent of live-DB state).
+- Articles touched: concepts/verification/testing.md.
+
 ## [2026-05-23] chore(walk): Phase 6 Track B walk completed
 
 - 94 candidates triaged in ~94 minutes (one session, 11:46 → 13:20 local). Mean ~60s/candidate. Disposition: 89 accept, 5 edit-accept, 0 reject, 0 split, 0 deferred.
