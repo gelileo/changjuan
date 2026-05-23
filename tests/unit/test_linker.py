@@ -82,7 +82,7 @@ def _seed_candidate(
 
 
 def test_auto_merge_writes_match_target_id_and_audit(conn: sqlite3.Connection) -> None:
-    """Strong variant + state same + social same → score ≥ 0.75 → auto-merge."""
+    """Strong variant + state same + social same → score 0.80 ≥ 0.70 → auto-merge."""
     _seed_canonical(
         conn,
         person_id="per:jin-wen-gong",
@@ -115,10 +115,41 @@ def test_auto_merge_writes_match_target_id_and_audit(conn: sqlite3.Connection) -
     assert any(r[0] == "link@v1" for r in audit)
 
 
+def test_strong_variant_same_state_with_nulls_auto_merges_after_p65_tuning(
+    conn: sqlite3.Connection,
+) -> None:
+    """Phase 6.5 recalibration: strong variant + same state + one_null elsewhere
+    scores exactly 0.70 and now auto-merges (was the dominant 90/94 pattern
+    on the walk).
+
+    Score: strong(+0.50) + state_same(+0.20) + clan one_null(±0) +
+    social one_null(±0) + temporal unknown(±0) = 0.70 ≥ LINKER_AUTO_MERGE_THRESHOLD.
+    """
+    _seed_canonical(
+        conn,
+        person_id="per:zhou-xuan-wang",
+        name="周宣王",
+        state_id="sta:zhou",
+        variants=[("宣王", "谥号")],
+    )
+    _seed_candidate(
+        conn,
+        run_id="run:1",
+        cand_id="cand:per:run:1:p1",
+        name="周宣王",
+        state_id="sta:zhou",
+        # No clan, no social_category → both produce one_null with canonical.
+    )
+
+    stats = link_run(conn, "run:1")
+    assert stats["auto_merges"] == 1, "the 90/94-pattern must now auto-merge"
+    assert stats["queued"] == 0
+
+
 def test_queue_writes_merge_candidates_row(conn: sqlite3.Connection) -> None:
     """Mid-score (strong variant + state one_null, no social) lands in queue.
 
-    Score: strong(+0.50) + state one_null(±0) = 0.50, which is in [0.40, 0.75).
+    Score: strong(+0.50) + state one_null(±0) = 0.50, which is in [0.40, 0.70).
     """
     _seed_canonical(
         conn,
@@ -163,7 +194,7 @@ def test_cross_run_chain_resolution(conn: sqlite3.Connection) -> None:
     """When a candidate's best match is a same-run sibling candidate, match_target_id
     points at that sibling (Stage 7's chain helper resolves at load time).
 
-    Score: strong(+0.50) + state_same(+0.20) + social_same(+0.10) = 0.80 >= 0.75 → auto-merge.
+    Score: strong(+0.50) + state_same(+0.20) + social_same(+0.10) = 0.80 >= 0.70 → auto-merge.
     """
     _seed_state(conn, "sta:jin")
     _seed_candidate(

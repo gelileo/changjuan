@@ -66,15 +66,15 @@ The raw sum is clamped to `[0, 1]` (floated, then `max(0.0, min(1.0, ...))` appl
 
 Thresholds live in `pipeline/config.py` alongside a recalibration history comment:
 
-- `LINKER_AUTO_MERGE_THRESHOLD = 0.75` — the minimum score for automatic merging. Rationale: strong variant (+0.50) + state agreement (+0.20) = 0.70, just below threshold; adding one more positive signal (e.g. same clan, +0.10) reaches 0.80, comfortably above.
+- `LINKER_AUTO_MERGE_THRESHOLD = 0.70` (Phase 6.5; was `0.75` initially). Strong variant (+0.50) + state agreement (+0.20) = 0.70 — this is now the auto-merge floor. Lowered after walk-the-94 evidence showed 90/94 candidates fell exactly at this score and were all true positives. Raising back to 0.75 reverts to Phase 3-5 behavior (queue strong+same-state for review); lowering further risks auto-merging partial-variant matches.
 - `LINKER_QUEUE_THRESHOLD = 0.40` — the minimum score to enter the curator queue. Rationale: partial variant (+0.20) + state agreement (+0.20) = 0.40 exactly, the minimum plausible evidence worth human review.
 
 Dispatch:
 
 | Score range | Action |
 |---|---|
-| `>= 0.75` | `UPDATE candidate_persons SET match_target_id = <target_id>` + `audit_log` row (`actor='link@v1'`) |
-| `0.40 – 0.74` | `INSERT INTO merge_candidates` with `surface_features_json` |
+| `>= 0.70` (Phase 6.5; was `>= 0.75`) | `UPDATE candidate_persons SET match_target_id = <target_id>` + `audit_log` row (`actor='link@v1'`) |
+| `0.40 – 0.69` (Phase 6.5; was `0.40 – 0.74`) | `INSERT INTO merge_candidates` with `surface_features_json` |
 | `< 0.40` | No action — candidate will become a new canonical Person at load |
 
 ## Merge regression set

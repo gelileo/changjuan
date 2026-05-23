@@ -587,6 +587,10 @@ The first test is the load-bearing regression for the duplicate-row problem obse
 
 Total test count after Phase 6 Task A6: **282** (281 passed + 1 pre-existing curator-smoke failure).
 
+## `test_strong_variant_same_state_with_nulls_auto_merges_after_p65_tuning` (Phase 6.5)
+
+Added to `tests/unit/test_linker.py`. Asserts the dominant 90/94 walk pattern (strong variant + same state + clan/social/temporal all one_null/unknown) now auto-merges. Score = strong(+0.50) + state_same(+0.20) = 0.70, equal to the new `LINKER_AUTO_MERGE_THRESHOLD`. Locks the recalibrated dispatch behavior — any future raise of the threshold above 0.70 will trip this test.
+
 ## Smoke test self-skips when queue is empty (Phase 6 walk follow-up)
 
 `test_curator_smoke_resolves_all_open_candidates` was written when the live DB always had open `merge_candidates` rows (the original 31). After Track B's walk closed all 94, the test failed at the `assert len(rows) > 0` premise check. Replaced the assertion with `pytest.skip(...)`. A proper Phase 7 fix would refactor the test to seed its own fixture rows so it never depends on live-DB state.

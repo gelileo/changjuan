@@ -85,7 +85,16 @@ GOLDEN_PR_THRESHOLDS: dict[str, dict[str, float]] = {
 #     just under threshold; ≥1 additional positive (+0.10) bumps to 0.80 = auto-merge.
 #     Why queue=0.40: partial variant (+0.20) + state agreement (+0.20) = 0.40
 #     exactly at threshold = minimum to land in the queue for human review.
-LINKER_AUTO_MERGE_THRESHOLD: float = 0.75
+#   - 2026-05-23 (Phase 6.5 recalibration): auto lowered 0.75 → 0.70.
+#     Walk-the-94 evidence: 90 of 94 queued candidates scored exactly 0.70
+#     (strong variant + same state + one_null elsewhere) and were all true
+#     positives — the curator accepted every one without edits. Lowering to
+#     0.70 means that combination auto-merges; the 4 outliers at 0.40/0.50
+#     (the genuinely ambiguous cases) still hit the queue. The lower bound
+#     of what auto-merges is now "same canonical_name + same state, no
+#     contradictions" — a very high bar in practice for Eastern-Zhou data
+#     where named figures have distinctive 谥号/封号.
+LINKER_AUTO_MERGE_THRESHOLD: float = 0.70
 LINKER_QUEUE_THRESHOLD: float = 0.40
 
 # Phase 5 — curation app

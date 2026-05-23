@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] feat(config): Phase 6.5 — lower LINKER_AUTO_MERGE_THRESHOLD 0.75 → 0.70
+
+- Walk-the-94 evidence: 90 of 94 queued candidates scored exactly 0.70 (strong variant + same state + one_null elsewhere), all true positives accepted by the curator without edits. At the new threshold the same combination auto-merges; the 4 outliers at 0.40/0.50 (the genuinely ambiguous cases) still hit the queue.
+- Added `test_strong_variant_same_state_with_nulls_auto_merges_after_p65_tuning` asserting the new behavior.
+- Articles touched: concepts/runtime/configuration.md, concepts/pipeline/linking.md, concepts/verification/testing.md.
+
 ## [2026-05-23] fix(test): curator_smoke skips when live DB has no open candidates
 
 - The smoke test assumed the live DB always has open `merge_candidates` to exercise (the original 31). After Track B's walk closed all 94, the test asserted `len(rows) > 0` and failed. Switched to `pytest.skip(...)` with a message pointing to the Phase 7 refactor (self-seeded fixture rows independent of live-DB state).
