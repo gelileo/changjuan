@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] feat(cli): Phase 6 Task A5 — changjuan link --ignore-rejections flag
+
+- Phase 6 Task A5: changjuan link --ignore-rejections flag.
+- Articles touched: concepts/runtime/cli.md, concepts/verification/testing.md.
+
 ## [2026-05-23] feat(stage5): Phase 6 Task A4 — linker filters rejected pairs; ignore_rejections kwarg added
 
 - Phase 6 Task A4: linker filters rejected (canonical_id, fingerprint) pairs; ignore_rejections kwarg added.

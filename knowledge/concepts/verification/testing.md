@@ -560,6 +560,14 @@ Note: `person_variants.kind` requires values from `('本名','字','谥号','封
 
 Total test count after Phase 6 Task A4: **278**.
 
+## Phase 6 Task A5 — CLI `--ignore-rejections` flag
+
+`tests/unit/test_cli.py` gains one new test:
+
+- `test_link_accepts_ignore_rejections_flag` — invokes `changjuan link --help` via the Typer `CliRunner` and asserts `--ignore-rejections` appears in the help output.
+
+Total test count after Phase 6 Task A5: **279**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

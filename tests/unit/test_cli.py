@@ -180,3 +180,16 @@ def test_extract_load_cli_loads_yaml_via_cli(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0, result.stdout + result.stderr
     assert "persons=1" in result.stdout
+
+
+def test_link_accepts_ignore_rejections_flag() -> None:
+    """Phase 6: link verb exposes --ignore-rejections (default False)."""
+    from typer.testing import CliRunner
+
+    from pipeline.cli import app
+
+    runner = CliRunner()
+    # --help should mention the new flag
+    result = runner.invoke(app, ["link", "--help"])
+    assert result.exit_code == 0
+    assert "--ignore-rejections" in result.stdout

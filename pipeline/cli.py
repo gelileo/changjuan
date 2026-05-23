@@ -698,6 +698,14 @@ def link(
     pipeline_run_id: str = typer.Argument(
         ..., help="Pipeline run id to link (matches candidate_persons.pipeline_run_id)."
     ),
+    ignore_rejections: bool = typer.Option(
+        False,
+        "--ignore-rejections",
+        help=(
+            "Re-emit pairs previously dispositioned as rejected. Use when "
+            "the curator wants to revisit prior rejections (Phase 6)."
+        ),
+    ),
     repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
 ) -> None:
     """Run Stage 5 (linker) for the given pipeline_run_id.
@@ -706,15 +714,21 @@ def link(
     dispatches by threshold: auto-merge writes match_target_id + audit_log;
     mid-score writes a merge_candidates row; low-score skips. See
     concepts/pipeline/linking.md for the full picture.
+
+    Phase 6: by default, pairs previously rejected by the curator (rejected_merges
+    table) are filtered out at the queue stage. --ignore-rejections bypasses
+    that filter.
     """
     from pipeline.stage5_link import link_run
 
     canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
-    stats = link_run(canonical, pipeline_run_id)
+    stats = link_run(canonical, pipeline_run_id, ignore_rejections=ignore_rejections)
+    rejected_skipped = stats.get("rejected_filter_skipped", 0)
+    suffix = " (ignore-rejections=ON)" if ignore_rejections else ""
     typer.echo(
         f"link {pipeline_run_id}: processed={stats['candidates_processed']} "
         f"auto-merged={stats['auto_merges']} queued={stats['queued']} "
-        f"skipped={stats['skipped']}"
+        f"skipped={stats['skipped']} rejected-filter-skipped={rejected_skipped}" + suffix
     )
 
 
