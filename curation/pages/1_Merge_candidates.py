@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
-from streamlit_shortcuts import add_keyboard_shortcuts
+from streamlit_shortcuts import add_shortcuts
 
 from curation.components.records import render_pair
 from curation.components.shell import render_shell
@@ -232,15 +232,15 @@ def main() -> None:
         render_right=render_right,
     )
 
-    add_keyboard_shortcuts(
-        {
-            "a": "a · Accept merge",
-            "e": "e · Edit & accept",
-            "r": "r · Reject",
-            "d": "d · Defer",
-            "j": "j ▶",
-            "k": "◀ k",
-        }
+    # streamlit-shortcuts >= 1.3 renamed add_keyboard_shortcuts → add_shortcuts and
+    # changed the signature from a single dict to **kwargs mapping key → button label.
+    add_shortcuts(
+        a="a · Accept merge",
+        e="e · Edit & accept",
+        r="r · Reject",
+        d="d · Defer",
+        j="j ▶",
+        k="◀ k",
     )
 
 

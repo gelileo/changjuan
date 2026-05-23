@@ -111,4 +111,6 @@ The `edit_mode` boolean lives in `st.session_state["edit_mode"]`. When `True`, `
 
 ### Keyboard shortcuts
 
-`streamlit_shortcuts.add_keyboard_shortcuts` maps `a/e/r/d/j/k` to the corresponding button labels. `mypy.ini` has `[mypy-streamlit_shortcuts] ignore_missing_imports = True`.
+`streamlit_shortcuts.add_shortcuts` maps `a/e/r/d/j/k` to the corresponding button labels (`**kwargs` form: `add_shortcuts(a="...", e="...", ...)`). `mypy.ini` has `[mypy-streamlit_shortcuts] ignore_missing_imports = True`.
+
+**Phase 6 dependency-drift note:** Pre-Phase 6 the function was named `add_keyboard_shortcuts` and took a single `dict` argument. `streamlit-shortcuts >= 1.3` renamed it to `add_shortcuts` with a `**kwargs` signature; Phase 6's bug-fix at the start of Track B's walk migrated to the new API. The pin in `pyproject.toml` (`streamlit-shortcuts>=1.2.1`) is a floor only; fresh installs pick up the new API.

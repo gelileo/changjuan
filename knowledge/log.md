@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] fix(curation): streamlit-shortcuts ≥1.3 API migration — add_keyboard_shortcuts → add_shortcuts
+
+- The shipped Phase 5 curator page failed to import on a fresh `uv sync` because `streamlit-shortcuts` renamed `add_keyboard_shortcuts(dict)` to `add_shortcuts(**kwargs)` between the Phase 5 ship version (1.2.1) and the currently-installed version. Curator UI was broken at the merge-candidates page. Migration: one import + one call site updated in `curation/pages/1_Merge_candidates.py`.
+- Discovered when starting Phase 6 Track B walk; fixed as break-fix (not counted against the ≤3 walk friction budget — it's a pre-existing dependency-drift regression, not walk-surfaced UX friction).
+- Articles touched: concepts/curation/streamlit-app.md.
+
 ## [2026-05-23] chore(walk): Phase 6 Track B walk started
 
 - Pre-walk DB snapshot at `data/changjuan.sqlite.phase6-walk-bak`. Baseline: open=94 (was originally 31, grew by 63 via Track C backfill — see Task C2 entry below).
