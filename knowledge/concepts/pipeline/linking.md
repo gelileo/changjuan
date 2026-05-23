@@ -138,13 +138,14 @@ Spec §3 has the full step-by-step.
 ### PK-collision rules (Phase 5 Task 3)
 
 `accept_merge` resolves PK collisions before retargeting:
-- `event_participants` `(event_id, person_id, role)` — higher-confidence wins.
-- `person_relations` self-loops (relation from/to merged pair) — deleted.
-- `person_states` `(person_id, state_id, role, COALESCE(from_date_json,''))` —
-  higher-confidence wins.
-- `entity_citations` `(entity_kind, entity_id, citation_id)` — candidate row dropped.
+- `event_participants` `(event_id, person_id, role)` — higher-confidence wins; on a tie the canonical survives (candidate is the loser).
+- `person_relations` self-loops (relation from/to merged pair) — deleted; audit_log captures full row.
+- `person_states` `(person_id, state_id, role, COALESCE(from_date_json,''))` — higher-confidence wins; on a tie the canonical survives.
+- `entity_citations` `(entity_kind, entity_id, citation_id)` — candidate row dropped; audit_log entry carries `entity_id` + `citation_id` (not just `{"duplicate":true}`).
 
 Each resolution writes an `audit_log` row with `change_kind='merge_collision_resolved'`.
+
+Task 3 follow-up fixes tie-break + audit-completeness minors.
 
 ## What would invalidate this article
 

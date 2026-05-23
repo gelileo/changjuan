@@ -90,7 +90,7 @@ def _resolve_collisions_event_participants(
     )
     collisions = list(cur)
     for c in collisions:
-        loser_person = candidate_id if c["cand_conf"] < c["can_conf"] else canonical_id
+        loser_person = candidate_id if c["cand_conf"] <= c["can_conf"] else canonical_id
         loser_row = conn.execute(
             "SELECT * FROM event_participants " "WHERE event_id = ? AND person_id = ? AND role = ?",
             (c["event_id"], loser_person, c["role"]),
@@ -123,7 +123,7 @@ def _resolve_self_loops_person_relations(
     Delete those outright. Returns the count.
     """
     rows = conn.execute(
-        "SELECT from_person_id, to_person_id, kind FROM person_relations "
+        "SELECT * FROM person_relations "
         "WHERE (from_person_id = ? AND to_person_id = ?) "
         "   OR (from_person_id = ? AND to_person_id = ?)",
         (candidate_id, canonical_id, canonical_id, candidate_id),
@@ -168,7 +168,7 @@ def _resolve_collisions_person_states(
     )
     collisions = list(cur)
     for c in collisions:
-        loser_person = candidate_id if c["cand_conf"] < c["can_conf"] else canonical_id
+        loser_person = candidate_id if c["cand_conf"] <= c["can_conf"] else canonical_id
         loser_row = conn.execute(
             "SELECT * FROM person_states "
             "WHERE person_id = ? AND state_id = ? AND role = ? "
@@ -218,11 +218,15 @@ def _resolve_collisions_entity_citations(
         conn.execute(
             "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
             "before_json, after_json, actor, at) "
-            "VALUES (?, 'entity_citation', ?, NULL, 'merge_collision_resolved', "
-            "'{\"duplicate\":true}', NULL, 'curator', ?)",
+            "VALUES (?, 'entity_citation', ?, NULL, "
+            "'merge_collision_resolved', ?, NULL, 'curator', ?)",
             (
                 _new_audit_id(),
                 f"person:{candidate_id}:{c['citation_id']}",
+                json.dumps(
+                    {"duplicate": True, "entity_id": candidate_id, "citation_id": c["citation_id"]},
+                    ensure_ascii=False,
+                ),
                 _now_iso(),
             ),
         )

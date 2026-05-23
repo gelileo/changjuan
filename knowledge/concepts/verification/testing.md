@@ -456,6 +456,7 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
   used by the merge unit tests.
 - Task 2 brings the suite to 7 tests covering the `accept_merge` happy path (result shape, audit_log row, status flip, FK retarget, candidate deletion, variant dedup, stale-guard).
 - Task 3 brings the suite to 12 tests covering PK-collision branches.
+- Task 3 follow-up (review minors) adds `test_accept_merge_event_participants_collision_tie_keeps_canonical`, bringing the suite to 13 tests; this test locks in the canonical-wins-on-tie rule.
 
 ## What would invalidate this article
 

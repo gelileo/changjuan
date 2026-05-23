@@ -196,3 +196,28 @@ def test_accept_merge_collision_writes_audit_log(seeded_db: tuple[Path, str]) ->
         ).fetchall()
     assert len(rows) == 1
     assert rows[0]["entity_kind"] == "event_participant"
+
+
+def test_accept_merge_event_participants_collision_tie_keeps_canonical(
+    seeded_db: tuple[Path, str],
+) -> None:
+    """On equal confidence, canonical wins (candidate is the loser)."""
+    db_path, mc_id = seeded_db
+    # Set both rows to confidence 0.9 (the seeded candidate's value).
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO event_participants "
+            "(event_id, person_id, role, confidence, provenance) "
+            "VALUES ('evt:test:1', 'per:test:canonical', 'victor', 0.9, 'auto')",
+        )
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.collisions_resolved == 1
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT person_id, confidence FROM event_participants "
+            "WHERE event_id = 'evt:test:1' AND role = 'victor'"
+        ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["person_id"] == "per:test:canonical"
+    assert rows[0]["confidence"] == 0.9

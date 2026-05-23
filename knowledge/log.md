@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-22] fix(stage5): Task 3 review minors — tie-breaking + audit completeness
+
+- Tie-breaking on collision confidence now favors canonical (was: candidate).
+- person_relations self-loop audit_log entries now capture full row, not just PK.
+- entity_citations duplicate audit_log entries now carry entity_id + citation_id, not just `{"duplicate":true}`.
+- New test `test_accept_merge_event_participants_collision_tie_keeps_canonical`.
+- Net: 13 unit tests in test_stage5_merge.py (was 12).
+
 ## [2026-05-22] feat(stage5): accept_merge PK-collision handling (Phase 5 Task 3)
 
 Adds four collision-resolution helpers + 5 unit tests exercising each rule.
