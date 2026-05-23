@@ -10,6 +10,7 @@ spec §5) correct.
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
@@ -31,6 +32,11 @@ _ALLOWED_EDIT_FIELDS: frozenset[str] = frozenset(
         "canonical_name",
     }
 )
+
+# Local-extraction state_id pattern: 's' followed by one or more digits.
+# IDs in this format (e.g. 's1', 's12') reference per-chunk extraction slots,
+# not canonical states rows. They must not be folded into canonical persons.
+_LOCAL_STATE_ID_RE: re.Pattern[str] = re.compile(r"^s\d+$")
 
 
 class MergeError(Exception):
@@ -255,6 +261,11 @@ def accept_merge(
     """Fuse candidate (A) into canonical (B). Survivor = canonical.
 
     See spec §3 for the full algorithm. All work happens in one transaction.
+
+    candidate_a_id may point at either ``persons`` (legacy spec assumption) or
+    ``candidate_persons`` (actual live-data layout). Detection is automatic:
+    the persons table is checked first; if the row is absent the function falls
+    back to candidate_persons.
     """
     cur = conn.execute(
         "SELECT id, candidate_a_id, candidate_b_id, status " "FROM merge_candidates WHERE id = ?",
@@ -269,10 +280,18 @@ def accept_merge(
     candidate_id = mc_row["candidate_a_id"]
     canonical_id = mc_row["candidate_b_id"]
 
-    # Snapshots for audit_log.
+    # Detect whether candidate is in persons (legacy spec assumption) or
+    # candidate_persons (actual live-data layout).
     candidate_snapshot = _row_snapshot(conn, "persons", candidate_id)
+    candidate_from_table = "persons"
     if candidate_snapshot is None:
-        raise MergeError(f"candidate person {candidate_id!r} not found")
+        candidate_snapshot = _candidate_persons_snapshot(conn, candidate_id)
+        if candidate_snapshot is None:
+            raise MergeError(
+                f"candidate {candidate_id!r} not found in persons or candidate_persons"
+            )
+        candidate_from_table = "candidate_persons"
+
     canonical_snapshot_before = _row_snapshot(conn, "persons", canonical_id)
     if canonical_snapshot_before is None:
         raise MergeError(f"canonical person {canonical_id!r} not found")
@@ -344,7 +363,7 @@ def accept_merge(
             (*field_updates.values(), canonical_id),
         )
 
-    # 4. Variant fold (UNIQUE(person_id, variant, kind) makes this collision-safe).
+    # 4. Variant fold — source depends on which table the candidate came from.
     existing = {
         (r["variant"], r["kind"])
         for r in conn.execute(
@@ -352,52 +371,93 @@ def accept_merge(
         )
     }
     variants_added = 0
-    candidate_variants = conn.execute(
-        "SELECT id, variant, kind FROM person_variants WHERE person_id = ?", (candidate_id,)
-    ).fetchall()
-    for v in candidate_variants:
-        if (v["variant"], v["kind"]) in existing:
-            conn.execute("DELETE FROM person_variants WHERE id = ?", (v["id"],))
-            continue
-        conn.execute(
-            "UPDATE person_variants SET person_id = ? WHERE id = ?", (canonical_id, v["id"])
-        )
-        variants_added += 1
 
-    # 5. PK-collision resolution must happen BEFORE the retarget UPDATEs.
+    if candidate_from_table == "persons":
+        # Existing path: person_variants rows with person_id=candidate_id.
+        candidate_variants = conn.execute(
+            "SELECT id, variant, kind FROM person_variants WHERE person_id = ?", (candidate_id,)
+        ).fetchall()
+        for v in candidate_variants:
+            if (v["variant"], v["kind"]) in existing:
+                conn.execute("DELETE FROM person_variants WHERE id = ?", (v["id"],))
+                continue
+            conn.execute(
+                "UPDATE person_variants SET person_id = ? WHERE id = ?", (canonical_id, v["id"])
+            )
+            variants_added += 1
+    else:
+        # candidate_persons path: variants live in variants_json JSON blob.
+        vj_row = conn.execute(
+            "SELECT variants_json FROM candidate_persons WHERE id = ?", (candidate_id,)
+        ).fetchone()
+        if vj_row is not None and vj_row["variants_json"] is not None:
+            raw_variants: list[dict[str, str]] = json.loads(vj_row["variants_json"])
+            for entry in raw_variants:
+                variant = entry.get("variant", "")
+                kind = entry.get("kind", "")
+                if not variant:
+                    continue
+                if (variant, kind) in existing:
+                    continue
+                pv_id = f"pv:{uuid.uuid4().hex[:12]}"
+                conn.execute(
+                    "INSERT OR IGNORE INTO person_variants (id, person_id, variant, kind) "
+                    "VALUES (?, ?, ?, ?)",
+                    (pv_id, canonical_id, variant, kind),
+                )
+                existing.add((variant, kind))
+                variants_added += 1
+
+    # 5. PK-collision resolution + FK retarget — persons path only.
+    #    For candidate_persons path, no persons-FK columns point at a
+    #    candidate_persons id, so all collision helpers and retargets are no-ops.
     collisions_resolved = 0
-    collisions_resolved += _resolve_collisions_event_participants(conn, candidate_id, canonical_id)
-    collisions_resolved += _resolve_self_loops_person_relations(conn, candidate_id, canonical_id)
-    collisions_resolved += _resolve_collisions_person_states(conn, candidate_id, canonical_id)
-    collisions_resolved += _resolve_collisions_entity_citations(conn, candidate_id, canonical_id)
-
-    # Now the UPDATEs are safe.
     relations_retargeted = 0
-    relations_retargeted += conn.execute(
-        "UPDATE event_participants SET person_id = ? WHERE person_id = ?",
-        (canonical_id, candidate_id),
-    ).rowcount
-    relations_retargeted += conn.execute(
-        "UPDATE person_relations SET from_person_id = ? WHERE from_person_id = ?",
-        (canonical_id, candidate_id),
-    ).rowcount
-    relations_retargeted += conn.execute(
-        "UPDATE person_relations SET to_person_id = ? WHERE to_person_id = ?",
-        (canonical_id, candidate_id),
-    ).rowcount
-    relations_retargeted += conn.execute(
-        "UPDATE person_states SET person_id = ? WHERE person_id = ?",
-        (canonical_id, candidate_id),
-    ).rowcount
-    relations_retargeted += conn.execute(
-        "UPDATE entity_citations SET entity_id = ? "
-        "WHERE entity_kind = 'person' AND entity_id = ?",
-        (canonical_id, candidate_id),
-    ).rowcount
 
-    # 6. Delete candidate row. person_variants with person_id=candidate_id are gone
-    #    (all either moved or deleted in step 4).
-    conn.execute("DELETE FROM persons WHERE id = ?", (candidate_id,))
+    if candidate_from_table == "persons":
+        collisions_resolved += _resolve_collisions_event_participants(
+            conn, candidate_id, canonical_id
+        )
+        collisions_resolved += _resolve_self_loops_person_relations(
+            conn, candidate_id, canonical_id
+        )
+        collisions_resolved += _resolve_collisions_person_states(conn, candidate_id, canonical_id)
+        collisions_resolved += _resolve_collisions_entity_citations(
+            conn, candidate_id, canonical_id
+        )
+
+        relations_retargeted += conn.execute(
+            "UPDATE event_participants SET person_id = ? WHERE person_id = ?",
+            (canonical_id, candidate_id),
+        ).rowcount
+        relations_retargeted += conn.execute(
+            "UPDATE person_relations SET from_person_id = ? WHERE from_person_id = ?",
+            (canonical_id, candidate_id),
+        ).rowcount
+        relations_retargeted += conn.execute(
+            "UPDATE person_relations SET to_person_id = ? WHERE to_person_id = ?",
+            (canonical_id, candidate_id),
+        ).rowcount
+        relations_retargeted += conn.execute(
+            "UPDATE person_states SET person_id = ? WHERE person_id = ?",
+            (canonical_id, candidate_id),
+        ).rowcount
+        relations_retargeted += conn.execute(
+            "UPDATE entity_citations SET entity_id = ? "
+            "WHERE entity_kind = 'person' AND entity_id = ?",
+            (canonical_id, candidate_id),
+        ).rowcount
+
+        # Delete candidate row. person_variants with person_id=candidate_id are gone
+        # (all either moved or deleted in step 4).
+        conn.execute("DELETE FROM persons WHERE id = ?", (candidate_id,))
+    else:
+        # candidate_persons path: mark the historical extraction record as merged.
+        # Do NOT delete it — it is the pipeline's source record.
+        conn.execute(
+            "UPDATE candidate_persons SET match_target_id = ? WHERE id = ?",
+            (canonical_id, candidate_id),
+        )
 
     # 7. Flip merge_candidates status.
     conn.execute(
@@ -553,3 +613,41 @@ def _row_snapshot(conn: sqlite3.Connection, table: str, row_id: str) -> dict[str
     cur = conn.execute(f"SELECT * FROM {table} WHERE id = ?", (row_id,))
     row = cur.fetchone()
     return dict(row) if row else None
+
+
+def _candidate_persons_snapshot(
+    conn: sqlite3.Connection, candidate_id: str
+) -> dict[str, Any] | None:
+    """Return a persons-compatible snapshot dict from candidate_persons.
+
+    Drops candidate_persons-only columns (social_category, pipeline_run_id,
+    chunk_id, quote, variants_json, match_target_id) and filters out local
+    state_id values (e.g. 's1') that cannot be safely folded into canonical rows.
+
+    Returns None if the row does not exist.
+    """
+    row = conn.execute(
+        "SELECT id, canonical_name, gender, birth_date_json, death_date_json, "
+        "notes, state_id, clan_name, confidence "
+        "FROM candidate_persons WHERE id = ?",
+        (candidate_id,),
+    ).fetchone()
+    if row is None:
+        return None
+
+    snapshot: dict[str, Any] = dict(row)
+
+    # Filter out local-extraction state_id values so they are never folded
+    # into the canonical row.  If detection is ambiguous, treat as NULL.
+    raw_state = snapshot.get("state_id")
+    if raw_state is not None:
+        is_local = bool(_LOCAL_STATE_ID_RE.match(str(raw_state)))
+        if is_local:
+            snapshot["state_id"] = None
+        else:
+            # Also verify the state_id exists in the states table; if not, treat as NULL.
+            exists = conn.execute("SELECT 1 FROM states WHERE id = ?", (raw_state,)).fetchone()
+            if exists is None:
+                snapshot["state_id"] = None
+
+    return snapshot

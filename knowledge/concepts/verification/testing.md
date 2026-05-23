@@ -511,6 +511,18 @@ The single test `test_curator_smoke_resolves_all_open_candidates`:
 Smoke result on 2026-05-22 live data (31 candidates):
 `accepted=11, rejected=10, deferred=10, skipped_conflicts=0, skipped_not_found=0`.
 
+**Phase 5.1 update:** the `_promote_merge_candidates_to_persons` workaround has been removed from the smoke fixture. `accept_merge` now handles `candidate_persons`-side A natively so no pre-promotion step is needed. The smoke fixture now only calls `_migrate_audit_log_check` before running. The test still exercises all 31 open candidates.
+
+## Phase 5.1 tests — candidate_persons-side A (tests/unit/test_stage5_merge.py)
+
+Three tests added for the Phase 5.1 `candidate_persons`-side A path in `accept_merge`. All use a new seeder helper `seed_with_candidate_in_candidate_persons` in `tests/fixtures/curation/seed_merge_db.py` that creates a canonical `persons` row, a `candidate_persons` row with `variants_json` populated, and a `merge_candidates` row pointing at the `candidate_persons` row.
+
+- `test_accept_merge_candidate_in_candidate_persons_happy_path` — verifies merge works, `candidate_persons` row is not deleted, `match_target_id` is set, no spurious `persons` row for the candidate id, `relations_retargeted=0`.
+- `test_accept_merge_candidate_persons_local_state_id_skipped` — candidate has `state_id='s1'`; canonical has `state_id=NULL`; after merge canonical `state_id` is still NULL.
+- `test_accept_merge_candidate_persons_variants_json_folded` — candidate has two variants in `variants_json`; canonical has one overlap; after merge canonical has both, deduped.
+
+Total test count after Phase 5.1: **265**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

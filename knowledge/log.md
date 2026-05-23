@@ -1,5 +1,31 @@
 # Build Log
 
+## [2026-05-23] feat(stage5): accept_merge handles candidate_persons-side A (Phase 5.1)
+
+`merge_candidates.candidate_a_id` in the live DB references `candidate_persons.id`, not
+`persons.id`. `accept_merge` now detects which table A is in and branches:
+
+- **candidate_persons path**: reads candidate snapshot from `candidate_persons` via
+  `_candidate_persons_snapshot` (drops candidate-only columns; filters local state_id values
+  matching `s\d+` pattern to NULL). Folds variants from `variants_json` JSON blob into
+  `person_variants` via INSERT OR IGNORE. Skips FK retarget (no `persons`-FK columns point
+  at `candidate_persons` ids). Sets `candidate_persons.match_target_id = canonical_id`.
+  Does not delete the `candidate_persons` row (it is the historical extraction record).
+- **persons path**: existing logic unchanged.
+
+Integration smoke's `_promote_merge_candidates_to_persons` workaround removed — no longer
+needed. `PHASE5_DEFERRED` entry for the candidate_a_id gap is now addressed.
+
+3 new unit tests added (`tests/unit/test_stage5_merge.py`):
+- `test_accept_merge_candidate_in_candidate_persons_happy_path`
+- `test_accept_merge_candidate_persons_local_state_id_skipped`
+- `test_accept_merge_candidate_persons_variants_json_folded`
+
+Total tests: 265 (was 262).
+
+Articles touched: `concepts/pipeline/linking.md`, `concepts/data-model/knowledge-graph.md`,
+`concepts/runtime/configuration.md`, `concepts/verification/testing.md`.
+
 ## [2026-05-23] fix(phase5): final-review follow-ups
 
 Three findings from the final code review acted on:

@@ -87,6 +87,10 @@ Phase 5 Task 5 implements `reject_merge` and `defer_merge`; no new configuration
 
 Phase 5 Task 6 implements `split_person`; no new configuration constants are added. The function is threshold-free — all logic is deterministic (validate variants exist, mint new id, update rows, write audit_log). The `confidence=1.0` and `provenance='curated'` defaults for the minted person row are hard-coded business decisions, not tunable values. Phase 5a (the load-bearing merge module) is now complete.
 
+## accept_merge candidate_persons path (Phase 5.1)
+
+Phase 5.1 adds no configuration constants. The `_LOCAL_STATE_ID_RE` regex (`^s\d+$`) is a module-level constant in `pipeline/stage5_link/merge.py` (not in `pipeline/config.py`) because it is a hard data-shape rule, not a tunable threshold.
+
 ## Stage 5 candidate_pool pre-filter (Phase 3 Task 7, hardened Task 7 fix)
 
 `pipeline/stage5_link/candidate_pool.py` provides `candidate_pool(conn, candidate_id, pipeline_run_id)` — the SQL name-overlap pre-filter that runs before the scorer. No new configuration constants: the function has no tuneable thresholds; it is a pure filter whose inclusion criterion is "shares at least one name string." The two existing linker thresholds (`LINKER_AUTO_MERGE_THRESHOLD`, `LINKER_QUEUE_THRESHOLD`) govern downstream dispatch after scoring; `candidate_pool` is upstream of both.

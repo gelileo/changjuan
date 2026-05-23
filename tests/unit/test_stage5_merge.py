@@ -28,6 +28,7 @@ from tests.fixtures.curation.seed_merge_db import (
     add_person_relations_self_loop,
     add_person_states_collision,
     seed,
+    seed_with_candidate_in_candidate_persons,
 )
 
 
@@ -376,3 +377,91 @@ def test_split_person_unknown_variant_raises(seeded_db: tuple[Path, str]) -> Non
     with connect(db_path) as conn:
         with pytest.raises(SplitValidationError):
             split_person(conn, "per:test:canonical", variants_to_extract=["不存在"])
+
+
+# ---------------------------------------------------------------------------
+# Phase 5.1 tests — candidate_a_id points at candidate_persons
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def cand_persons_db(tmp_path: Path) -> tuple[Path, str]:
+    db_path = tmp_path / "cand_persons_test.sqlite"
+    mc_id = seed_with_candidate_in_candidate_persons(db_path)
+    return db_path, mc_id
+
+
+def test_accept_merge_candidate_in_candidate_persons_happy_path(
+    cand_persons_db: tuple[Path, str],
+) -> None:
+    """accept_merge works when candidate_a_id is in candidate_persons, not persons."""
+    db_path, mc_id = cand_persons_db
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.canonical_id == "per:test:canonical"
+    # The candidate row in persons should never have existed.
+    with connect(db_path) as conn:
+        no_person = conn.execute("SELECT id FROM persons WHERE id = 'cand:per:test:p1'").fetchone()
+    assert no_person is None
+
+    # candidate_persons row should still exist (not deleted).
+    with connect(db_path) as conn:
+        cand_row = conn.execute(
+            "SELECT id, match_target_id FROM candidate_persons WHERE id = 'cand:per:test:p1'"
+        ).fetchone()
+    assert cand_row is not None
+    assert cand_row["match_target_id"] == "per:test:canonical"
+
+    # merge_candidates status flipped.
+    with connect(db_path) as conn:
+        mc_row = conn.execute(
+            "SELECT status FROM merge_candidates WHERE id = ?", (mc_id,)
+        ).fetchone()
+    assert mc_row["status"] == "merged"
+
+    # relations_retargeted is 0 (no persons-FK rows point at a cand:per row).
+    assert result.relations_retargeted == 0
+
+
+def test_accept_merge_candidate_persons_local_state_id_skipped(
+    tmp_path: Path,
+) -> None:
+    """Local state_id (e.g. 's1') is NOT folded into the canonical row."""
+
+    from tests.fixtures.curation.seed_merge_db import seed_with_candidate_in_candidate_persons
+
+    db_path = tmp_path / "state_test.sqlite"
+    mc_id = seed_with_candidate_in_candidate_persons(db_path)
+    # canonical has state_id=NULL (seeder sets it); candidate has state_id='s1'.
+    with connect(db_path) as conn:
+        accept_merge(conn, mc_id)
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT state_id FROM persons WHERE id = 'per:test:canonical'"
+        ).fetchone()
+    # Local 's1' id must not have been folded into the canonical row.
+    assert row["state_id"] is None
+
+
+def test_accept_merge_candidate_persons_variants_json_folded(
+    tmp_path: Path,
+) -> None:
+    """Variants from variants_json are folded into person_variants, deduped."""
+
+    from tests.fixtures.curation.seed_merge_db import seed_with_candidate_in_candidate_persons
+
+    db_path = tmp_path / "variants_test.sqlite"
+    mc_id = seed_with_candidate_in_candidate_persons(db_path)
+    # canonical has only 宣王 (谥号); candidate has [宣王 (谥号), 靖 (本名)].
+    with connect(db_path) as conn:
+        accept_merge(conn, mc_id)
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT variant, kind FROM person_variants WHERE person_id = 'per:test:canonical'"
+        ).fetchall()
+    variants = {(r["variant"], r["kind"]) for r in rows}
+    # 宣王 was already present (deduped), 靖 is new.
+    assert ("宣王", "谥号") in variants
+    assert ("靖", "本名") in variants
+    # Exactly these two (no extras seeded).
+    assert len(variants) == 2

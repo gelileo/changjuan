@@ -95,3 +95,7 @@ Phase 5 Task 5 adds `'merge_rejected'` to the `audit_log.change_kind` CHECK cons
 ## persons INSERT defaults for split_person (Phase 5 Task 6)
 
 `split_person` mints a new `persons` row. The table requires `confidence REAL NOT NULL` and `provenance TEXT NOT NULL CHECK (provenance IN ('auto','curated'))`. Since the split is a curator-initiated assertion of a distinct identity, sensible defaults are `confidence=1.0` and `provenance='curated'`. The `canonical_name` is set to the first peeled variant; the curator edits it later via the curation UI. The `audit_log` row uses `change_kind='split'` (already in the CHECK constraint since the original schema).
+
+## candidate_persons.match_target_id set by accept_merge (Phase 5.1)
+
+Phase 5.1: when `accept_merge` handles a `candidate_persons`-side A candidate, it sets `candidate_persons.match_target_id = canonical_id` on the merged row instead of deleting it. This marks the historical extraction record as resolved without destroying it. Stage 7 already reads `match_target_id` during the promotion pass; a curator-set value here is semantically identical to a linker-set one.

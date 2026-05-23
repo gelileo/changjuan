@@ -65,7 +65,7 @@ wait $SP 2>/dev/null || true
 
 section "7. PHASE5_DEFERRED"
 cat <<'EOF'
-15 items deferred to Phase 6+:
+14 items deferred to Phase 6+:
   Curator UI surface:
   - Reject-memory (prevent linker re-flagging rejected pairs)
   - Undo button (audit_log replay)
@@ -78,11 +78,8 @@ cat <<'EOF'
   - Prefetch ergonomics (<200ms per record)
 
   Merge-action gaps surfaced by final review:
-  - candidate_a_id/persons gap — merge_candidates.candidate_a_id references
-    candidate_persons.id, but accept_merge looks up persons.id. The smoke
-    test patches with _promote_merge_candidates_to_persons; the live app
-    needs the same migration (or accept_merge extended to fall back to
-    candidate_persons) before curators can work the queue.
+  - [DONE Phase 5.1] candidate_a_id/persons gap — accept_merge now detects
+    whether A is in persons or candidate_persons and handles both natively.
   - chapter_citation_context ±N paragraph window — params are accepted but
     only the immediate chunk is returned. Phase 6 implements the window.
   - Atomicity tests for accept/reject/split error branches (DoD item 4 gap).

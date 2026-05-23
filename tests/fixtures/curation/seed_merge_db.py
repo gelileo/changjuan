@@ -142,3 +142,45 @@ def add_entity_citations_duplicate(db_path: Path) -> None:
             "INSERT INTO entity_citations (entity_kind, entity_id, citation_id) "
             "VALUES ('person', 'per:test:canonical', 'cite:test:1')"
         )
+
+
+def seed_with_candidate_in_candidate_persons(db_path: Path) -> str:
+    """Variant of seed() where candidate_a_id points at candidate_persons.
+
+    This is the layout that the live DB actually uses. Returns the
+    merge_candidates id.
+    """
+    import json as _json
+
+    with connect(db_path) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        # Canonical only (B side).
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, gender, clan_name, confidence, provenance) "
+            "VALUES ('per:test:canonical', '周宣王', 'M', '姬', 0.9, 'curated')",
+        )
+        conn.execute(
+            "INSERT INTO person_variants (id, person_id, variant, kind) "
+            "VALUES ('pv:test:c:1', 'per:test:canonical', '宣王', '谥号')",
+        )
+        # A side: candidate_persons row.
+        conn.execute(
+            "INSERT INTO candidate_persons "
+            "(id, canonical_name, gender, state_id, confidence, "
+            "pipeline_run_id, chunk_id, quote, variants_json) "
+            "VALUES ('cand:per:test:p1', '周宣王', 'M', 's1', 0.85, "
+            "'run:test', 'chunk:1', 'quote text', ?)",
+            (
+                _json.dumps(
+                    [{"variant": "宣王", "kind": "谥号"}, {"variant": "靖", "kind": "本名"}]
+                ),
+            ),
+        )
+        mc_id = "mc:test:cand:1"
+        conn.execute(
+            "INSERT INTO merge_candidates "
+            "(id, kind, candidate_a_id, candidate_b_id, score, status) "
+            "VALUES (?, 'person', 'cand:per:test:p1', 'per:test:canonical', 0.7, 'open')",
+            (mc_id,),
+        )
+        return mc_id

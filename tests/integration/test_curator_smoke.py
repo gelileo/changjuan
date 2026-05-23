@@ -8,12 +8,11 @@ Schema migration:
   does not include the new change_kind values added in Phase 5 Tasks 3-5.
   _migrate_audit_log_check() upgrades the constraint before any tests run.
 
-Candidate promotion:
+Candidate layout (Phase 5.1):
   merge_candidates.candidate_a_id references candidate_persons.id in the
   live DB (candidates have not yet been promoted to persons). accept_merge
-  expects both parties in persons. _promote_merge_candidates_to_persons()
-  inserts the candidate rows into persons with their original IDs so the
-  merge logic can find them.
+  now handles this natively — it detects which table the candidate is in
+  and branches accordingly. No promotion workaround is required.
 """
 
 from __future__ import annotations
@@ -81,59 +80,6 @@ def _migrate_audit_log_check(db_path: Path) -> None:
         conn.close()
 
 
-def _promote_merge_candidates_to_persons(db_path: Path) -> int:
-    """Insert open merge_candidates' candidate_a rows into persons.
-
-    The live DB has merge_candidates.candidate_a_id pointing to
-    candidate_persons.id (unloaded candidates). accept_merge looks up
-    candidate_a_id in the persons table; without this step every
-    accept_merge call would raise MergeError("candidate person not found").
-
-    Inserts with provenance='auto' and state_id=NULL (local extraction
-    ids like 's1' are not valid FK references to states; setting NULL
-    avoids a FK constraint violation with foreign_keys=ON).
-
-    Idempotent: INSERT OR IGNORE skips rows that already exist.
-    Returns the number of newly inserted rows.
-    """
-    conn = sqlite3.connect(db_path)
-    try:
-        rows = conn.execute(
-            "SELECT cp.id, cp.canonical_name, cp.gender, cp.birth_date_json, "
-            "       cp.death_date_json, cp.notes, cp.clan_name, cp.social_category, "
-            "       cp.confidence, cp.pipeline_run_id "
-            "FROM candidate_persons cp "
-            "JOIN merge_candidates mc ON cp.id = mc.candidate_a_id "
-            "WHERE mc.status = 'open'"
-        ).fetchall()
-        inserted = 0
-        for r in rows:
-            cur = conn.execute(
-                "INSERT OR IGNORE INTO persons "
-                "(id, canonical_name, gender, birth_date_json, death_date_json, "
-                " notes, state_id, clan_name, social_category, confidence, "
-                " provenance, pipeline_run_id) "
-                "VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, 'auto', ?)",
-                (
-                    r[0],  # id
-                    r[1],  # canonical_name
-                    r[2],  # gender
-                    r[3],  # birth_date_json
-                    r[4],  # death_date_json
-                    r[5],  # notes
-                    r[6],  # clan_name
-                    r[7],  # social_category
-                    r[8],  # confidence
-                    r[9],  # pipeline_run_id
-                ),
-            )
-            inserted += cur.rowcount
-        conn.commit()
-        return inserted
-    finally:
-        conn.close()
-
-
 @pytest.fixture
 def db_copy(tmp_path: Path) -> Path:
     if not LIVE_DB.exists():
@@ -141,7 +87,6 @@ def db_copy(tmp_path: Path) -> Path:
     dst = tmp_path / "smoke.sqlite"
     shutil.copy(LIVE_DB, dst)
     _migrate_audit_log_check(dst)
-    _promote_merge_candidates_to_persons(dst)
     return dst
 
 

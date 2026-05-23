@@ -187,6 +187,21 @@ An `audit_log` row with `change_kind='split'` is written, with `before_json`
 capturing the source person snapshot and `after_json` carrying the new id,
 source id, peeled variants, and optional note.
 
+### candidate_persons-side A handling (Phase 5.1)
+
+In the live DB, `merge_candidates.candidate_a_id` points at `candidate_persons.id`, not `persons.id`. Phase 5.1 extends `accept_merge` to detect this automatically: it checks `persons` first; if the candidate is not found there it falls back to `candidate_persons` via the internal helper `_candidate_persons_snapshot`.
+
+**Behavior when A is in `candidate_persons`:**
+
+- **Snapshot**: `_candidate_persons_snapshot` reads the `candidate_persons` row and returns a persons-compatible dict. It drops candidate-only columns (`social_category`, `pipeline_run_id`, `chunk_id`, `quote`, `variants_json`, `match_target_id`). `state_id` values matching the local-extraction pattern (`s\d+`, e.g. `s1`) or absent from the `states` table are replaced with `NULL` so they are never folded into the canonical row.
+- **NULL-fold**: same as the persons path.
+- **Variant fold**: variants come from `candidate_persons.variants_json` (a JSON array of `{variant, kind}` objects). Each variant is inserted into `person_variants` via `INSERT OR IGNORE`, deduped against the `UNIQUE(person_id, variant, kind)` constraint.
+- **FK retarget**: skipped. No `persons`-FK columns point at `candidate_persons` ids. `relations_retargeted = 0`.
+- **Cleanup**: the `candidate_persons` row is NOT deleted (it is the historical extraction record). Instead, `candidate_persons.match_target_id` is set to `canonical_id` so Stage 7 and future linker runs know this candidate has been merged.
+- **Audit log**: written the same way as the persons path. `before_json` holds the candidate snapshot sourced from `candidate_persons`.
+
+The integration smoke's `_promote_merge_candidates_to_persons` workaround has been removed; `accept_merge` handles `candidate_persons`-side A natively.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.
