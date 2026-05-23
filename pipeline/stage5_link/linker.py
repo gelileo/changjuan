@@ -55,14 +55,26 @@ def _denormalize_variants(conn: sqlite3.Connection, pipeline_run_id: str) -> Non
     conn.commit()
 
 
-def link_run(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, int]:
+def link_run(
+    conn: sqlite3.Connection,
+    pipeline_run_id: str,
+    *,
+    ignore_rejections: bool = False,
+) -> dict[str, int]:
     """For each candidate_persons row in the run, find plausible match targets and
     dispatch by score:
       - score >= LINKER_AUTO_MERGE_THRESHOLD  → write match_target_id + audit_log
       - LINKER_QUEUE_THRESHOLD <= score < auto → write merge_candidates row
       - score < LINKER_QUEUE_THRESHOLD         → no action
-    Returns stats: {candidates_processed, auto_merges, queued, skipped}.
+
+    Phase 6: pairs previously dispositioned as rejected (rejected_merges) are
+    skipped at the queue stage unless ignore_rejections=True.
+
+    Returns stats: {candidates_processed, auto_merges, queued, skipped,
+                    rejected_filter_skipped}.
     """
+    from pipeline.stage5_link.fingerprint import candidate_fingerprint
+
     _denormalize_variants(conn, pipeline_run_id)
 
     stats: dict[str, int] = {
@@ -70,7 +82,17 @@ def link_run(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, int]:
         "auto_merges": 0,
         "queued": 0,
         "skipped": 0,
+        "rejected_filter_skipped": 0,
     }
+
+    rejected: set[tuple[str, str]] = set()
+    if not ignore_rejections:
+        rejected = {
+            (row[0], row[1])
+            for row in conn.execute(
+                "SELECT canonical_id, candidate_fingerprint FROM rejected_merges"
+            )
+        }
 
     candidate_ids = [
         row[0]
@@ -145,6 +167,16 @@ def link_run(conn: sqlite3.Connection, pipeline_run_id: str) -> dict[str, int]:
             if best_target.get("target_kind") == "candidate":
                 already_matched.add(best_target["target_id"])
         else:
+            # Queue case — apply Phase 6 reject-memory filter (canonical targets only).
+            if best_target.get("target_kind") == "canonical":
+                fp = candidate_fingerprint(
+                    me["canonical_name"],
+                    [v["variant"] for v in (me.get("variants") or [])],
+                )
+                if (best_target["target_id"], fp) in rejected:
+                    stats["rejected_filter_skipped"] += 1
+                    continue
+
             conn.execute(
                 "INSERT INTO merge_candidates "
                 "(id, kind, candidate_a_id, candidate_b_id, score, surface_features_json, status) "

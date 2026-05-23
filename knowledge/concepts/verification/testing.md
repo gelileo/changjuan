@@ -549,6 +549,17 @@ All three tests use `_fresh_db()` (`:memory:` + `CANONICAL_SCHEMA`), no fixtures
 
 Total test count after Phase 6 Task A3: **276**.
 
+## Phase 6 Task A4 — rejection-loop integration tests
+
+`tests/integration/test_link_rejection_loop.py` adds two integration tests for the new linker filter. Both use an in-memory `:memory:` SQLite database with `CANONICAL_SCHEMA` applied via the `conn` pytest fixture. A `_seed_minimal_world` helper seeds a canonical person `申侯` (with two `person_variants` using `kind='别名'`), a matching `candidate_persons` row with `variants_json=[{"variant":"申侯"},{"variant":"申伯"}]`, and returns `(canonical_id, run_id)`. The seed is tuned to score 0.50 (strong variant overlap, all other signals one_null) — in the queue band `[0.40, 0.75)`.
+
+- `test_link_then_reject_then_link_does_not_reflag` — runs `link_run`, asserts `queued==1`; calls `reject_merge` on the produced `merge_candidates` row; re-runs `link_run`; asserts `queued==0` and `rejected_filter_skipped >= 1`.
+- `test_ignore_rejections_bypasses_filter` — same setup + rejection; re-runs `link_run(conn, run_id, ignore_rejections=True)`; asserts `queued==1` (pair re-emitted despite rejection record).
+
+Note: `person_variants.kind` requires values from `('本名','字','谥号','封号','别名')` — the seed uses `'别名'` (not `'alias'`).
+
+Total test count after Phase 6 Task A4: **278**.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

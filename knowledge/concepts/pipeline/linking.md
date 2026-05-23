@@ -3,7 +3,7 @@ title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
 updated: 2026-05-23
-implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention)
+implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention); Phase 6 A4 (linker filters rejected pairs; ignore_rejections kwarg)
 status: thin
 load_bearing: true
 references:
@@ -219,6 +219,16 @@ The integration smoke's `_promote_merge_candidates_to_persons` workaround has be
 ### Reject-memory fingerprint
 
 `pipeline/stage5_link/fingerprint.py` exposes `candidate_fingerprint(name, variants) → str` — a 16-hex SHA-1 hash that serves as the stability key for the `rejected_merges` table. The fingerprint is computed from candidate-side data only: `json.dumps({"name": name, "variants": sorted(set(variants))})` encoded as UTF-8 and truncated to 16 hex characters. Sorting and deduplication of variants make the fingerprint order-insensitive and dedup-insensitive, so re-extraction runs that permute variant order or emit duplicate entries produce the same hash and the rejection remains effective. A genuinely new variant (new evidence) changes the sorted set and therefore the fingerprint; the rejection no longer suppresses the pair and the linker re-surfaces it for review. The name is included as a separate key so that two candidates sharing the same variant set but differing in canonical name produce different fingerprints.
+
+## Phase 6 linker filter (Task A4)
+
+`link_run` now accepts an `ignore_rejections: bool = False` keyword argument. When `False` (default), it loads all `(canonical_id, candidate_fingerprint)` pairs from `rejected_merges` once at the start of the run and skips any queue-band pair that matches. When `True`, the load is skipped and all pairs are emitted regardless of prior rejections.
+
+The filter is scoped to **canonical-side targets only** (`target_kind == "canonical"`). Same-run candidate-vs-candidate pairs are not filtered — the `rejected_merges.canonical_id` FK references `persons`, not `candidate_persons`, so cross-candidate pairs have no rejection record to match against.
+
+Stats dict gains a new key: `rejected_filter_skipped` (always present, zero when `ignore_rejections=True` or when no rejections match). All consumers that unpack stats by key are unaffected; the key is additive.
+
+The fingerprint used at filter time is `candidate_fingerprint(me["canonical_name"], [v["variant"] for v in me.get("variants") or []])`, where `me` is the loaded candidate dict (populated by `_load_candidate` and denormalized by `_denormalize_variants` at the start of the run).
 
 ## What would invalidate this article
 
