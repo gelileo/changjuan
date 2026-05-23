@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-23] chore(data): Phase 6 Task C2 — backfilled person_relations from cached Ch.1-5 extractions
+
+- Re-ran stages 3→5→7 against cached `data/extractions/ch0{1..5}/extract-v2.yaml` after the Task C1 fix.
+- Counts before → after:
+  - `person_relations`: **0 → 28**
+  - `candidate_person_relations` rows with non-empty `kind`: **0 → 32** (28 promoted + 4 with unresolvable candidate-side FKs after queue-filter)
+  - `merge_candidates` open: **31 → 94** (+63 new mentions across chapters). A6's filter caught 0 because cross-chapter mentions carry different variant evidence (e.g. Ch.1's `周宣王` has variants `[宣王, 靖]`; Ch.2's has `[宣王]`) → different fingerprints. A6's exact-fingerprint dedup is by design — it catches re-extraction of the same chapter, not legitimately different mentions across chapters.
+  - `conflicts`: **12 → 24** (+12 from directional `person_relations` contradictions now visible; Phase 7's conflicts queue will triage).
+- Each new mc is a quick name-match accept for the curator since `candidate_persons.canonical_name == persons.canonical_name`. The walk count grew from 31 → 94 but the per-decision cost stayed low.
+- Live DB snapshot at `data/changjuan.sqlite.pre-phase6c-bak` preserved for rollback. Ch.1-only attempt was rolled back; this is the second-attempt clean backfill with A6 active.
+- no knowledge impact: operational log entry only; behavior already documented in Task C1.
+
 ## [2026-05-23] fix(test): smoke-test audit_log migration preserves rejected_merges FK
 
 - Smoke test's `_migrate_audit_log_check` was rewriting `rejected_merges.audit_log_id` FK from `audit_log` → `audit_log_old` during the RENAME trick (SQLite default behavior since 3.26). When `audit_log_old` was dropped, the FK pointed at a nonexistent table; `reject_merge` then failed with `no such table: audit_log_old`. Fixed by wrapping the RENAME in `PRAGMA legacy_alter_table=ON/OFF`.
