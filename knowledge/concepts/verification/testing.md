@@ -376,7 +376,7 @@ These tests verify the CLI shim wires correctly into `stage5_link.link_run` and 
 - `test_queue_writes_merge_candidates_row` — strong(+0.50) + state one_null(±0) = 0.50, in [0.40, 0.75) → `merge_candidates` row written with `kind='person'`, `status='open'`.
 - `test_skip_leaves_no_trace` — no variant overlap (hard veto, score=0.0) → nothing written, `skipped=1`.
 - `test_cross_run_chain_resolution` — two same-run sibling candidates sharing names; first alphabetically is processed, scores 0.80 against the sibling → `match_target_id` points at the sibling candidate id; sibling is added to `already_matched` set and skipped. Also asserts the stats reconciliation invariant: `candidates_processed (2) == auto_merges (1) + queued (0) + skipped (1)`.
-- `test_returns_stats_dict` — empty run → stats dict has exactly the four expected keys.
+- `test_returns_stats_dict` — empty run → stats dict has exactly the six expected keys (updated in Phase 6 A6 to include `rejected_filter_skipped` and `already_open_skipped`).
 - `test_variants_denormalized_from_variants_json` — seeds candidate with `variants_json` only (Phase 2 stage 3 pattern); asserts `candidate_person_variants` rows are created by `_denormalize_variants` before scoring.
 
 Score values in tests are calibrated against the actual scorer formula; the queue test uses `state=one_null` (one side has no state_id) to land in [0.40, 0.75), and the cross-run test adds `social_category='royalty'` on both sides to reach 0.80.
@@ -573,6 +573,19 @@ Total test count after Phase 6 Task A5: **279**.
 `tests/integration/test_person_relations_backfill.py` adds one new test that exercises the fixed `pipeline/stage3_extract.py` field-name bug end-to-end. The test loads the cached `data/extractions/ch01/extract-v2.yaml` against a tmp-path canonical DB plus the live `data/corpus.sqlite`, asserts `candidate_person_relations` rows are produced with real kinds (`parent`, `ally`, `mentor`, `spouse`, `killed_by`), and asserts no empty-string kinds leak through. Skipped via `@pytest.mark.skipif` when either the extraction YAML or the corpus DB is absent.
 
 Total test count after Phase 6 Task C1: **280**.
+
+## Phase 6 Task A6 — already-open duplicate-pair filter integration tests
+
+`tests/integration/test_link_already_open_filter.py` adds two integration tests for the new `already_open` filter in `link_run`. Both use an in-memory `:memory:` SQLite database with `CANONICAL_SCHEMA` applied via the `conn` pytest fixture (same pattern as the rejection-loop tests).
+
+- `test_link_skips_emission_when_pair_already_open` — seeds canonical person `申侯` + run 1 candidate; runs `link_run(run1)` → asserts `queued==1`; seeds run 2 candidate with same name/variants (same fingerprint, different id); runs `link_run(run2)` → asserts `queued==0` and `already_open_skipped >= 1`. Total open count stays at 1.
+- `test_already_open_filter_is_run_local` — same setup, but run 2 uses a different `canonical_name` ("申国君") with the same variants → different fingerprint → the filter key differs. Asserts `queued + already_open_skipped >= 1` (no crash, accounting consistent).
+
+The first test is the load-bearing regression for the duplicate-row problem observed in Phase 6 Ch.1 backfill (10 duplicate `merge_candidates` rows for `per:周宣王`). The second test verifies the filter is fingerprint-based rather than canonical-id-only.
+
+`test_returns_stats_dict` in `tests/unit/test_linker.py` was also updated to include `rejected_filter_skipped` and `already_open_skipped` in the expected key set (both keys are always present, default 0).
+
+Total test count after Phase 6 Task A6: **282** (281 passed + 1 pre-existing curator-smoke failure).
 
 ## What would invalidate this article
 

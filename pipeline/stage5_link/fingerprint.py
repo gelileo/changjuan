@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from collections.abc import Iterable
 
 
@@ -27,3 +28,32 @@ def candidate_fingerprint(name: str, variants: Iterable[str]) -> str:
     normalized = sorted(set(variants))
     payload = json.dumps({"name": name, "variants": normalized}, ensure_ascii=False)
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
+
+
+def fingerprint_for_candidate_a(conn: sqlite3.Connection, cand_a_id: str) -> str | None:
+    """Compute candidate_fingerprint for the A-side of a merge_candidates row.
+
+    Phase 5.1 dual-table: A may be in candidate_persons (typical) or persons.
+    Returns None if cand_a_id is found in neither table (caller should treat
+    as "can't filter this pair").
+    """
+    cp = conn.execute(
+        "SELECT canonical_name, variants_json FROM candidate_persons WHERE id = ?",
+        (cand_a_id,),
+    ).fetchone()
+    if cp is not None:
+        name = cp[0]
+        raw = cp[1]
+        variants: list[str] = []
+        if raw:
+            parsed = json.loads(raw)
+            variants = [v["variant"] for v in parsed if isinstance(v, dict) and "variant" in v]
+        return candidate_fingerprint(name, variants)
+
+    p = conn.execute("SELECT canonical_name FROM persons WHERE id = ?", (cand_a_id,)).fetchone()
+    if p is None:
+        return None
+    variant_rows = conn.execute(
+        "SELECT variant FROM person_variants WHERE person_id = ?", (cand_a_id,)
+    ).fetchall()
+    return candidate_fingerprint(p[0], [r[0] for r in variant_rows])

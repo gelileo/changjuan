@@ -73,7 +73,7 @@ def link_run(
     Returns stats: {candidates_processed, auto_merges, queued, skipped,
                     rejected_filter_skipped}.
     """
-    from pipeline.stage5_link.fingerprint import candidate_fingerprint
+    from pipeline.stage5_link.fingerprint import candidate_fingerprint, fingerprint_for_candidate_a
 
     _denormalize_variants(conn, pipeline_run_id)
 
@@ -83,6 +83,7 @@ def link_run(
         "queued": 0,
         "skipped": 0,
         "rejected_filter_skipped": 0,
+        "already_open_skipped": 0,
     }
 
     rejected: set[tuple[str, str]] = set()
@@ -93,6 +94,17 @@ def link_run(
                 "SELECT canonical_id, candidate_fingerprint FROM rejected_merges"
             )
         }
+
+    already_open: set[tuple[str, str]] = set()
+    for mc_row in conn.execute(
+        "SELECT id, candidate_a_id, candidate_b_id FROM merge_candidates "
+        "WHERE status = 'open' AND kind = 'person'"
+    ):
+        mc_cand_a_id = mc_row[1]
+        mc_cand_b_id = mc_row[2]
+        fp = fingerprint_for_candidate_a(conn, mc_cand_a_id)
+        if fp is not None:
+            already_open.add((mc_cand_b_id, fp))
 
     candidate_ids = [
         row[0]
@@ -175,6 +187,9 @@ def link_run(
                 )
                 if (best_target["target_id"], fp) in rejected:
                     stats["rejected_filter_skipped"] += 1
+                    continue
+                if (best_target["target_id"], fp) in already_open:
+                    stats["already_open_skipped"] += 1
                     continue
 
             conn.execute(

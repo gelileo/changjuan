@@ -207,7 +207,14 @@ def test_cross_run_chain_resolution(conn: sqlite3.Connection) -> None:
 
 def test_returns_stats_dict(conn: sqlite3.Connection) -> None:
     stats = link_run(conn, "run:empty")
-    assert set(stats.keys()) == {"candidates_processed", "auto_merges", "queued", "skipped"}
+    assert set(stats.keys()) == {
+        "candidates_processed",
+        "auto_merges",
+        "queued",
+        "skipped",
+        "rejected_filter_skipped",
+        "already_open_skipped",
+    }
 
 
 def test_variants_denormalized_from_variants_json(conn: sqlite3.Connection) -> None:

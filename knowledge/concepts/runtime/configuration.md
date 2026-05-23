@@ -99,6 +99,10 @@ Phase 6 Task A3 extends `reject_merge` to write a `rejected_merges` row; no new 
 
 Phase 6 Task A4 extends `link_run` to read `rejected_merges` and filter queue-band canonical-side pairs. No new configuration constants are added. The `ignore_rejections` kwarg is a call-site flag, not a global constant. `link_run` reads `LINKER_QUEUE_THRESHOLD` and `LINKER_AUTO_MERGE_THRESHOLD` as before; the filter applies only within the queue band.
 
+## linker filter against already-open merge_candidates (Phase 6 Task A6)
+
+Phase 6 Task A6 extends `link_run` to scan OPEN `merge_candidates` rows and skip emission of pairs already in the queue. No new configuration constants are added. The `already_open_skipped` stats key is always present (default 0); no kwarg controls this filter (it is unconditional and cannot be disabled).
+
 ## Phase 6 Task A2 — candidate_fingerprint (no configuration constants)
 
 `pipeline/stage5_link/fingerprint.candidate_fingerprint` is configuration-free: SHA-1/16-hex/sorted-set-dedup are hard-coded design decisions (see Phase 6 spec §3.2), not tuneable thresholds.

@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] feat(stage5): Phase 6 Task A6 — linker skips emission of pairs already in open merge_candidates queue
+
+- Phase 6 Task A6: linker skips emission of pairs already in open merge_candidates queue.
+- Articles touched: concepts/pipeline/linking.md, concepts/data-model/knowledge-graph.md, concepts/runtime/configuration.md, concepts/verification/testing.md.
+
 ## [2026-05-23] fix(stage3): Phase 6 Task C1 — read kind_detail (not relation_kind) for person_relations
 
 - Phase 6 Task C1: stage3 loader reads kind_detail (was relation_kind); person_relations no longer 0.
