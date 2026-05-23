@@ -198,6 +198,40 @@ def test_accept_merge_collision_writes_audit_log(seeded_db: tuple[Path, str]) ->
     assert rows[0]["entity_kind"] == "event_participant"
 
 
+def test_accept_merge_with_edits_applies_field_change(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id, edits={"clan_name": "姬"})
+    assert result.fields_edited == 1
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT clan_name FROM persons WHERE id = 'per:test:canonical'"
+        ).fetchone()
+    assert row["clan_name"] == "姬"
+
+
+def test_accept_merge_with_edits_writes_field_level_audit(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    with connect(db_path) as conn:
+        accept_merge(conn, mc_id, edits={"notes": "edited by curator"})
+    with connect(db_path) as conn:
+        row = conn.execute(
+            "SELECT field, before_json, after_json FROM audit_log "
+            "WHERE entity_id = 'per:test:canonical' AND field = 'notes'"
+        ).fetchone()
+    assert row is not None
+    assert row["field"] == "notes"
+    after = json.loads(row["after_json"])
+    assert after["value"] == "edited by curator"
+    # before_json should match the §5 shape: {value, confidence, source_excerpt}
+    before = json.loads(row["before_json"])
+    assert "value" in before and "confidence" in before
+
+
 def test_accept_merge_event_participants_collision_tie_keeps_canonical(
     seeded_db: tuple[Path, str],
 ) -> None:

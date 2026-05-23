@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): accept_merge edits + field-level audit_log (Phase 5 Task 4)
+
+Curator can pass `edits={field: value}` to apply to canonical pre-fold.
+Field-level audit_log rows conform to §5 shape. Edits restricted to a
+whitelist of person columns. Schema CHECK extended to allow 'edit'.
+
 ## [2026-05-22] fix(stage5): Task 3 review minors — tie-breaking + audit completeness
 
 - Tie-breaking on collision confidence now favors canonical (was: candidate).

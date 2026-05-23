@@ -147,6 +147,18 @@ Each resolution writes an `audit_log` row with `change_kind='merge_collision_res
 
 Task 3 follow-up fixes tie-break + audit-completeness minors.
 
+### Field-level edits (Phase 5 Task 4)
+
+`accept_merge(conn, mc_id, edits={field_name: new_value, ...})` applies
+the listed edits to the canonical row BEFORE the field-level NULL fold,
+so the fold sees the curator's intended values. Each edit produces a
+field-level `audit_log` row with the §5 shape `{value, confidence,
+source_excerpt}` for both `before_json` and `after_json`.
+
+Editable fields: `gender`, `birth_date_json`, `death_date_json`, `notes`,
+`state_id`, `clan_name`, `canonical_name`. Other field names raise
+`MergeError`.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.

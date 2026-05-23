@@ -457,6 +457,7 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
 - Task 2 brings the suite to 7 tests covering the `accept_merge` happy path (result shape, audit_log row, status flip, FK retarget, candidate deletion, variant dedup, stale-guard).
 - Task 3 brings the suite to 12 tests covering PK-collision branches.
 - Task 3 follow-up (review minors) adds `test_accept_merge_event_participants_collision_tie_keeps_canonical`, bringing the suite to 13 tests; this test locks in the canonical-wins-on-tie rule.
+- Task 4 brings the suite to 15 tests covering `accept_merge` with curator `edits`: `test_accept_merge_with_edits_applies_field_change` (edits={clan_name:"姬"} → row updated, `fields_edited==1`) and `test_accept_merge_with_edits_writes_field_level_audit` (edits={notes:...} → field-level `audit_log` row with `change_kind='edit'` and §5-shaped `before_json`/`after_json`).
 
 ## What would invalidate this article
 

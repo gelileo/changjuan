@@ -83,3 +83,7 @@ Phase 5 Task 2 implements the no-edits, no-collision `accept_merge` path: NULL c
 ## audit_log.change_kind expansion (Phase 5 Task 3)
 
 Phase 5 Task 3 adds `'merge_collision_resolved'` to the `audit_log.change_kind` CHECK constraint. This value is written by the four PK-collision resolution helpers in `pipeline/stage5_link/merge.py` when a colliding row is deleted prior to FK retargeting. The full allowed set is now: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`.
+
+## audit_log.change_kind expansion (Phase 5 Task 4)
+
+Phase 5 Task 4 adds `'edit'` to the `audit_log.change_kind` CHECK constraint. This value is written when a curator passes `edits={field: value}` to `accept_merge`. Each edited field produces one field-level `audit_log` row with `change_kind='edit'`, `before_json` and `after_json` both in the §5 shape `{value, confidence, source_excerpt}`. The full allowed set is now: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`, `edit`.

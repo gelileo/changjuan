@@ -314,7 +314,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     entity_kind     TEXT NOT NULL,
     entity_id       TEXT NOT NULL,
     field           TEXT,
-    change_kind     TEXT NOT NULL CHECK (change_kind IN ('create','set','delete','merge','split','curator_override','merge_collision_resolved')),
+    change_kind     TEXT NOT NULL CHECK (change_kind IN ('create','set','delete','merge','split','curator_override','merge_collision_resolved','edit')),
     before_json     TEXT,
     after_json      TEXT,
     actor           TEXT NOT NULL,

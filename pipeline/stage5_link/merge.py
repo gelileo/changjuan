@@ -19,6 +19,19 @@ from typing import Any
 # Tables that _row_snapshot is permitted to read.
 _SNAPSHOTTABLE_TABLES: frozenset[str] = frozenset({"persons", "events", "places", "states"})
 
+# Fields that curator is permitted to edit via accept_merge edits=.
+_ALLOWED_EDIT_FIELDS: frozenset[str] = frozenset(
+    {
+        "gender",
+        "birth_date_json",
+        "death_date_json",
+        "notes",
+        "state_id",
+        "clan_name",
+        "canonical_name",
+    }
+)
+
 
 class MergeError(Exception):
     """Base class for merge-action errors."""
@@ -243,10 +256,6 @@ def accept_merge(
 
     See spec §3 for the full algorithm. All work happens in one transaction.
     """
-    # Edits are processed in Task 4. For Task 2, edits must be None or empty.
-    if edits:
-        raise NotImplementedError("edits handled in Task 4")
-
     cur = conn.execute(
         "SELECT id, candidate_a_id, candidate_b_id, status " "FROM merge_candidates WHERE id = ?",
         (mc_id,),
@@ -267,6 +276,47 @@ def accept_merge(
     canonical_snapshot_before = _row_snapshot(conn, "persons", canonical_id)
     if canonical_snapshot_before is None:
         raise MergeError(f"canonical person {canonical_id!r} not found")
+
+    # Validate all requested edit fields before any writes (fail-fast).
+    if edits:
+        for field_name in edits:
+            if field_name not in _ALLOWED_EDIT_FIELDS:
+                raise MergeError(f"field {field_name!r} not editable via accept_merge")
+
+    # Apply curator edits to canonical FIRST (before NULL-fold) so the field
+    # value the fold sees is the edited one. Field-level audit_log rows per §5.
+    fields_edited = 0
+    if edits:
+        for field_name, new_value in edits.items():
+            before_value = canonical_snapshot_before.get(field_name)
+            conn.execute(
+                f"UPDATE persons SET {field_name} = ? WHERE id = ?",
+                (new_value, canonical_id),
+            )
+            conn.execute(
+                "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+                "before_json, after_json, actor, at) "
+                "VALUES (?, 'person', ?, ?, 'edit', ?, ?, 'curator', ?)",
+                (
+                    _new_audit_id(),
+                    canonical_id,
+                    field_name,
+                    json.dumps(
+                        {"value": before_value, "confidence": 1.0, "source_excerpt": None},
+                        ensure_ascii=False,
+                    ),
+                    json.dumps(
+                        {"value": new_value, "confidence": 1.0, "source_excerpt": None},
+                        ensure_ascii=False,
+                    ),
+                    _now_iso(),
+                ),
+            )
+            fields_edited += 1
+        # Refresh the in-memory snapshot so subsequent fold logic sees edited values.
+        canonical_snapshot_before = (
+            _row_snapshot(conn, "persons", canonical_id) or canonical_snapshot_before
+        )
 
     # 3. Field-level fold: NULL canonical slots filled from candidate.
     nullable_fields = (
@@ -374,7 +424,7 @@ def accept_merge(
         canonical_id=canonical_id,
         variants_added=variants_added,
         relations_retargeted=relations_retargeted,
-        fields_edited=0,
+        fields_edited=fields_edited,
         collisions_resolved=collisions_resolved,
     )
 
