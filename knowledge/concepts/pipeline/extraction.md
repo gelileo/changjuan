@@ -123,6 +123,23 @@ The system prompt is the primary iteration surface for Phase 2. Edit
 `system-prompt.md` and re-invoke the skill; the Python validator and its invariants
 do not change between prompt iterations.
 
+### Pre-flight helpers (Ch.6 follow-on)
+
+Two scripts shave the iteration loop for any chapter beyond Ch.1:
+
+- **`scripts/read-chapter <N>`** dumps the chapter's chunks to
+  `data/readable/ch{NN}.md` (one section per chunk, paragraph-range heading,
+  raw text fenced) and prints to stdout with `--print`. Replaces ad-hoc
+  `sqlite3` queries against `data/corpus.sqlite` as the source of truth for
+  `chunk_id`, paragraph numbers, and the verbatim NFC bytes of each quote.
+- **`scripts/check-extraction <yaml>`** runs the JSON schema and all five
+  `validate_record` invariants against the YAML *without* touching the
+  canonical DB. Run it between `fill-spans` and `extract-load` to catch
+  justification-not-in-quote, quote-not-in-chunk, and chunk-local-id-typo
+  mistakes without round-tripping through `extract-load` and cleaning up a
+  half-loaded run. Locked by
+  `tests/unit/test_check_extraction_script.py` (Ch.6 follow-on).
+
 ## Chunk-local ids and the P/R harness
 
 The chunk-local id scheme creates a cross-id-space mismatch when comparing extraction output against the golden chapter annotations. Golden files use canonical-style ids (`sta:zhou`, `pla:qian-mu`, `per:zhou-xuan-wang`); the skill output uses chunk-local ids (`s1`, `pl1`, `p1`). The `tests/golden/precision_recall.py` harness resolves this by building per-side name-lookup maps (`{id → name}` for places/states, `{id → canonical_name}` for persons, `{id → type}` for events) and comparing resolved names rather than raw ids. The `golden_eval_cmd` in `pipeline/cli.py` includes the chunk-local suffix (extracted via `full_id.split(":")[-1]`) as the `id` field in each candidate dict so the lookup maps have the correct keys.

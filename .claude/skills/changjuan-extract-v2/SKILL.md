@@ -21,6 +21,29 @@ uv run changjuan extract --chapter $CHAPTER
 This pre-flight prints the copy-paste invocation to use and exits 1 if anything is
 missing. Fix any reported issues before proceeding.
 
+## Common gotchas (read once before writing any YAML)
+
+These are the failure modes that surfaced repeatedly during the Ch.1–Ch.6 runs.
+Each one is caught by `scripts/check-extraction` after the fact, but writing
+the YAML with them in mind saves an iterate-fix cycle:
+
+- **`justifications` values must be substrings of `citation.quote`, not of the
+  whole chunk.** A summary justification that points to text *after* your
+  quote will be rejected — pick a longer quote or shorter justification.
+- **No paraphrasing inside `quote`.** Don't insert `……` to elide; don't drop
+  trailing punctuation that's actually in the chunk; don't substitute simple
+  quotes for the source's Chinese typographer's quotes.
+- **Avoid bare `"<name>曰"` / `"<name>奏曰"` quotes.** Dialog tags repeat across
+  the chunk and force `fill-spans` to ask you to disambiguate — pick the
+  follow-on sentence instead, e.g. `"右宰丑曰：乱臣贼子"` or
+  `"石碏乃使右宰丑往濮莅杀州吁"`.
+- **`paragraph` is the absolute chapter paragraph number** — same indexing as
+  the `[paragraph_start, paragraph_end]` range printed by `read-chapter` for
+  the chunk, with the schema lower bound of 1.
+- **Use natural type values** (`处死`, `战`, `朝议`, ...). The loader's
+  collision guard handles same-type events at different places via `-2`, `-3`,
+  ... id suffixes (commit `0b6afbe`); you don't need to invent unique types.
+
 ## Invocation
 
 ```
@@ -44,26 +67,20 @@ Read these files before extracting anything:
 Accept `chapter:N` from the invocation (first positional arg or `chapter:N` kwarg).
 Convert to zero-padded two-digit form: `ch{N:02d}`.
 
-### 3. Query chunks for the chapter
+### 3. Dump chunks for the chapter
 
 ```bash
-uv run python -c "
-import sqlite3, json
-c = sqlite3.connect('data/corpus.sqlite')
-rows = list(c.execute(
-    'SELECT ch.id, ch.paragraph_start, ch.paragraph_end, ch.text '
-    'FROM chunks ch JOIN documents d ON ch.document_id = d.id '
-    'WHERE d.chapter_num = ? ORDER BY ch.paragraph_start',
-    ($CHAPTER,)
-))
-for row in rows:
-    print(repr(row))
-print(f'--- {len(rows)} chunks ---')
-"
+./scripts/read-chapter $CHAPTER --print
 ```
 
-If zero chunks are returned, stop and report. The pre-flight verb (`changjuan extract`)
-should have caught this — re-run it and investigate.
+This writes `data/readable/ch{N:02d}.md` (Markdown with one section per chunk,
+chunk id + paragraph range as the heading, raw paragraph text in a fenced block)
+and also prints to stdout. Read it once before starting extraction — it's the
+single source of truth for `chunk_id`, paragraph ranges, and the exact NFC bytes
+of every quote you'll pull.
+
+If `read-chapter` reports "no chunks found", stop and report. The pre-flight
+verb (`changjuan extract`) should have caught this — re-run it and investigate.
 
 ### 4. Extract entities per chunk
 
@@ -81,7 +98,9 @@ Key mechanics:
   ```yaml
   citation:
     chunk_id: "chk:dzl:1:0"   # exact chunk id from the DB query
-    paragraph: 4               # 1-based paragraph index within the chunk
+    paragraph: 4               # absolute chapter-paragraph number (matches the
+                               # chunk's [paragraph_start, paragraph_end] range
+                               # as shown by read-chapter; min 1 per schema)
     quote: "宣王御驾亲征，败绩于千亩"  # verbatim substring of chunk.text
     span: [0, 0]               # leave as [0, 0] — fill-spans script computes this
   ```
@@ -134,6 +153,24 @@ once in the chunk text, the script will prompt for disambiguation.
 If `fill-spans` reports "quote not found" for any record, fix the `quote` value
 in the YAML (check for punctuation mismatch, full-width vs. half-width, or
 Chinese quote-mark contamination) and re-run.
+
+### 6.5. Pre-flight validation (read-only)
+
+```bash
+./scripts/check-extraction data/extractions/ch$(printf "%02d" $CHAPTER)/extract-v2.yaml
+```
+
+Runs the same JSON-schema + five per-record invariant checks as `extract-load`
+but without touching the DB, so iterating on quote/justification fixes is
+fast. Catches the common Ch.6-class mistakes:
+
+- justification value not a substring of `citation.quote`
+- `citation.quote` not a verbatim substring of the chunk (e.g. you added a
+  paraphrase, an ellipsis `……`, or a stray Chinese typographer's quote)
+- chunk-local id reference (`primary_place_id: pl9`) not declared anywhere
+- `inference_kind` outside the allowlist
+
+Fix everything it reports before moving on. Exit code 0 means safe to load.
 
 ### 7. Load into the database
 

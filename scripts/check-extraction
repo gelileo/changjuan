@@ -1,0 +1,163 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Validate a stage-3 extraction YAML without writing to the canonical DB.
+
+Runs the same checks `changjuan extract-load` would run, but read-only:
+  1. JSON-schema validation against `pipeline.schemas.extract_output.EXTRACT_OUTPUT_SCHEMA`.
+  2. The five per-record invariants from `pipeline.stage3_extract.validate_record`
+     (verbatim quote, justification substring of quote, chunk-id match,
+     `inference_kind` allowlist, chunk-local id integrity).
+
+Use this between `fill-spans` and `extract-load` to catch quote/justification
+mistakes before they hit the candidate tables — much faster than the
+extract-load round-trip and you don't have to clean up a half-loaded run.
+
+Usage:
+    scripts/check-extraction data/extractions/ch06/extract-v2.yaml
+    scripts/check-extraction --db data/corpus.sqlite path/to/file.yaml
+
+Exit code 0 = clean; 1 = at least one violation reported.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sqlite3
+import sys
+from pathlib import Path
+
+import jsonschema
+import yaml
+
+from pipeline.schemas.extract_output import EXTRACT_OUTPUT_SCHEMA
+from pipeline.stage3_extract import InvariantError, validate_record
+
+
+def _load_yaml(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    if not isinstance(data, dict):
+        raise SystemExit(f"{path}: top-level YAML must be a mapping, got {type(data).__name__}")
+    return data
+
+
+def _fetch_chunks(corpus_db: Path, chunk_ids: set[str]) -> dict[str, dict]:
+    if not corpus_db.exists():
+        raise SystemExit(f"corpus db not found: {corpus_db}")
+    conn = sqlite3.connect(corpus_db)
+    placeholders = ",".join("?" * len(chunk_ids))
+    rows = conn.execute(
+        f"SELECT id, text FROM chunks WHERE id IN ({placeholders})",
+        tuple(chunk_ids),
+    ).fetchall()
+    found = {r[0]: {"id": r[0], "text": r[1]} for r in rows}
+    return found
+
+
+def _declared_local_ids(data: dict) -> set[str]:
+    """Collect every chunk-local id declared across persons/events/places/states.
+
+    The validator's `declared_local_ids` is per-chunk in the live loader; here
+    we relax to per-file (the YAML is the unit). This catches typos like a
+    `primary_place_id: pl9` that's not declared anywhere.
+    """
+    declared: set[str] = set()
+    for kind in ("persons", "events", "places", "states"):
+        for rec in data.get(kind) or []:
+            rid = rec.get("id")
+            if isinstance(rid, str):
+                declared.add(rid)
+    return declared
+
+
+def check_extraction(yaml_path: Path, corpus_db: Path) -> list[str]:
+    data = _load_yaml(yaml_path)
+
+    errors: list[str] = []
+
+    # Pass 1 — JSON schema
+    try:
+        jsonschema.validate(data, EXTRACT_OUTPUT_SCHEMA)
+    except jsonschema.ValidationError as exc:
+        loc = "/".join(str(p) for p in exc.absolute_path) or "<root>"
+        errors.append(f"schema: {loc}: {exc.message}")
+        # Don't return early — invariants may still surface useful errors
+
+    # Pass 2 — per-record invariants
+    chunk_ids: set[str] = set()
+    for kind in ("persons", "events", "places", "states", "relations"):
+        for rec in data.get(kind) or []:
+            cid = (rec.get("citation") or {}).get("chunk_id")
+            if isinstance(cid, str):
+                chunk_ids.add(cid)
+    chunks = _fetch_chunks(corpus_db, chunk_ids) if chunk_ids else {}
+    declared = _declared_local_ids(data)
+
+    for kind in ("persons", "events", "places", "states"):
+        for rec in data.get(kind) or []:
+            cid = (rec.get("citation") or {}).get("chunk_id")
+            chunk = chunks.get(cid)
+            if chunk is None:
+                errors.append(
+                    f"{kind}/{rec.get('id')}: citation.chunk_id '{cid}' not found in {corpus_db.name}"
+                )
+                continue
+            try:
+                validate_record(rec, chunk, declared_local_ids=declared)
+            except InvariantError as exc:
+                errors.append(f"{kind}/{rec.get('id')}: {exc}")
+
+    # Relations carry citations too — check the verbatim-quote rule for them.
+    for rel in data.get("relations") or []:
+        cit = rel.get("citation") or {}
+        cid = cit.get("chunk_id")
+        quote = cit.get("quote", "")
+        chunk = chunks.get(cid)
+        if chunk is None:
+            errors.append(
+                f"relations/{rel.get('kind')}: citation.chunk_id '{cid}' not found"
+            )
+            continue
+        if not quote:
+            errors.append(f"relations/{rel.get('kind')}: citation.quote is empty")
+            continue
+        # Same NFC-substring check as validate_record uses.
+        import unicodedata
+
+        if unicodedata.normalize("NFC", quote) not in unicodedata.normalize(
+            "NFC", chunk["text"]
+        ):
+            errors.append(
+                f"relations/{rel.get('kind')}: quote not substring of chunk '{cid}'"
+            )
+
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate an extraction YAML without DB writes.")
+    parser.add_argument("yaml_path", type=Path, help="path to extract-v2.yaml")
+    parser.add_argument(
+        "--db",
+        type=Path,
+        default=Path("data/corpus.sqlite"),
+        help="path to corpus.sqlite (default: data/corpus.sqlite)",
+    )
+    args = parser.parse_args()
+
+    if not args.yaml_path.exists():
+        print(f"file not found: {args.yaml_path}", file=sys.stderr)
+        return 2
+
+    errors = check_extraction(args.yaml_path, args.db)
+    if errors:
+        print(f"=== {args.yaml_path} ===")
+        for e in errors:
+            print(f"  ✗ {e}")
+        print(f"\n{len(errors)} violation(s); fix and re-run before `changjuan extract-load`.")
+        return 1
+    print(f"✓ {args.yaml_path}: schema + invariants clean")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

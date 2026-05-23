@@ -602,6 +602,10 @@ Added to `tests/unit/test_linker.py`. Asserts the dominant 90/94 walk pattern (s
 
 The Phase 5 smoke test helper `_migrate_audit_log_check` does the standard SQLite "table rename trick" to widen the `audit_log.change_kind` CHECK constraint. Since SQLite 3.26 the default behavior of `ALTER TABLE … RENAME TO` is to *also* rewrite foreign-key references in OTHER tables — so once `rejected_merges` was added in Phase 6 with `audit_log_id REFERENCES audit_log(id)`, the rename silently mutated that FK to `audit_log_old(id)`, which then broke at the next `DROP audit_log_old`. The helper now wraps the rename in `PRAGMA legacy_alter_table=ON` / `OFF` so FK references in sibling tables are preserved verbatim. Total test count: **282** (now 282 passing).
 
+## `scripts/check-extraction` validator (Ch.6 follow-on)
+
+`tests/unit/test_check_extraction_script.py` exercises the new pre-flight validator by invoking it as a subprocess (the way the skill calls it). A `tiny_corpus` fixture builds a throwaway `corpus.sqlite` with one document and one chunk (`chk:ch01-001`, text `重耳奔狄`) using `open_corpus_db`; each test then writes a one-record extraction YAML to `tmp_path` and runs `scripts/check-extraction <yaml> --db <tiny_corpus>`. Three cases: `test_clean_yaml_exits_zero` (canonical_name 重耳, quote 重耳奔狄, justification 重耳 — schema and all five invariants happy, exit 0), `test_justification_not_in_quote_reports_error` (quote shortened to 重耳 but justification 奔狄 — both substrings of the chunk but the justification escapes the quote — exit 1 with `not substring of citation.quote`), and `test_quote_not_in_chunk_reports_error` (quote 重耳……奔狄 inserts a paraphrase ellipsis — fails the verbatim-quote invariant). These two failure modes were exactly the ones that cost ~7 minutes of iterate-fix wall-clock during the Ch.6 extraction.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

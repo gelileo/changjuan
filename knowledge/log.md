@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-23] feat(skill): `scripts/check-extraction` pre-flight validator + SKILL.md polish
+
+- Ch.6 extraction surfaced ~7 minutes of avoidable wall-clock from the iterate-fix loop on quote / justification mistakes — `extract-load` was the only thing reporting them, so each failure cost a round-trip plus a partial-candidate cleanup.
+- New `scripts/check-extraction <yaml>` reuses the existing `pipeline.stage3_extract.validate_record` + JSON schema to do a read-only check (schema + verbatim-quote + justification-substring + chunk-id-match + inference_kind allowlist + chunk-local id integrity). Exit 0 = safe to load. Run between `fill-spans` and `extract-load`.
+- New `tests/unit/test_check_extraction_script.py` covers the clean-pass plus the two Ch.6-class failure modes (justification outside the quote, paraphrased/ellipsis quote).
+- `SKILL.md` updates: step 3 now points at the long-standing `scripts/read-chapter` (no more ad-hoc `sqlite3` snippet); new step 6.5 invokes the validator; a "Common gotchas" block at the top captures the failure patterns from Ch.6 (paraphrasing inside `quote`, bare `<name>曰` dialog tags that force `fill-spans` disambiguation, the absolute-vs-relative paragraph indexing).
+- Articles touched: concepts/pipeline/extraction.md (new "Pre-flight helpers" subsection under Skill files).
+
 ## [2026-05-23] fix(load): propagate `persons.social_category` through stage 7
 
 - Surfaced by Ch.6 post-load audit: all 82 canonical persons had `social_category=NULL` despite every candidate (415 rows) populating it. Three sites in the stage-7 persons loader silently dropped the column:
