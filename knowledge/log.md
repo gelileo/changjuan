@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-05-22] feat(phase5): Phase 5 complete — curator UI v1 (merge-candidates triage)
+
+12 tasks shipped. `streamlit run curation/app.py` boots; merge-candidates
+queue works end-to-end against the 31 open rows; integration smoke green;
+phase5-prep.sh reports all pass. Three queues materialized as Streamlit
+pages (one functional, two stubs). Decision logic in
+`pipeline.stage5_link.merge` (six functions, ~25 unit tests).
+
+Phase 5 acceptance bar was "UI ready" — the curator can now sit down and
+work through the 31 candidates whenever they want. Reject-memory, undo,
+and the other two queues are Phase 6.
+
 ## [2026-05-22] test(curation): end-to-end smoke + scripts/curator-smoke (Phase 5 Task 11)
 
 Creates `tests/integration/test_curator_smoke.py` and `scripts/curator-smoke`.

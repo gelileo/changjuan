@@ -11,7 +11,8 @@ references:
   - concepts/pipeline/architecture.md
   - concepts/data-model/knowledge-graph.md
 affects:
-  - pipeline/cli.py
+  - pipeline/**/incremental*.py
+  - pipeline/**/reextract*.py
   - .claude/skills/changjuan-extract/**
   - .claude/skills/changjuan-extract-v*/**
 ---

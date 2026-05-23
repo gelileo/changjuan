@@ -10,7 +10,6 @@ references:
   - concepts/pipeline/architecture.md
 affects:
   - pipeline/config.py
-  - pipeline/cli.py
   - pipeline/stage5_link/**
 ---
 

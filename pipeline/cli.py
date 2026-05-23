@@ -753,3 +753,16 @@ def extract_load_cmd(
             typer.echo(f"  - {v}")
         if len(stats["invariant_violations"]) > 10:
             typer.echo(f"  ... and {len(stats['invariant_violations']) - 10} more")
+
+
+@app.command()
+def curator() -> None:
+    """Launch the Streamlit curator UI."""
+    import os
+
+    project_root = Path(__file__).resolve().parent.parent
+    app_path = project_root / "curation" / "app.py"
+    if not app_path.exists():
+        typer.echo(f"curation app not found at {app_path}", err=True)
+        raise typer.Exit(1)
+    os.execvp("streamlit", ["streamlit", "run", str(app_path)])

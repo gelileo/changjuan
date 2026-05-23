@@ -83,6 +83,19 @@ The `list-unresolved-dates` / `resolve-relative-date` pair is deliberately not a
 - `export` takes a required `version` positional — export bundles are always versioned at the bundle dirname.
 - `resolve-relative-date` always writes an `audit_log` entry — resolutions are auditable even if the curator corrects a previous resolution.
 
+### `changjuan curator`
+
+Launches the Streamlit curator UI:
+
+```bash
+uv run changjuan curator
+```
+
+Equivalent to `streamlit run curation/app.py` but registered as a CLI
+verb for symmetry with `extract`, `link`, `load`, etc. Phase 5 surface
+implements the merge-candidates queue only; conflicts and low-confidence
+are Phase 6.
+
 ## What would invalidate this article
 
 - A stage acquiring more than one user-facing verb (e.g., separate `link` and `link-rescue`).
