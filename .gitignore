@@ -2,6 +2,7 @@
 # (Cannot use `!data/X/` exceptions when data/ itself is ignored; explicit per-subdir.)
 data/changjuan.sqlite
 data/corpus.sqlite
+data/exports/
 data/extractions/
 data/logs/
 data/qa/
