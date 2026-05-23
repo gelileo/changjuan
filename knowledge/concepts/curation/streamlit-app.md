@@ -122,3 +122,7 @@ The `edit_mode` boolean lives in `st.session_state["edit_mode"]`. When `True`, `
 ### `render_left` reads citation from candidate_persons row (Phase 6 walk fix #2)
 
 The evidence column previously queried `entity_citations WHERE entity_kind = 'person' AND entity_id = candidate_a_id`, but `entity_citations` is populated only for canonical entities. Candidate rows carry `chunk_id` and `quote` directly on `candidate_persons`, so the column rendered "(no citation linked to candidate)" for every candidate. `render_left` now reads `chunk_id` + `quote` from the candidate row first (the typical Phase 5.1 case) and looks up the chunk text from `corpus.sqlite`; it falls back to the original `entity_citations` path only when the id is in `persons` (the escape-hatch case). Budget: 2/3 used.
+
+### Recent-decisions sidebar (Phase 6 walk fix #3)
+
+`_render_history_sidebar` in `pages/1_Merge_candidates.py` reads the last 20 merge-related `audit_log` rows (`change_kind IN ('merge', 'merge_rejected', 'split', 'edit')`) and renders them in `st.sidebar` as timestamped captions. Lets the curator confirm what just landed and spot accidental wrong-target decisions during a long walk. Read-only, no schema change, no `merge.py` API change. Budget: 3/3 used.

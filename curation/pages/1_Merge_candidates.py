@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -134,8 +135,45 @@ def _do_split(person_id: str, variants_to_extract: list[str], note: str | None) 
         conn.close()
 
 
+def _render_history_sidebar(limit: int = 20) -> None:
+    """Render a sidebar panel listing recent merge-related decisions.
+
+    Reads audit_log directly (no schema change), filters to the change_kinds
+    written by accept_merge / reject_merge / split_person, and shows the
+    most recent rows newest-first. Useful for confirming what just happened
+    and for spotting accidental wrong-target decisions during a long walk.
+    """
+    with sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT entity_kind, entity_id, change_kind, after_json, "
+            "       datetime(at, 'localtime') as when_local "
+            "FROM audit_log "
+            "WHERE change_kind IN ('merge', 'merge_rejected', 'split', 'edit') "
+            "ORDER BY at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+
+    with st.sidebar:
+        st.subheader(f"Recent decisions ({len(rows)})")
+        if not rows:
+            st.caption("No decisions yet.")
+            return
+        for r in rows:
+            note = ""
+            if r["change_kind"] == "merge_rejected" and r["after_json"]:
+                try:
+                    parsed = json.loads(r["after_json"])
+                    if parsed.get("note"):
+                        note = f" — {parsed['note'][:40]}"
+                except json.JSONDecodeError:
+                    pass
+            st.caption(f"`{r['when_local']}` · **{r['change_kind']}** · " f"{r['entity_id']}{note}")
+
+
 def main() -> None:
     st.set_page_config(page_title="Merge candidates · changjuan curator", layout="wide")
+    _render_history_sidebar()
     queue = _load_queue()
     cursor = st.session_state.get("mc_cursor", 0)
 

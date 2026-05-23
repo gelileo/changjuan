@@ -1,5 +1,11 @@
 # Build Log
 
+## [2026-05-23] feat(curation): walk fix #3 — recent-decisions sidebar
+
+- `_render_history_sidebar` reads the last 20 merge-related `audit_log` rows and renders them in `st.sidebar`. Lets the curator confirm landed decisions and spot accidents during the walk.
+- Counted against Track B friction-fix budget (3/3 used — budget exhausted).
+- Articles touched: concepts/curation/streamlit-app.md.
+
 ## [2026-05-23] fix(curation): walk fix #2 — render_left reads citation from candidate_persons
 
 - Evidence column showed "(no citation linked to candidate)" for every candidate because `entity_citations` is canonical-only and lookups by `candidate_a_id` always missed. `render_left` now reads `chunk_id` + `quote` directly from the `candidate_persons` row and resolves the chunk text from `corpus.sqlite`. Falls back to the original `entity_citations` path only for the persons-side escape-hatch case.
