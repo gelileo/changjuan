@@ -1,5 +1,18 @@
 # Build Log
 
+## [2026-05-22] feat(curation): merge-candidates review screen (Phase 5 Task 10)
+
+Creates `curation/pages/1_Merge_candidates.py` — the workhorse curator review page.
+40/40/20 shell wired to all five actions: Accept, Edit & accept, Reject, Defer, Split.
+Keyboard shortcuts a/e/r/d/j/k via streamlit-shortcuts. Short-lived write connections
+per action (plain sqlite3 + PRAGMA foreign_keys=ON); read-only display connections via
+URI mode=ro. Queue managed in session_state (mc_queue / mc_cursor).
+
+Adds `[mypy-streamlit_shortcuts] ignore_missing_imports = True` to mypy.ini.
+mypy --strict clean on all 10 curation/ source files. HTTP 200 confirmed on boot smoke.
+
+Articles updated: curation/streamlit-app.md (merge-candidates review screen section), log.md.
+
 ## [2026-05-22] feat(curation): home screen + stub pages (Phase 5 Task 9)
 
 Creates `curation/app.py` (Streamlit home screen), `curation/pages/2_Conflicts.py`,

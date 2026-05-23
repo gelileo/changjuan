@@ -80,3 +80,35 @@ Queue rendering:
 `curation/pages/2_Conflicts.py` and `curation/pages/3_Low_confidence.py` are Phase 6 stub pages. Each calls `st.set_page_config` and renders a single `st.warning` explaining the deferral. Streamlit's multipage convention requires no `__init__.py` in `pages/`.
 
 `streamlit-shortcuts` (v1.2.1) added as a project dependency for Task 10 keyboard shortcuts.
+
+## Merge-candidates review screen (Phase 5 Task 10)
+
+`curation/pages/1_Merge_candidates.py` is the workhorse review page. It uses the 40/40/20 `render_shell` layout (evidence / candidate-pair / decision columns) and wires all five curator actions.
+
+### Queue management
+
+- `_load_queue()` — loads `list[MergeCandidateRow]` once into `st.session_state["mc_queue"]` via `open_merge_candidates(DB_PATH)`; cursor is tracked in `st.session_state["mc_cursor"]`. The queue is frozen for the session; `_reload()` clears both keys and calls `st.rerun()`.
+- `_advance()` / `_retreat()` — increment / decrement cursor (retreat clamped to 0).
+- When the cursor reaches the end of the queue, a completion message with item count is shown and a "Reload queue" button is offered.
+
+### DB connections
+
+Reads use short-lived URI connections (`file:{path}?mode=ro`) opened inline. Writes use `_write_connect(db_path)` (plain `sqlite3.connect`, `PRAGMA foreign_keys = ON`) opened per-action, closed in a `finally` block.
+
+### Five actions (render_right column)
+
+| Button | Key | Function | Handles |
+|--------|-----|----------|---------|
+| Accept merge | `a` | `_do_accept(mc_id)` | `StaleMergeCandidateError` → skip; `MergeConflictError` → error; `MergeError` → error |
+| Edit & accept | `e` | enters edit mode first, then `_do_accept(mc_id, edits=edits_captured)` | same as above; clears `edit_mode` on success |
+| Reject | `r` | `_do_reject(mc_id)` | `StaleMergeCandidateError` → skip; `MergeError` → error |
+| Defer | `d` | `_do_defer(mc_id)` | always advances |
+| Split | `s` | `_do_split(candidate_b_id, variants, note)` inside expander | `MergeError` → error |
+
+### Edit mode
+
+The `edit_mode` boolean lives in `st.session_state["edit_mode"]`. When `True`, `render_pair` renders `st.text_input` widgets for the canonical column and returns an `edits: dict[str, Any]` with changed fields. The `edits_captured` variable is set by `render_center` (via `nonlocal`) and consumed by the "Edit & accept" button in `render_right`.
+
+### Keyboard shortcuts
+
+`streamlit_shortcuts.add_keyboard_shortcuts` maps `a/e/r/d/j/k` to the corresponding button labels. `mypy.ini` has `[mypy-streamlit_shortcuts] ignore_missing_imports = True`.
