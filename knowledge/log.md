@@ -1,5 +1,15 @@
 # Build Log
 
+## [2026-05-23] fix(phase5): final-review follow-ups
+
+Three findings from the final code review acted on:
+
+- `_do_split` now exposes a radio between candidate (A) and canonical (B) instead of always targeting B. The default — splitting the canonical — was risky and surfaced no choice to the curator.
+- `knowledge/concepts/curation/streamlit-app.md` frontmatter changed `status: thin` → `status: mature`. The article now comprehensively covers what shipped (DB layer, components, home, review screen).
+- `scripts/phase5-prep.sh` PHASE5_DEFERRED expanded from 12 to 15 items. New entries: candidate_a_id/persons bridging gap (curators cannot accept-merge against the live DB until this is addressed); chapter_citation_context paragraph window (params accepted but ignored); atomicity tests for error branches of accept/reject/split.
+
+Atomicity behavior is correct (sqlite3 `with conn:` rolls back on exception) — just lacks the snapshot-based tests the spec §6 promised. Defer_merge no-op + render_left's leaked connection are documented minors not yet acted on.
+
 ## [2026-05-22] feat(phase5): Phase 5 complete — curator UI v1 (merge-candidates triage)
 
 12 tasks shipped. `streamlit run curation/app.py` boots; merge-candidates

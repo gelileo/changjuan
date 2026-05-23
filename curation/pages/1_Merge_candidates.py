@@ -200,11 +200,22 @@ def main() -> None:
             _do_defer(current.mc_id)
             st.rerun()
         with st.expander("s · Split"):
+            split_target = st.radio(
+                "split which side",
+                ("A (candidate)", "B (canonical)"),
+                horizontal=True,
+                key="split-target",
+            )
             variants_text = st.text_input("variants to peel off (comma-separated)")
             split_note = st.text_input("note (optional)", key="split-note")
             if st.button("Confirm split"):
                 variants = [v.strip() for v in variants_text.split(",") if v.strip()]
-                _do_split(current.candidate_b_id, variants, split_note or None)
+                target_id = (
+                    current.candidate_a_id
+                    if split_target.startswith("A")
+                    else current.candidate_b_id
+                )
+                _do_split(target_id, variants, split_note or None)
                 st.rerun()
         st.divider()
         col_prev, col_next = st.columns(2)

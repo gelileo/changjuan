@@ -3,7 +3,7 @@ title: Curation app — Streamlit retrospective review
 type: concept
 area: curation
 updated: 2026-05-22
-status: thin
+status: mature
 load_bearing: false
 references:
   - concepts/pipeline/architecture.md

@@ -65,19 +65,32 @@ wait $SP 2>/dev/null || true
 
 section "7. PHASE5_DEFERRED"
 cat <<'EOF'
-12 items deferred to Phase 6+:
+15 items deferred to Phase 6+:
+  Curator UI surface:
   - Reject-memory (prevent linker re-flagging rejected pairs)
   - Undo button (audit_log replay)
   - Conflicts queue full implementation
   - Low-confidence extractions queue
   - Re-extract button per chapter
-  - person_relations zero-kind extractor bug (stage 3)
-  - LLM judge for ambiguous merges
-  - Prefetch ergonomics (<200ms per record)
-  - Linker for events / places / states / relations
-  - Coverage grid per-chapter detail view
   - Search box implementation
   - Headline counter widgets
+  - Coverage grid per-chapter detail view
+  - Prefetch ergonomics (<200ms per record)
+
+  Merge-action gaps surfaced by final review:
+  - candidate_a_id/persons gap — merge_candidates.candidate_a_id references
+    candidate_persons.id, but accept_merge looks up persons.id. The smoke
+    test patches with _promote_merge_candidates_to_persons; the live app
+    needs the same migration (or accept_merge extended to fall back to
+    candidate_persons) before curators can work the queue.
+  - chapter_citation_context ±N paragraph window — params are accepted but
+    only the immediate chunk is returned. Phase 6 implements the window.
+  - Atomicity tests for accept/reject/split error branches (DoD item 4 gap).
+
+  Pipeline cleanup:
+  - person_relations zero-kind extractor bug (stage 3)
+  - LLM judge for ambiguous merges
+  - Linker for events / places / states / relations
 EOF
 pass "deferred list printed"
 
