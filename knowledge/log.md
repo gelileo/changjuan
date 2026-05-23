@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-23] chore(walk): Phase 6 Track B walk started
+
+- Pre-walk DB snapshot at `data/changjuan.sqlite.phase6-walk-bak`. Baseline: open=94 (was originally 31, grew by 63 via Track C backfill — see Task C2 entry below).
+- Retro skeleton at `docs/superpowers/retros/2026-05-23-phase6-walk.md`.
+
 ## [2026-05-23] chore(data): Phase 6 Task C2 — backfilled person_relations from cached Ch.1-5 extractions
 
 - Re-ran stages 3→5→7 against cached `data/extractions/ch0{1..5}/extract-v2.yaml` after the Task C1 fix.
