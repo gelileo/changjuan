@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-22] feat(stage5): accept_merge PK-collision handling (Phase 5 Task 3)
+
+Adds four collision-resolution helpers + 5 unit tests exercising each rule.
+audit_log row written per collision with `change_kind='merge_collision_resolved'`.
+Also adds `'merge_collision_resolved'` to the `audit_log.change_kind` CHECK constraint
+in `pipeline/schemas/canonical_schema.sql`.
+
 ## [2026-05-22] feat(stage5): accept_merge happy path (Phase 5 Task 2)
 
 Implements the no-edits, no-collisions accept_merge path. 7 unit tests

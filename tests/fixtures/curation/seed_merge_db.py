@@ -77,3 +77,68 @@ def _seed_merge_candidate(conn: sqlite3.Connection) -> str:
         ),
     )
     return mc_id
+
+
+def add_event_participants_collision(db_path: Path) -> None:
+    """Both candidate AND canonical play 'victor' in evt:test:1.
+
+    After the seeder, event_participants has the candidate row only. This
+    helper adds a canonical row with the same (event_id, role), forcing a
+    PK collision on retarget. Confidence of the canonical row is higher
+    so it should be the survivor.
+    """
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO event_participants "
+            "(event_id, person_id, role, confidence, provenance) "
+            "VALUES ('evt:test:1', 'per:test:canonical', 'victor', 0.95, 'auto')",
+        )
+
+
+def add_person_relations_self_loop(db_path: Path) -> None:
+    """Candidate has a 'spouse' relation TO the canonical.
+
+    After merge, this would become (canonical, canonical, 'spouse') — a self-loop.
+    The merge function should delete the relation outright.
+    """
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO person_relations "
+            "(from_person_id, to_person_id, kind, confidence, provenance) "
+            "VALUES ('per:test:candidate', 'per:test:canonical', 'spouse', 0.9, 'auto')",
+        )
+
+
+def add_person_states_collision(db_path: Path) -> None:
+    """Both rows are 'ruler' of sta:周 with the same from_date_json (NULL).
+
+    The canonical row has higher confidence and wins.
+    """
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO states (id, name, type, confidence, provenance) "
+            "VALUES ('sta:周', '周', 'state', 0.9, 'auto')"
+        )
+        conn.execute(
+            "INSERT INTO person_states "
+            "(person_id, state_id, role, confidence, provenance) "
+            "VALUES ('per:test:candidate', 'sta:周', 'ruler', 0.8, 'auto')"
+        )
+        conn.execute(
+            "INSERT INTO person_states "
+            "(person_id, state_id, role, confidence, provenance) "
+            "VALUES ('per:test:canonical', 'sta:周', 'ruler', 0.95, 'auto')"
+        )
+
+
+def add_entity_citations_duplicate(db_path: Path) -> None:
+    """Both rows reference the same citation. Candidate's row should drop silently."""
+    with connect(db_path) as conn:
+        conn.execute(
+            "INSERT INTO entity_citations (entity_kind, entity_id, citation_id) "
+            "VALUES ('person', 'per:test:candidate', 'cite:test:1')"
+        )
+        conn.execute(
+            "INSERT INTO entity_citations (entity_kind, entity_id, citation_id) "
+            "VALUES ('person', 'per:test:canonical', 'cite:test:1')"
+        )

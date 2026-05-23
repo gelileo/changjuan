@@ -71,6 +71,164 @@ class SplitResult:
     variants_moved: list[str] = field(default_factory=list)
 
 
+def _resolve_collisions_event_participants(
+    conn: sqlite3.Connection, candidate_id: str, canonical_id: str
+) -> int:
+    """Detect (event_id, role) PK collisions between candidate's and canonical's rows.
+
+    Keeps the higher-confidence row; deletes the other. Returns the number
+    of collisions resolved. Writes audit_log rows for each deletion.
+    """
+    cur = conn.execute(
+        "SELECT cand.event_id, cand.role, cand.confidence AS cand_conf, "
+        "       can.confidence AS can_conf "
+        "FROM event_participants cand "
+        "JOIN event_participants can "
+        "  ON cand.event_id = can.event_id AND cand.role = can.role "
+        "WHERE cand.person_id = ? AND can.person_id = ?",
+        (candidate_id, canonical_id),
+    )
+    collisions = list(cur)
+    for c in collisions:
+        loser_person = candidate_id if c["cand_conf"] < c["can_conf"] else canonical_id
+        loser_row = conn.execute(
+            "SELECT * FROM event_participants " "WHERE event_id = ? AND person_id = ? AND role = ?",
+            (c["event_id"], loser_person, c["role"]),
+        ).fetchone()
+        conn.execute(
+            "DELETE FROM event_participants " "WHERE event_id = ? AND person_id = ? AND role = ?",
+            (c["event_id"], loser_person, c["role"]),
+        )
+        conn.execute(
+            "INSERT INTO audit_log "
+            "(id, entity_kind, entity_id, field, change_kind, "
+            "before_json, after_json, actor, at) "
+            "VALUES (?, 'event_participant', ?, NULL, "
+            "'merge_collision_resolved', ?, NULL, 'curator', ?)",
+            (
+                _new_audit_id(),
+                f"{c['event_id']}:{loser_person}:{c['role']}",
+                json.dumps(dict(loser_row), ensure_ascii=False),
+                _now_iso(),
+            ),
+        )
+    return len(collisions)
+
+
+def _resolve_self_loops_person_relations(
+    conn: sqlite3.Connection, candidate_id: str, canonical_id: str
+) -> int:
+    """A relation FROM candidate TO canonical (or vice versa) becomes a self-loop after merge.
+
+    Delete those outright. Returns the count.
+    """
+    rows = conn.execute(
+        "SELECT from_person_id, to_person_id, kind FROM person_relations "
+        "WHERE (from_person_id = ? AND to_person_id = ?) "
+        "   OR (from_person_id = ? AND to_person_id = ?)",
+        (candidate_id, canonical_id, canonical_id, candidate_id),
+    ).fetchall()
+    for r in rows:
+        loser_snapshot = dict(r)
+        conn.execute(
+            "DELETE FROM person_relations "
+            "WHERE from_person_id = ? AND to_person_id = ? AND kind = ?",
+            (r["from_person_id"], r["to_person_id"], r["kind"]),
+        )
+        conn.execute(
+            "INSERT INTO audit_log "
+            "(id, entity_kind, entity_id, field, change_kind, "
+            "before_json, after_json, actor, at) "
+            "VALUES (?, 'person_relation', ?, NULL, "
+            "'merge_collision_resolved', ?, NULL, 'curator', ?)",
+            (
+                _new_audit_id(),
+                f"{r['from_person_id']}:{r['to_person_id']}:{r['kind']}",
+                json.dumps(loser_snapshot, ensure_ascii=False),
+                _now_iso(),
+            ),
+        )
+    return len(rows)
+
+
+def _resolve_collisions_person_states(
+    conn: sqlite3.Connection, candidate_id: str, canonical_id: str
+) -> int:
+    """PK is (person_id, state_id, role, from_date_json). Higher-confidence wins."""
+    cur = conn.execute(
+        "SELECT cand.state_id, cand.role, cand.from_date_json, "
+        "       cand.confidence AS cand_conf, can.confidence AS can_conf "
+        "FROM person_states cand "
+        "JOIN person_states can "
+        "  ON cand.state_id = can.state_id "
+        " AND cand.role = can.role "
+        " AND COALESCE(cand.from_date_json, '') = COALESCE(can.from_date_json, '') "
+        "WHERE cand.person_id = ? AND can.person_id = ?",
+        (candidate_id, canonical_id),
+    )
+    collisions = list(cur)
+    for c in collisions:
+        loser_person = candidate_id if c["cand_conf"] < c["can_conf"] else canonical_id
+        loser_row = conn.execute(
+            "SELECT * FROM person_states "
+            "WHERE person_id = ? AND state_id = ? AND role = ? "
+            "  AND COALESCE(from_date_json, '') = COALESCE(?, '')",
+            (loser_person, c["state_id"], c["role"], c["from_date_json"]),
+        ).fetchone()
+        conn.execute(
+            "DELETE FROM person_states "
+            "WHERE person_id = ? AND state_id = ? AND role = ? "
+            "  AND COALESCE(from_date_json, '') = COALESCE(?, '')",
+            (loser_person, c["state_id"], c["role"], c["from_date_json"]),
+        )
+        conn.execute(
+            "INSERT INTO audit_log "
+            "(id, entity_kind, entity_id, field, change_kind, "
+            "before_json, after_json, actor, at) "
+            "VALUES (?, 'person_state', ?, NULL, "
+            "'merge_collision_resolved', ?, NULL, 'curator', ?)",
+            (
+                _new_audit_id(),
+                f"{loser_person}:{c['state_id']}:{c['role']}",
+                json.dumps(dict(loser_row), ensure_ascii=False),
+                _now_iso(),
+            ),
+        )
+    return len(collisions)
+
+
+def _resolve_collisions_entity_citations(
+    conn: sqlite3.Connection, candidate_id: str, canonical_id: str
+) -> int:
+    """PK is (entity_kind, entity_id, citation_id). Idempotent — drop candidate's row."""
+    cur = conn.execute(
+        "SELECT cand.citation_id FROM entity_citations cand "
+        "JOIN entity_citations can "
+        "  ON cand.entity_kind = can.entity_kind AND cand.citation_id = can.citation_id "
+        "WHERE cand.entity_kind = 'person' AND cand.entity_id = ? AND can.entity_id = ?",
+        (candidate_id, canonical_id),
+    )
+    collisions = list(cur)
+    for c in collisions:
+        conn.execute(
+            "DELETE FROM entity_citations "
+            "WHERE entity_kind = 'person' AND entity_id = ? AND citation_id = ?",
+            (candidate_id, c["citation_id"]),
+        )
+        conn.execute(
+            "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+            "before_json, after_json, actor, at) "
+            "VALUES (?, 'entity_citation', ?, NULL, 'merge_collision_resolved', "
+            "'{\"duplicate\":true}', NULL, 'curator', ?)",
+            (
+                _new_audit_id(),
+                f"person:{candidate_id}:{c['citation_id']}",
+                _now_iso(),
+            ),
+        )
+    return len(collisions)
+
+
 def accept_merge(
     conn: sqlite3.Connection,
     mc_id: str,
@@ -152,8 +310,14 @@ def accept_merge(
         )
         variants_added += 1
 
-    # 5. FK retarget across the 5 person-FK columns. Task 3 adds collision handling;
-    #    for Task 2 the seeded fixture has no collisions, so naive UPDATE suffices.
+    # 5. PK-collision resolution must happen BEFORE the retarget UPDATEs.
+    collisions_resolved = 0
+    collisions_resolved += _resolve_collisions_event_participants(conn, candidate_id, canonical_id)
+    collisions_resolved += _resolve_self_loops_person_relations(conn, candidate_id, canonical_id)
+    collisions_resolved += _resolve_collisions_person_states(conn, candidate_id, canonical_id)
+    collisions_resolved += _resolve_collisions_entity_citations(conn, candidate_id, canonical_id)
+
+    # Now the UPDATEs are safe.
     relations_retargeted = 0
     relations_retargeted += conn.execute(
         "UPDATE event_participants SET person_id = ? WHERE person_id = ?",
@@ -207,6 +371,7 @@ def accept_merge(
         variants_added=variants_added,
         relations_retargeted=relations_retargeted,
         fields_edited=0,
+        collisions_resolved=collisions_resolved,
     )
 
 

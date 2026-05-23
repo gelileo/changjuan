@@ -78,3 +78,7 @@ Phase 5 Task 2 implements the no-edits, no-collision `accept_merge` path: NULL c
 ## candidate_persons.match_target_id (Phase 3)
 
 `candidate_persons.match_target_id` is a nullable TEXT column added in Phase 3 Task 1. It is populated by Stage 5 (linker, see `concepts/pipeline/linking.md`) after the linker identifies a canonical or sibling-candidate identity for this record. The value may be either a canonical `persons.id` slug (e.g. `per:jin-wen-gong`) or the `id` of a sibling `candidate_persons` row from the same pipeline run that the linker has decided is the same entity. Stage 7 honors this column during the candidate-promotion pass: when `match_target_id` is set, Stage 7 routes the candidate's data into the identified target record via field-merge logic and uses the target's `canonical_name` as the fallback name rather than minting a new slug. No foreign-key constraint is applied — an FK would reject rows whose target is a sibling candidate not yet promoted to canonical at insert time (spec §6 anti-pattern: "no FK on match_target_id").
+
+## audit_log.change_kind expansion (Phase 5 Task 3)
+
+Phase 5 Task 3 adds `'merge_collision_resolved'` to the `audit_log.change_kind` CHECK constraint. This value is written by the four PK-collision resolution helpers in `pipeline/stage5_link/merge.py` when a colliding row is deleted prior to FK retargeting. The full allowed set is now: `create`, `set`, `delete`, `merge`, `split`, `curator_override`, `merge_collision_resolved`.

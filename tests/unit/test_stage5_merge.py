@@ -17,7 +17,13 @@ from pipeline.stage5_link.merge import (
     StaleMergeCandidateError,
     accept_merge,
 )
-from tests.fixtures.curation.seed_merge_db import seed
+from tests.fixtures.curation.seed_merge_db import (
+    add_entity_citations_duplicate,
+    add_event_participants_collision,
+    add_person_relations_self_loop,
+    add_person_states_collision,
+    seed,
+)
 
 
 @pytest.fixture
@@ -111,3 +117,82 @@ def test_accept_merge_stale_raises(seeded_db: tuple[Path, str]) -> None:
     with connect(db_path) as conn:
         with pytest.raises(StaleMergeCandidateError):
             accept_merge(conn, mc_id)
+
+
+def test_accept_merge_event_participants_collision_keeps_higher_confidence(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    add_event_participants_collision(db_path)  # canonical row, confidence 0.95
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.collisions_resolved == 1
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT person_id, confidence FROM event_participants "
+            "WHERE event_id = 'evt:test:1' AND role = 'victor'"
+        ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["person_id"] == "per:test:canonical"
+    assert rows[0]["confidence"] == 0.95  # higher-confidence row survived
+
+
+def test_accept_merge_person_relations_self_loop_deletes(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    add_person_relations_self_loop(db_path)
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.collisions_resolved == 1
+    with connect(db_path) as conn:
+        row = conn.execute("SELECT * FROM person_relations WHERE kind = 'spouse'").fetchone()
+    assert row is None  # self-loop was deleted, not folded
+
+
+def test_accept_merge_person_states_collision_keeps_higher_confidence(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    add_person_states_collision(db_path)
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.collisions_resolved == 1
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT person_id, confidence FROM person_states "
+            "WHERE state_id = 'sta:周' AND role = 'ruler'"
+        ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["confidence"] == 0.95
+
+
+def test_accept_merge_entity_citations_duplicate_drops_candidate(
+    seeded_db: tuple[Path, str],
+) -> None:
+    db_path, mc_id = seeded_db
+    add_entity_citations_duplicate(db_path)
+    with connect(db_path) as conn:
+        result = accept_merge(conn, mc_id)
+    assert result.collisions_resolved == 1
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT entity_id FROM entity_citations "
+            "WHERE entity_kind = 'person' AND citation_id = 'cite:test:1'"
+        ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["entity_id"] == "per:test:canonical"
+
+
+def test_accept_merge_collision_writes_audit_log(seeded_db: tuple[Path, str]) -> None:
+    db_path, mc_id = seeded_db
+    add_event_participants_collision(db_path)
+    with connect(db_path) as conn:
+        accept_merge(conn, mc_id)
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT entity_kind, change_kind FROM audit_log "
+            "WHERE change_kind = 'merge_collision_resolved'"
+        ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["entity_kind"] == "event_participant"

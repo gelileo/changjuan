@@ -135,6 +135,17 @@ constraint dedups), retarget the 5 person-FK columns, delete candidate
 row, flip `merge_candidates` status, write record-level audit_log row.
 Spec §3 has the full step-by-step.
 
+### PK-collision rules (Phase 5 Task 3)
+
+`accept_merge` resolves PK collisions before retargeting:
+- `event_participants` `(event_id, person_id, role)` — higher-confidence wins.
+- `person_relations` self-loops (relation from/to merged pair) — deleted.
+- `person_states` `(person_id, state_id, role, COALESCE(from_date_json,''))` —
+  higher-confidence wins.
+- `entity_citations` `(entity_kind, entity_id, citation_id)` — candidate row dropped.
+
+Each resolution writes an `audit_log` row with `change_kind='merge_collision_resolved'`.
+
 ## What would invalidate this article
 
 - Changing any weight or classification threshold in `pipeline/stage5_link/scoring.py`.

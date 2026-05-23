@@ -455,6 +455,7 @@ The `states` table uses `name` (not `canonical_name`) — confirmed against `pip
 - `tests/fixtures/curation/seed_merge_db.py` — tiny synthetic DB seeder
   used by the merge unit tests.
 - Task 2 brings the suite to 7 tests covering the `accept_merge` happy path (result shape, audit_log row, status flip, FK retarget, candidate deletion, variant dedup, stale-guard).
+- Task 3 brings the suite to 12 tests covering PK-collision branches.
 
 ## What would invalidate this article
 
