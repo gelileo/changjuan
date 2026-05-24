@@ -204,3 +204,77 @@ def test_score_clamps_to_one() -> None:
     )
     result = person_match_score(a, b)
     assert result["score"] == 1.0
+
+
+def test_strong_variant_same_state_diff_social_no_penalty() -> None:
+    """Phase 7 follow-on: when name match is strong AND state agrees, a different
+    social_category tracks role evolution (公子 → 君, 大夫 → 正卿, etc.) rather
+    than identity mismatch. Skip the -0.10 penalty.
+
+    Score: strong(+0.50) + state_same(+0.20) + clan one_null(±0) +
+    social different (waived → ±0) + temporal unknown(±0) = 0.70 ≥ threshold.
+
+    Surfaced by Ch.6-10 walks: 4 of 5 queued candidates were this exact pattern
+    (公孙阏 noble→military, 公子佗 noble→royalty, 公子翚 noble→official,
+    宋庄公 noble→royalty).
+    """
+    a = _p(
+        "公子佗",
+        state_id="sta:chen",
+        social_category="noble",  # earlier chapter — as 公子
+    )
+    b = _p(
+        "公子佗",
+        state_id="sta:chen",
+        social_category="royalty",  # later chapter — after 篡立
+    )
+    result = person_match_score(a, b)
+    assert result["features"]["variant_overlap"] == "strong"
+    assert result["features"]["state_agreement"] == "same"
+    assert result["features"]["social_category_agreement"] == "different"
+    # 0.50 + 0.20 + 0 (clan one_null) + 0 (social diff waived) + 0 = 0.70
+    assert abs(result["score"] - 0.70) < 1e-9
+
+
+def test_diff_social_still_penalized_when_state_differs() -> None:
+    """Regression guard: the social_category penalty must still apply when the
+    waiver condition (strong + same state) is NOT satisfied. Otherwise two
+    homonymous figures in different states would auto-merge on diff social.
+    """
+    a = _p(
+        "公子元",
+        state_id="sta:zheng",  # the 郑 公子元 from Ch.7
+        social_category="noble",
+    )
+    b = _p(
+        "公子元",
+        state_id="sta:qi",  # a 齐 公子元 from Ch.8
+        social_category="military",
+    )
+    result = person_match_score(a, b)
+    assert result["features"]["state_agreement"] == "different"
+    # 0.50 (strong) + 0 - 0.40 (state diff) + 0 (clan one_null) - 0.10 (social diff)
+    # = 0.00 (clamped). Penalty fires; combined with state_diff = no merge.
+    assert result["score"] == 0.0
+
+
+def test_diff_social_still_penalized_with_partial_variant() -> None:
+    """Regression guard: the waiver requires variant_overlap=strong specifically.
+    A partial match should keep the -0.10 social-diff penalty.
+    """
+    a = _p(
+        "A",
+        variants=[{"variant": "shared", "kind": "别名"}],
+        state_id="sta:jin",
+        social_category="noble",
+    )
+    b = _p(
+        "B",
+        variants=[{"variant": "shared", "kind": "别名"}],
+        state_id="sta:jin",
+        social_category="royalty",
+    )
+    result = person_match_score(a, b)
+    assert result["features"]["variant_overlap"] == "partial"
+    # 0.20 (partial) + 0.20 (state same) + 0 - 0.10 (social diff penalty still fires) = 0.30
+    assert abs(result["score"] - 0.30) < 1e-9

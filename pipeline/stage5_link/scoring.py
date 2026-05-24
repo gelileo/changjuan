@@ -153,7 +153,15 @@ def person_match_score(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     if features["clan_agreement"] == "different":
         score -= 0.20
     if features["social_category_agreement"] == "different":
-        score -= 0.10
+        # Waiver: when name match is strong AND state agrees, a different
+        # social_category usually tracks role evolution (公子 → 君,
+        # 大夫 → 正卿, etc.) rather than identity mismatch. Skip the penalty
+        # in that regime. Surfaced by Ch.6-10 walks (4 of 5 queued candidates
+        # fit this pattern). The penalty still fires whenever the waiver
+        # condition is not met — partial variants and cross-state name
+        # collisions remain penalized.
+        if not (features["variant_overlap"] == "strong" and features["state_agreement"] == "same"):
+            score -= 0.10
 
     # Round to avoid float accumulation errors, then clamp to [0, 1]
     score = round(score, 10)

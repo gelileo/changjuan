@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-23] feat(link): `social_category` promotion waiver in scoring
+
+- Ch.6-10 batched extractions surfaced a recurring queue pattern: 4 of 5 queued candidates (公孙阏, 公子佗, 公子翚, 宋庄公) all scored exactly 0.60 with the same surface fingerprint — `variant_overlap: strong` + `state_agreement: same` + `social_category_agreement: different`. Each was a real person whose `social_category` changed because their role evolved across chapters (公子 → 君, 大夫 → 正卿, etc.), not an identity mismatch.
+- The −0.10 penalty for `social_category_agreement: different` in `pipeline/stage5_link/scoring.py::person_match_score` is now skipped when *both* `variant_overlap == "strong"` AND `state_agreement == "same"`. The promotion-pattern score becomes 0.70 (auto-merge floor). The penalty still fires for `partial` matches and cross-state name collisions — original false-positive guard intact.
+- Tests added: `test_strong_variant_same_state_diff_social_no_penalty` (positive case, asserts 0.70), `test_diff_social_still_penalized_when_state_differs` (cross-state regression), `test_diff_social_still_penalized_with_partial_variant` (partial-match regression) in `tests/unit/test_scoring.py`; `test_promotion_pattern_auto_merges` end-to-end in `tests/unit/test_linker.py`.
+- Articles touched: concepts/pipeline/linking.md (new "promotion waiver" subsection + updated penalty row).
+
 ## [2026-05-23] feat(skill): `scripts/check-extraction` pre-flight validator + SKILL.md polish
 
 - Ch.6 extraction surfaced ~7 minutes of avoidable wall-clock from the iterate-fix loop on quote / justification mistakes — `extract-load` was the only thing reporting them, so each failure cost a round-trip plus a partial-candidate cleanup.

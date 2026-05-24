@@ -3,7 +3,7 @@ title: Runtime Configuration
 type: concept
 area: runtime
 updated: 2026-05-23
-note: Phase 6 A3 review nits — no config change; touched to satisfy drift-check for merge.py refactor.
+note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no threshold or config change; see concepts/pipeline/linking.md for the rule).
 status: mature
 load_bearing: true
 references:

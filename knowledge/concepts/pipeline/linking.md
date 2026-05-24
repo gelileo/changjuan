@@ -54,13 +54,19 @@ Candidate `state_id` is a local extraction id (e.g. `s1`) only meaningful within
 | | different | −0.20 |
 | | one_null | 0 |
 | `social_category_agreement` | same | +0.10 |
-| | different | −0.10 |
+| | different | −0.10 (waived when `variant_overlap == "strong"` AND `state_agreement == "same"` — see waiver note below) |
 | | one_null | 0 |
 | `temporal_proximity` | compatible (all dates within 200-year era window, no death-before-birth gap >150yr) | +0.10 |
 | | conflict | −0.30 |
 | | unknown (no date data on either side) | 0 |
 
 The raw sum is clamped to `[0, 1]` (floated, then `max(0.0, min(1.0, ...))` applied). Hard veto on `variant_overlap == "none"` returns 0.0 immediately — no amount of state or clan agreement can rescue a pair with no name overlap.
+
+### `social_category` "promotion waiver" (Ch.6-10 follow-on)
+
+When `variant_overlap == "strong"` AND `state_agreement == "same"`, the −0.10 penalty for `social_category_agreement: different` is *not* applied. In 春秋-era Chinese naming a strong name match plus same state is essentially identity-confirming; a `social_category` change in that regime tracks role evolution (公子 → 君, 大夫 → 正卿, 公子→royalty after 篡立) rather than identity mismatch. The Ch.6-10 walks queued 4 of 5 candidates fitting exactly this shape — 公孙阏 (noble→military), 公子佗 (noble→royalty), 公子翚 (noble→official), 宋庄公 (noble→royalty), all the same person with an evolved title.
+
+The waiver is narrow: it requires *both* `strong` variant overlap and `same` state. `partial` matches and cross-state name collisions remain penalized, so the original false-positive guard (two homonymous figures in different states) is intact. Tests: `test_strong_variant_same_state_diff_social_no_penalty` (positive case) and `test_diff_social_still_penalized_when_state_differs` / `test_diff_social_still_penalized_with_partial_variant` (regression guards) in `tests/unit/test_scoring.py`; `test_promotion_pattern_auto_merges` in `tests/unit/test_linker.py`.
 
 ## Threshold dispatch
 

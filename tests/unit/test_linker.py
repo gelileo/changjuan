@@ -275,3 +275,38 @@ def test_variants_denormalized_from_variants_json(conn: sqlite3.Connection) -> N
         "WHERE candidate_person_id='cand:per:run:1:p1'"
     ).fetchone()[0]
     assert cnt == 1
+
+
+def test_promotion_pattern_auto_merges(conn: sqlite3.Connection) -> None:
+    """Phase 7 follow-on: strong variant + same state + different social_category
+    auto-merges (was queued pre-fix).
+
+    Surfaced by Ch.6-10 walks — 4 of 5 queued candidates fit this pattern, all
+    representing role evolution of the same person (公子 → 君, 大夫 → 正卿, etc.).
+    The scoring rule now waives the -0.10 social_category penalty when name and
+    state are both confirming.
+
+    Score: strong(+0.50) + state_same(+0.20) + clan one_null(±0) +
+    social diff (waived → ±0) + temporal unknown(±0) = 0.70 ≥ threshold.
+    """
+    _seed_canonical(
+        conn,
+        person_id="per:公子佗",
+        name="公子佗",
+        state_id="sta:chen",
+        social_category="noble",  # Ch.6 view — a 陈 公子
+    )
+    _seed_candidate(
+        conn,
+        run_id="run:1",
+        cand_id="cand:per:run:1:p1",
+        name="公子佗",
+        state_id="sta:chen",
+        social_category="royalty",  # Ch.10 view — after 篡立 he's a ruler
+    )
+
+    stats = link_run(conn, "run:1")
+    assert (
+        stats["auto_merges"] == 1
+    ), "the promotion pattern (strong + same state + diff social) must auto-merge"
+    assert stats["queued"] == 0

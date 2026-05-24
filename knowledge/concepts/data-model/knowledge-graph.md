@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-05-23
-note: Phase 6 A3 review nits — _load_reject_payload moved before reject_merge; no schema change.
+note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule).
 status: mature
 load_bearing: true
 references:
