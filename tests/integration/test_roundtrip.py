@@ -73,7 +73,7 @@ def test_phase1_roundtrip(tmp_path: Path) -> None:
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["counts"]["persons"] == 1
     assert "audit_log" in manifest["counts"]
-    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+    with sqlite3.connect(out / "graph.sqlite") as snap:
         leaked = list(
             snap.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'candidate_%';"

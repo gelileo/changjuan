@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-30] fix(export): point roundtrip integration test at graph.sqlite + clarify v2 doc
+
+- 2026-05-30 — `tests/integration/test_roundtrip.py` line 76 was opening `out / "changjuan.sqlite"` (the old v1 artifact name), causing `sqlite3.connect` to silently auto-create an empty DB and making the test pass vacuously. Fixed to `out / "graph.sqlite"` (v2 layout). Test confirmed genuinely passing.
+- `knowledge/concepts/pipeline/export-contract.md` v2 section reworded: enrichment tables (`citations`, `deed_importance`) and `pinyin` columns are forthcoming (not already present); the "in v1" qualifier in the `candidate_*` stripping section was dropped to make the statement version-neutral; "What would invalidate" updated to "beyond v2" since v2 is the current version.
+- `knowledge/concepts/verification/testing.md` roundtrip section updated: now explicitly notes the snapshot is opened via `graph.sqlite` (v2 layout).
+- Articles touched: concepts/pipeline/export-contract.md, concepts/verification/testing.md.
+
 ## [2026-05-30] feat(export): v2 bundle layout — rename to graph.sqlite, schema_version=2
 
 - 2026-05-30 — export-contract: bundle artifact renamed `changjuan.sqlite`→`graph.sqlite`, schema_version→2 (reader-app prereq). Touched: concepts/pipeline/export-contract.md, concepts/pipeline/architecture.md, concepts/verification/testing.md.

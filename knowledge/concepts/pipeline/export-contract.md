@@ -49,7 +49,7 @@ After the drops, `VACUUM` is called to reclaim space.
 
 ## candidate_* prefix stripping: fail-loud safety
 
-Tables are dropped by name-prefix enumeration (`name LIKE 'candidate_%'`), not from a hardcoded allowlist. If a future phase adds a new `candidate_events_v2` table and forgets to update this code, the export will silently strip it — which is the correct behaviour for the export bundle. There is no denormalized JSON per entity in v1; all data is relational.
+Tables are dropped by name-prefix enumeration (`name LIKE 'candidate_%'`), not from a hardcoded allowlist. If a future phase adds a new `candidate_events_v2` table and forgets to update this code, the export will silently strip it — which is the correct behaviour for the export bundle. There is no denormalized JSON per entity; all data is relational.
 
 ## _count_rows: dynamic enumeration
 
@@ -63,10 +63,10 @@ v1 is the initial schema. Snapshot artifact named `changjuan.sqlite`. No denorma
 
 ### v2 (current)
 
-v2 renames the snapshot to `graph.sqlite` and adds enrichment tables (`citations`, `deed_importance`) and `pinyin` columns; see tasks below.
+v2 renames the snapshot artifact to `graph.sqlite`. Subsequent tasks in the export-bundle-v1 plan will add enrichment tables (`citations`, `deed_importance`) and `pinyin` columns; backward-compatible additions will not require a further `schema_version` bump.
 
 ## What would invalidate this article
 
-- Schema version bumped to v2 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v2 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.

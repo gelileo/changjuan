@@ -137,7 +137,7 @@ All four assertions passed without modifying stage 7 merge logic; only the varia
 
 ## Phase 1 round-trip integration test
 
-`tests/integration/test_roundtrip.py` is the regression target for the full Phase 1 deterministic pipeline. `test_phase1_roundtrip` walks all four stages against a synthetic 1-chapter corpus: (1) ingest a single-chapter JSON into `corpus.sqlite`, (2) chunk the document, (3) seed a `candidate_persons` row directly and call `load_candidate_persons`, (4) call `export_bundle`. Assertions: `manifest["counts"]["persons"] == 1`, `audit_log` key present in counts, no `candidate_*` tables in snapshot, canonical Person's `canonical_name == "重耳"`. This test uses direct function calls (not the CLI) so it validates the pipeline layer, not the CLI layer. It lives in `tests/integration/` and is collected by default (no marker required in Phase 1).
+`tests/integration/test_roundtrip.py` is the regression target for the full Phase 1 deterministic pipeline. `test_phase1_roundtrip` walks all four stages against a synthetic 1-chapter corpus: (1) ingest a single-chapter JSON into `corpus.sqlite`, (2) chunk the document, (3) seed a `candidate_persons` row directly and call `load_candidate_persons`, (4) call `export_bundle`. Assertions: `manifest["counts"]["persons"] == 1`, `audit_log` key present in counts, no `candidate_*` tables in snapshot, canonical Person's `canonical_name == "重耳"`. The snapshot is opened via `out / "graph.sqlite"` (v2 layout, `SCHEMA_VERSION=2`). This test uses direct function calls (not the CLI) so it validates the pipeline layer, not the CLI layer. It lives in `tests/integration/` and is collected by default (no marker required in Phase 1).
 
 ## Extraction-output schema tests
 
