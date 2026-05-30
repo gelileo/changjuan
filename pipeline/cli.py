@@ -98,7 +98,11 @@ def export(
 ) -> None:
     """Stage 9: freeze a versioned export bundle."""
     cfg = _cfg(repo_root)
-    meta = _json.loads((cfg.books_dir / book_id / "book-meta.json").read_text("utf-8"))
+    meta_path = cfg.books_dir / book_id / "book-meta.json"
+    if not meta_path.exists():
+        typer.echo(f"book-meta.json not found for book '{book_id}': {meta_path}", err=True)
+        raise typer.Exit(code=1)
+    meta = _json.loads(meta_path.read_text("utf-8"))
     out_dir = cfg.exports_dir / f"changjuan-export-{version}"
     export_bundle(
         cfg.canonical_db, out_dir, version=version, corpus_db=cfg.corpus_db, book_meta=meta

@@ -138,26 +138,15 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
 
 def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> None:
     src = tmp_path / "changjuan.sqlite"
-    corpus = tmp_path / "corpus.sqlite"
+    corpus = _empty_corpus(tmp_path)
     out = tmp_path / "exports" / "b"
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    with connect(corpus) as cc:
-        cc.execute(
-            "CREATE TABLE chunks (id TEXT PRIMARY KEY, document_id TEXT, "
-            "paragraph_start INTEGER, paragraph_end INTEGER, text TEXT, hash TEXT);"
-        )
-    meta = {
-        "book_id": "dzl",
-        "title": "东周列国志",
-        "author": "冯梦龙 / 蔡元放",
-        "edition": "明刊本",
-        "cover": None,
-        "capabilities": ["cast", "timeline", "states"],
-    }
-    export_bundle(src, out, version="b", corpus_db=corpus, book_meta=meta)
+    export_bundle(src, out, version="b", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
     manifest = json.loads((out / "manifest.json").read_text())
-    assert manifest["title"] == "东周列国志"
-    assert manifest["author"] == "冯梦龙 / 蔡元放"
-    assert manifest["capabilities"] == ["cast", "timeline", "states"]
-    assert manifest["book_id"] == "dzl"
+    assert manifest["book_id"] == _MINIMAL_BOOK_META["book_id"]
+    assert manifest["title"] == _MINIMAL_BOOK_META["title"]
+    assert manifest["author"] == _MINIMAL_BOOK_META["author"]
+    assert manifest["edition"] == _MINIMAL_BOOK_META["edition"]
+    assert manifest["capabilities"] == _MINIMAL_BOOK_META["capabilities"]
+    assert manifest["cover"] == _MINIMAL_BOOK_META["cover"]  # None → JSON null branch

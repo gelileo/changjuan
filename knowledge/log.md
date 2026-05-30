@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-30] fix(export): reuse shared test fixtures, assert all manifest identity fields, clean missing-book-meta error
+
+- `tests/unit/test_stage9_export.py::test_manifest_includes_book_identity_and_capabilities` rewritten to use `_empty_corpus(tmp_path)` and `_MINIMAL_BOOK_META` instead of inline corpus creation and a local `meta` dict. Now asserts all six identity keys (`book_id`, `title`, `author`, `edition`, `capabilities`, `cover`) against `_MINIMAL_BOOK_META`, including the `cover=None` → JSON null optional branch.
+- `pipeline/cli.py` export command: wraps `book-meta.json` load with an existence check; emits `typer.echo(..., err=True)` + `raise typer.Exit(code=1)` if the file is missing, replacing a raw `FileNotFoundError` traceback.
+- `tests/unit/test_cli.py`: added `test_export_missing_book_meta_exits_cleanly` — invokes `export test-v1 --book-id dzl` against an empty tmp dir, asserts exit 1 and `"book-meta.json not found"` in output, no Traceback.
+- Articles touched: concepts/runtime/cli.md (export command missing-meta behaviour), concepts/verification/testing.md (Stage 9 export tests + CLI tests sections).
+
 ## [2026-05-30] feat(export): manifest book identity + capabilities from book-meta.json
 
 - 2026-05-30 — `export_bundle` signature extended: new required kwarg `book_meta: dict` carries book identity and capability metadata into `manifest.json`. New manifest keys: `book_id`, `title`, `author`, `edition`, `cover`, `capabilities`. Sourced at call time from `data/books/<book_id>/book-meta.json` (authored JSON, not inferred).

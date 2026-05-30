@@ -182,6 +182,19 @@ def test_extract_load_cli_loads_yaml_via_cli(tmp_path: Path) -> None:
     assert "persons=1" in result.stdout
 
 
+def test_export_missing_book_meta_exits_cleanly(tmp_path: Path) -> None:
+    """If data/books/<book_id>/book-meta.json is absent, `export` must exit 1 with
+    a clear message — not crash with a raw FileNotFoundError traceback."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        ["export", "test-v1", "--book-id", "dzl", "--repo-root", str(tmp_path)],
+    )
+    assert result.exit_code == 1
+    assert "book-meta.json not found" in (result.output + (result.stderr or ""))
+    assert "Traceback" not in result.output
+
+
 def test_link_accepts_ignore_rejections_flag() -> None:
     """Phase 6: link verb exposes --ignore-rejections (default False)."""
     from typer.testing import CliRunner
