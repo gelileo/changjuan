@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-30] feat(export): denormalize citation passages from corpus into graph.sqlite
+
+- 2026-05-30 — New `pipeline/export_enrich.py::build_citations_table` reads every distinct `citation_id` from `entity_citations` in the snapshot, fetches matching rows from `corpus.sqlite.chunks`, and writes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table into the export copy of `graph.sqlite`. Fails loud with `ValueError` if any cited chunk is absent from the corpus.
+- `export_bundle` signature extended to `corpus_db: Path` (required kwarg). `_source_editions` now accepts `corpus_db` directly instead of deriving it from `src_db.parent`, and guards against a missing `documents` table so tests with chunk-only corpus DBs don't fail.
+- All call sites updated: `pipeline/cli.py` (export command), `tests/unit/test_stage9_export.py` (all 5 tests now supply an empty-but-valid corpus), `tests/integration/test_roundtrip.py` (passes `cfg.corpus_db`, which already has the ingested chunk `chk:dzl:1:0`).
+- New test file `tests/unit/test_export_enrich.py` (2 tests: denormalize happy-path + missing-chunk ValueError).
+- Articles touched: concepts/pipeline/export-contract.md (new "citations table" section).
+
 ## [2026-05-30] fix(export): point roundtrip integration test at graph.sqlite + clarify v2 doc
 
 - 2026-05-30 — `tests/integration/test_roundtrip.py` line 76 was opening `out / "changjuan.sqlite"` (the old v1 artifact name), causing `sqlite3.connect` to silently auto-create an empty DB and making the test pass vacuously. Fixed to `out / "graph.sqlite"` (v2 layout). Test confirmed genuinely passing.

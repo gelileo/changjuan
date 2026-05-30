@@ -98,7 +98,7 @@ def export(
     """Stage 9: freeze a versioned export bundle."""
     cfg = _cfg(repo_root)
     out_dir = cfg.exports_dir / f"changjuan-export-{version}"
-    export_bundle(cfg.canonical_db, out_dir, version=version)
+    export_bundle(cfg.canonical_db, out_dir, version=version, corpus_db=cfg.corpus_db)
     typer.echo(f"export bundle written to {out_dir}")
 
 

@@ -16,6 +16,12 @@ Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `dat
 1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables.
 2. **`manifest.json`** — metadata describing the bundle contents.
 
+## `citations` table: denormalized passage text
+
+`graph.sqlite` includes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table denormalized from `corpus.sqlite`'s `chunks` for every distinct cited chunk id found in `entity_citations.citation_id`. The export **fails loud** (raises `ValueError`) if any cited chunk is absent from the corpus — the reader's one-tap-to-source feature must not silently lose passages. An empty `entity_citations` produces an empty but present `citations` table. Requires `corpus.sqlite` to be present and accessible at export time.
+
+The enrichment is performed by `pipeline/export_enrich.py::build_citations_table`, which mutates the already-snapshotted `graph.sqlite` in place after `_snapshot_canonical_only` runs and before the manifest is written. The `citations` table is created only in the export copy; the source canonical DB is never modified.
+
 ## SQLite snapshot: copy-then-drop
 
 The snapshot is built by copying `graph.sqlite` verbatim and then dropping implementation tables. This preserves all indexes, views, and constraints without having to re-create them. Two classes of tables are dropped:
