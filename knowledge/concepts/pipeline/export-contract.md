@@ -30,6 +30,31 @@ The enrichment is performed by `pipeline/export_enrich.py::add_pinyin_columns`, 
 
 The enrichment is performed by `pipeline/export_enrich.py::build_citations_table`, which mutates the already-snapshotted `graph.sqlite` in place after `_snapshot_canonical_only` runs and before the manifest is written. The `citations` table is created only in the export copy; the source canonical DB is never modified.
 
+## `deed_importance` table: per-participation ranking scores
+
+`graph.sqlite` includes a `deed_importance(event_id TEXT, person_id TEXT, score REAL)` table keyed on `(event_id, person_id)`. It is computed at export time by `pipeline/export_enrich.py::build_deed_importance`, which runs after `add_pinyin_columns` in `export_bundle`.
+
+The score blends two components:
+
+- **Global component:** type weight × log-scaled participant count × log-scaled citation count. High-salience event types (战, 弑, 灭, 会盟, 即位, etc.) receive weights of 2.0–3.0; all other types receive `DEFAULT_WEIGHT = 1.0`. The full weight table is `TYPE_WEIGHTS` in `pipeline/export_enrich.py` and is explicitly tunable (see reader spec open questions).
+- **Within-person salience:** deeds whose event type is rare in *this person's* record are boosted via a log-scaled rarity factor (`SALIENCE_WEIGHT = 1.5`), so a minor figure's single defining act is not buried by the global weighting of high-density participants.
+
+The formula (pure function `deed_importance(*, event_type, participants, citations, person_type_fraction)`):
+
+```
+weight = TYPE_WEIGHTS.get(event_type, DEFAULT_WEIGHT)
+global_component = weight × (1 + log1p(participants)) × (1 + log1p(citations))
+rarity = 1.0 / person_type_fraction
+salience = 1 + SALIENCE_WEIGHT × log1p(rarity - 1)
+score = global_component × salience
+```
+
+`person_type_fraction` is the fraction of this person's participations that share the same event type. A person with 8 total deeds and 1 of type 谏 has `person_type_fraction = 1/8` (high rarity boost); a person with 4 of type 谏 has `person_type_fraction = 4/8` (lower boost).
+
+**Multi-role note (v1 limitation):** `event_participants` allows a person to appear in one event under multiple roles. `deed_importance` uses `INSERT OR REPLACE` keyed on `(event_id, person_id)`, so multiple roles collapse to one score row. Per-person type counts may double-count multi-role events in v1; this is an accepted first-cut limitation — the formula is tunable.
+
+The client uses this table to rank a person's deeds cheaply without recomputing weights at query time.
+
 ## SQLite snapshot: copy-then-drop
 
 The snapshot is built by copying `graph.sqlite` verbatim and then dropping implementation tables. This preserves all indexes, views, and constraints without having to re-create them. Two classes of tables are dropped:
@@ -85,7 +110,7 @@ v1 is the initial schema. Snapshot artifact named `changjuan.sqlite`. No denorma
 
 ### v2 (current)
 
-v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible additions (`citations` table, `pinyin` columns) do not require a further `schema_version` bump. Remaining planned enrichment (`deed_importance`) likewise will not bump the version.
+v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible additions (`citations` table, `pinyin` columns, `deed_importance` table) do not require a further `schema_version` bump. All three enrichments are now present in v2 exports.
 
 ## What would invalidate this article
 

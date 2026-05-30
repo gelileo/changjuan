@@ -1,7 +1,13 @@
 import sqlite3
 from pathlib import Path
 
-from pipeline.export_enrich import add_pinyin_columns, build_citations_table, to_pinyin
+from pipeline.export_enrich import (
+    add_pinyin_columns,
+    build_citations_table,
+    build_deed_importance,
+    deed_importance,
+    to_pinyin,
+)
 
 
 def _mk_graph(path: Path) -> None:
@@ -93,3 +99,52 @@ def test_build_citations_table_raises_when_chunk_missing(tmp_path: Path) -> None
 
     with pytest.raises(ValueError, match="2 cited chunk"):
         build_citations_table(graph, corpus)
+
+
+def test_deed_importance_high_weight_beats_low_for_same_person() -> None:
+    # dense person: a battle outranks a sickbed visit
+    battle = deed_importance(event_type="战", participants=6, citations=2, person_type_fraction=0.1)
+    visit = deed_importance(
+        event_type="探病", participants=2, citations=1, person_type_fraction=0.1
+    )
+    assert battle > visit
+
+
+def test_deed_importance_rarity_boosts_sole_defining_act() -> None:
+    # same low-weight event type; the person for whom it is their ONLY deed of
+    # that type (fraction=1.0 -> rare relative to a rich record) is boosted vs.
+    # a person for whom that type is common (fraction=0.5).
+    sole = deed_importance(
+        event_type="谏", participants=2, citations=1, person_type_fraction=1.0 / 8
+    )
+    common = deed_importance(
+        event_type="谏", participants=2, citations=1, person_type_fraction=4.0 / 8
+    )
+    assert sole > common
+
+
+def test_build_deed_importance_writes_a_row_per_participation(tmp_path: Path) -> None:
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE events (id TEXT PRIMARY KEY, type TEXT);")
+        c.execute(
+            "CREATE TABLE event_participants (event_id TEXT, person_id TEXT, "
+            "role TEXT, role_detail TEXT, citation_id TEXT, confidence REAL, "
+            "provenance TEXT);"
+        )
+        c.execute(
+            "CREATE TABLE entity_citations (entity_kind TEXT, entity_id TEXT, citation_id TEXT);"
+        )
+        c.execute("INSERT INTO events VALUES ('evt:war', '战'), ('evt:visit', '探病');")
+        c.executemany(
+            "INSERT INTO event_participants (event_id, person_id, role, confidence, provenance)"
+            " VALUES (?,?,?,1.0,'auto');",
+            [("evt:war", "per:a", "主将"), ("evt:visit", "per:a", "主行")],
+        )
+    build_deed_importance(graph)
+    with sqlite3.connect(graph) as c:
+        scores = dict(
+            c.execute("SELECT event_id, score FROM deed_importance WHERE person_id='per:a';")
+        )
+    assert set(scores) == {"evt:war", "evt:visit"}
+    assert scores["evt:war"] > scores["evt:visit"]

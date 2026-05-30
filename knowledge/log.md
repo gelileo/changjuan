@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-30] feat(export): build-time deed_importance (global x within-person salience)
+
+- `pipeline/export_enrich.py`: added `TYPE_WEIGHTS`, `DEFAULT_WEIGHT`, `SALIENCE_WEIGHT` constants; `deed_importance(*, event_type, participants, citations, person_type_fraction)` pure function (blended global weight × log-scaled participant/citation counts × within-person rarity salience); `build_deed_importance(graph_db)` DB pass (creates `deed_importance(event_id, person_id, score)` table using `INSERT OR REPLACE`). Added `import math`.
+- `pipeline/stage9_export.py`: `export_bundle` now calls `build_deed_importance(snap_path)` after `add_pinyin_columns` and before manifest write.
+- `tests/unit/test_export_enrich.py`: added `test_deed_importance_high_weight_beats_low_for_same_person`, `test_deed_importance_rarity_boosts_sole_defining_act`, `test_build_deed_importance_writes_a_row_per_participation`. All 13 export tests pass (6 stage9 + 7 export_enrich).
+- Articles touched: `concepts/pipeline/export-contract.md` (new `deed_importance` table section documenting formula, tunable constants, multi-role v1 limitation; updated v2 history note to mark `deed_importance` as present), `concepts/pipeline/architecture.md` (new Stage 9 deed_importance enrichment pass section), `concepts/verification/testing.md` (three new deed_importance test descriptions appended to Export enrichment tests section).
+
 ## [2026-05-30] fix(test): match person_variants fixture to canonical TEXT PK schema
 
 - `tests/unit/test_export_enrich.py::test_add_pinyin_columns_populates_persons_and_variants`: changed `person_variants` CREATE TABLE from `id INTEGER PRIMARY KEY` to `id TEXT PRIMARY KEY` to match the production canonical schema. Behavior unchanged (`add_pinyin_columns` uses `rowid`). All 4 export_enrich tests and all 6 stage9_export tests pass.

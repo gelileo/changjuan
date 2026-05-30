@@ -7,10 +7,95 @@ unit-testable without building a full bundle.
 
 from __future__ import annotations
 
+import math
 import sqlite3
 from pathlib import Path
 
 from pypinyin import Style, lazy_pinyin
+
+# Curated high-salience event types; everything else gets DEFAULT_WEIGHT.
+# Tunable — see reader spec open questions. Matched against events.type exactly.
+TYPE_WEIGHTS: dict[str, float] = {
+    "战": 3.0,
+    "会盟": 3.0,
+    "盟": 2.5,
+    "弑": 3.0,
+    "灭": 3.0,
+    "即位": 2.5,
+    "立": 2.0,
+    "出奔": 2.5,
+    "奔": 2.5,
+    "伐": 2.0,
+    "围": 2.0,
+    "薨": 2.0,
+    "卒": 2.0,
+    "处死": 2.0,
+    "杀": 2.0,
+}
+DEFAULT_WEIGHT = 1.0
+SALIENCE_WEIGHT = 1.5  # how strongly within-person rarity boosts a deed
+
+
+def deed_importance(
+    *, event_type: str, participants: int, citations: int, person_type_fraction: float
+) -> float:
+    """Blended importance of one participation.
+
+    global component: type weight scaled by how many people were involved and
+    how often it is attested. within-person salience: deeds whose type is rare
+    in *this person's* record (small fraction) are boosted, so a minor figure's
+    single defining act is not buried by global weighting.
+    """
+    weight = TYPE_WEIGHTS.get(event_type, DEFAULT_WEIGHT)
+    global_component = weight * (1 + math.log1p(participants)) * (1 + math.log1p(citations))
+    rarity = 1.0 / person_type_fraction if person_type_fraction > 0 else 1.0
+    salience = 1 + SALIENCE_WEIGHT * math.log1p(rarity - 1)
+    return global_component * salience
+
+
+def build_deed_importance(graph_db: Path) -> None:
+    """Create `deed_importance(event_id, person_id, score)` over every
+    participation, using deed_importance()."""
+    with sqlite3.connect(graph_db) as g:
+        parts = g.execute(
+            "SELECT ep.event_id, ep.person_id, e.type "
+            "FROM event_participants ep JOIN events e ON e.id = ep.event_id;"
+        ).fetchall()
+        # participant count per event
+        pcount: dict[str, int] = {}
+        for eid, _pid, _t in parts:
+            pcount[eid] = pcount.get(eid, 0) + 1
+        # citation count per event (via entity_citations on the event)
+        ccount = dict(
+            g.execute(
+                "SELECT entity_id, COUNT(*) FROM entity_citations "
+                "WHERE entity_kind='event' GROUP BY entity_id;"
+            )
+        )
+        # per-person deed total and per-(person,type) counts
+        ptype: dict[tuple[str, str], int] = {}
+        ptotal: dict[str, int] = {}
+        for _eid, pid, t in parts:
+            ptotal[pid] = ptotal.get(pid, 0) + 1
+            ptype[(pid, t)] = ptype.get((pid, t), 0) + 1
+
+        g.execute("DROP TABLE IF EXISTS deed_importance;")
+        g.execute(
+            "CREATE TABLE deed_importance ("
+            " event_id TEXT, person_id TEXT, score REAL,"
+            " PRIMARY KEY (event_id, person_id));"
+        )
+        rows = []
+        for eid, pid, t in parts:
+            frac = ptype[(pid, t)] / ptotal[pid]
+            score = deed_importance(
+                event_type=t,
+                participants=pcount.get(eid, 1),
+                citations=ccount.get(eid, 0),
+                person_type_fraction=frac,
+            )
+            rows.append((eid, pid, score))
+        g.executemany("INSERT OR REPLACE INTO deed_importance VALUES (?,?,?);", rows)
 
 
 def to_pinyin(text: str) -> str:

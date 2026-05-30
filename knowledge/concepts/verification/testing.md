@@ -98,6 +98,12 @@ Phase 6.5 follow-on (Ch.6 audit) adds `test_load_propagates_social_category_on_c
 - `test_to_pinyin_toneless_joined_lowercase` — verifies the pure `to_pinyin` helper: `"管仲"→"guanzhong"`, `"赵盾"→"zhaodun"`, `""→""`. Non-polyphonic names chosen to avoid surprise readings; actual library output verified before the test was written.
 - `test_add_pinyin_columns_populates_persons_and_variants` — creates a minimal two-table SQLite (`persons`, `person_variants`), calls `add_pinyin_columns`, then reads back `persons.pinyin` and `person_variants.pinyin`; asserts `"管仲"→"guanzhong"` and `"夷吾"→"yiwu"`. Verifies the idempotent ALTER + populate contract. The `person_variants` fixture uses `id TEXT PRIMARY KEY` to match the canonical schema (export-bundle-v1 code-review fix); `add_pinyin_columns` uses `rowid` internally so behavior is unchanged.
 
+Export-bundle-v1 Task 5 adds three deed_importance tests:
+
+- `test_deed_importance_high_weight_beats_low_for_same_person` — pure function test: `deed_importance(event_type="战", participants=6, citations=2, person_type_fraction=0.1)` > `deed_importance(event_type="探病", ...)`. Verifies that a high-weight event type dominates a low-weight one for the same person at the same rarity.
+- `test_deed_importance_rarity_boosts_sole_defining_act` — pure function test: same `event_type="谏"` and same participants/citations; person with `person_type_fraction=1/8` scores higher than one with `4/8`. Verifies within-person salience boosts rare deed types.
+- `test_build_deed_importance_writes_a_row_per_participation` — DB pass test: seeds minimal `events` + `event_participants` + `entity_citations` tables (one war event, one sickbed-visit event, one person); calls `build_deed_importance`; asserts both `(event_id, person_id)` rows appear in `deed_importance` with the war row scoring higher than the visit row.
+
 These tests use `sqlite3.connect` directly (no `apply_schema`), building the minimal table shape that each enrichment pass expects. No pipeline fixtures or LLM calls needed.
 
 ## CLI tests
