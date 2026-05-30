@@ -1,5 +1,12 @@
 # Build Log
 
+## [2026-05-30] fix(export): scope citation denormalization to chk: ids (run: are provenance)
+
+- `pipeline/export_enrich.py::build_citations_table`: changed `SELECT DISTINCT citation_id FROM entity_citations` to `WHERE citation_id LIKE 'chk:%'`. `run:`-prefixed ids in `entity_citations` are pipeline-run provenance on edge entities (not passage-resolvable); treating them as missing chunks raised `ValueError: 95 cited chunk(s) absent from corpus` on real data. Fail-loud behaviour preserved for genuinely-missing `chk:` chunks.
+- `tests/unit/test_export_enrich.py::_mk_graph`: added `("event_participant", "evt:x:per:a:role", "run:extract-chX-vY")` fixture row to represent real-world edge provenance ids. `test_build_citations_table_denormalizes_cited_chunks`: added `assert "run:extract-chX-vY" not in rows` to prove provenance ids are excluded. `test_build_citations_table_raises_when_chunk_missing`: still passes (only `chk:` ids reach the missing-chunk check; the match string `"2 cited chunk"` is correct).
+- Real-data smoke: `changjuan export 2026-05-v1` succeeds; citations table populated with 482 rows (all `chk:` chunk pointers).
+- Articles touched: `concepts/pipeline/export-contract.md` (citations table section expanded to document chk: vs run: id kinds, exclusion rationale, updated status thin→current).
+
 ## [2026-05-30] feat(export): emit texts/ payload from readable chapters
 
 - `pipeline/config.py`: added `readable_dir` property → `data/readable/`. Matches existing property style (derives from `data_dir`).

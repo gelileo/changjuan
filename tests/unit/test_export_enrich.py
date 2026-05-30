@@ -21,6 +21,8 @@ def _mk_graph(path: Path) -> None:
                 ("person", "per:a", "chk:dzl:1:0"),
                 ("person", "per:a", "chk:dzl:1:0"),  # duplicate id
                 ("event", "evt:x", "chk:dzl:2:5"),
+                # run: ids are pipeline-run provenance on edge entities — not passage citations
+                ("event_participant", "evt:x:per:a:role", "run:extract-chX-vY"),
             ],
         )
 
@@ -53,10 +55,12 @@ def test_build_citations_table_denormalizes_cited_chunks(tmp_path: Path) -> None
         rows = dict(
             (cid, txt) for cid, txt in c.execute("SELECT citation_id, text FROM citations;")
         )
+    # Only chk: chunk pointers appear — run: provenance ids are excluded
     assert rows == {
         "chk:dzl:1:0": "周幽王嬖褒姒。",
         "chk:dzl:2:5": "郑伯克段于鄢。",
     }
+    assert "run:extract-chX-vY" not in rows
 
 
 def test_to_pinyin_toneless_joined_lowercase() -> None:

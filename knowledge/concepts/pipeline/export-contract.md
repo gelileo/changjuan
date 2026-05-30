@@ -3,7 +3,7 @@ title: Export contract
 type: concept
 area: pipeline
 updated: 2026-05-30
-status: thin
+status: current
 load_bearing: true
 affects:
   - pipeline/stage9_export.py
@@ -33,7 +33,14 @@ The enrichment is performed by `pipeline/export_enrich.py::add_pinyin_columns`, 
 
 ## `citations` table: denormalized passage text
 
-`graph.sqlite` includes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table denormalized from `corpus.sqlite`'s `chunks` for every distinct cited chunk id found in `entity_citations.citation_id`. The export **fails loud** (raises `ValueError`) if any cited chunk is absent from the corpus — the reader's one-tap-to-source feature must not silently lose passages. An empty `entity_citations` produces an empty but present `citations` table. Requires `corpus.sqlite` to be present and accessible at export time.
+`graph.sqlite` includes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table denormalized from `corpus.sqlite`'s `chunks`. Only **`chk:`-prefixed** citation ids (chunk pointers) are resolved to passage text and written to this table.
+
+`entity_citations.citation_id` contains two kinds of id:
+
+- **`chk:...`** (e.g. `chk:dzl:1:0`) — chunk pointers referencing a passage span in the corpus. These are the only ids denormalized into the `citations` table.
+- **`run:...`** (e.g. `run:extract-ch1-v2-20260522T002136`) — pipeline-run provenance ids attached to edge entities (`event_participant`, `person_state`, `event_relation`, `person_relation`, `event_place`). These record which pipeline run produced the edge; they are **not** text spans and are intentionally **excluded** from `citations` (no passage text to denormalize).
+
+The export **fails loud** (raises `ValueError`) if any `chk:`-prefixed id is absent from the corpus — the reader's one-tap-to-source feature must not silently lose passages. `run:` ids reaching the check would indicate a bug in the filter, not a missing chunk. An empty `entity_citations` (or one with only `run:` ids) produces an empty but present `citations` table. Requires `corpus.sqlite` to be present and accessible at export time.
 
 The enrichment is performed by `pipeline/export_enrich.py::build_citations_table`, which mutates the already-snapshotted `graph.sqlite` in place after `_snapshot_canonical_only` runs and before the manifest is written. The `citations` table is created only in the export copy; the source canonical DB is never modified.
 

@@ -136,7 +136,18 @@ def build_citations_table(graph_db: Path, corpus_db: Path) -> None:
     the reader's one-tap-to-source feature must not silently lose passages).
     """
     with sqlite3.connect(graph_db) as g:
-        cited = [r[0] for r in g.execute("SELECT DISTINCT citation_id FROM entity_citations;")]
+        # entity_citations also holds `run:` pipeline-run provenance ids on edge entities
+        # (event_participant, person_state, event_relation, person_relation, event_place).
+        # Those are not passage-resolvable — only `chk:` chunk pointers have text in the
+        # corpus. Scope the denormalization to chk: ids; run: (and any non-chk:) ids are
+        # intentionally ignored here, not treated as missing chunks.
+        cited = [
+            r[0]
+            for r in g.execute(
+                "SELECT DISTINCT citation_id FROM entity_citations "
+                "WHERE citation_id LIKE 'chk:%';"
+            )
+        ]
         g.execute("DROP TABLE IF EXISTS citations;")
         g.execute(
             "CREATE TABLE citations ("
