@@ -18,9 +18,11 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
         )
     export_bundle(src, out, version="test-v1")
     assert (out / "manifest.json").is_file()
-    assert (out / "changjuan.sqlite").is_file()
+    assert (out / "graph.sqlite").is_file()
+    assert not (out / "changjuan.sqlite").exists()
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["version"] == "test-v1"
+    assert manifest["schema_version"] == 2
     assert manifest["counts"]["persons"] == 1
 
 
@@ -30,7 +32,7 @@ def test_export_snapshot_is_readable_sqlite(tmp_path: Path) -> None:
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
     export_bundle(src, out, version="test-v1")
-    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+    with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute("SELECT name FROM sqlite_master WHERE type='table';")
         names = {r[0] for r in cur}
     assert "persons" in names
@@ -48,7 +50,7 @@ def test_export_strips_all_candidate_tables(tmp_path: Path) -> None:
             " VALUES ('cper:1', 'x', 0.5, 'r', 'c', 'q');"
         )
     export_bundle(src, out, version="x-v1")
-    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+    with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'candidate_%';"
         )
@@ -62,7 +64,7 @@ def test_export_strips_llm_cache(tmp_path: Path) -> None:
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
     export_bundle(src, out, version="x-v1")
-    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+    with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_cache';"
         )
@@ -90,7 +92,7 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
     export_bundle(src, out, version="rt-v1")
 
     # Fresh handle on the snapshot
-    with sqlite3.connect(out / "changjuan.sqlite") as snap:
+    with sqlite3.connect(out / "graph.sqlite") as snap:
         persons = list(
             snap.execute("SELECT id, canonical_name, provenance FROM persons ORDER BY id;")
         )

@@ -3,7 +3,7 @@
 Produces `out_dir/` with:
 - manifest.json: version, schema_version, generated_at, counts per canonical table,
   source corpus editions
-- changjuan.sqlite: read-only snapshot with candidate_* tables prefix-excluded and
+- graph.sqlite: read-only snapshot with candidate_* tables prefix-excluded and
   llm_cache excluded
 """
 
@@ -15,7 +15,7 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def export_bundle(src_db: Path, out_dir: Path, *, version: str) -> Path:
@@ -24,7 +24,7 @@ def export_bundle(src_db: Path, out_dir: Path, *, version: str) -> Path:
     Returns out_dir.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    snap_path = out_dir / "changjuan.sqlite"
+    snap_path = out_dir / "graph.sqlite"
     _snapshot_canonical_only(src_db, snap_path)
 
     counts = _count_rows(snap_path)

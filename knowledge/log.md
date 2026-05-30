@@ -1,5 +1,9 @@
 # Build Log
 
+## [2026-05-30] feat(export): v2 bundle layout — rename to graph.sqlite, schema_version=2
+
+- 2026-05-30 — export-contract: bundle artifact renamed `changjuan.sqlite`→`graph.sqlite`, schema_version→2 (reader-app prereq). Touched: concepts/pipeline/export-contract.md, concepts/pipeline/architecture.md, concepts/verification/testing.md.
+
 ## [2026-05-23] feat(link): `social_category` promotion waiver in scoring
 
 - Ch.6-10 batched extractions surfaced a recurring queue pattern: 4 of 5 queued candidates (公孙阏, 公子佗, 公子翚, 宋庄公) all scored exactly 0.60 with the same surface fingerprint — `variant_overlap: strong` + `state_agreement: same` + `social_category_agreement: different`. Each was a real person whose `social_category` changed because their role evolved across chapters (公子 → 君, 大夫 → 正卿, etc.), not an identity mismatch.

@@ -2,7 +2,7 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-05-20
+updated: 2026-05-30
 status: thin
 load_bearing: true
 affects:
@@ -13,12 +13,12 @@ affects:
 
 Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/changjuan-export-<version>/` with two artefacts:
 
-1. **`changjuan.sqlite`** — a read-only SQLite snapshot of all canonical tables.
+1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables.
 2. **`manifest.json`** — metadata describing the bundle contents.
 
 ## SQLite snapshot: copy-then-drop
 
-The snapshot is built by copying `changjuan.sqlite` verbatim and then dropping implementation tables. This preserves all indexes, views, and constraints without having to re-create them. Two classes of tables are dropped:
+The snapshot is built by copying `graph.sqlite` verbatim and then dropping implementation tables. This preserves all indexes, views, and constraints without having to re-create them. Two classes of tables are dropped:
 
 - Every table whose name matches `LIKE 'candidate_%'` — these are the staging tables used by stage 7; they are enumerated dynamically at export time so any future `candidate_*` table is stripped automatically (fail-loud if the schema grows a new candidate table without this code being updated).
 - `llm_cache` — an extraction implementation detail (content-addressed LLM response cache) that is not part of the knowledge-graph contract.
@@ -30,7 +30,7 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_at": "<ISO 8601 UTC>",
   "counts": {
     "persons": N,
@@ -43,7 +43,7 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 1` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 2` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `source_corpus_editions` is pulled from `corpus.sqlite.documents.MAX(source_edition) GROUP BY corpus`. If `corpus.sqlite` is absent (e.g. in tests that only exercise the canonical side), this field is an empty object.
 
@@ -55,9 +55,15 @@ Tables are dropped by name-prefix enumeration (`name LIKE 'candidate_%'`), not f
 
 `_count_rows` enumerates tables via `sqlite_master` (dynamic) rather than a hardcoded `_CANONICAL_TABLES` list. Because `_snapshot_canonical_only` already strips `candidate_*` and `llm_cache`, the dynamic enumeration produces exactly the canonical table set. Any new canonical table added to the schema is automatically included in manifest counts without updating `_count_rows`.
 
-## Schema version (v1)
+## Schema version history
 
-v1 is the initial schema. No denormalized JSON files are written alongside the SQLite snapshot. If a downstream consumer requires flat JSON it should query the snapshot directly.
+### v1 (initial)
+
+v1 is the initial schema. Snapshot artifact named `changjuan.sqlite`. No denormalized JSON files are written alongside the SQLite snapshot. If a downstream consumer requires flat JSON it should query the snapshot directly.
+
+### v2 (current)
+
+v2 renames the snapshot to `graph.sqlite` and adds enrichment tables (`citations`, `deed_importance`) and `pinyin` columns; see tasks below.
 
 ## What would invalidate this article
 
