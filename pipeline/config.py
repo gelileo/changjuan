@@ -40,6 +40,10 @@ class Config:
         return self.data_dir / "books"
 
     @property
+    def readable_dir(self) -> Path:
+        return self.data_dir / "readable"
+
+    @property
     def corpora_dir(self) -> Path:
         return self.repo_root / "corpora"
 

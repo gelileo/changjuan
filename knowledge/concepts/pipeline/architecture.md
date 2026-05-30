@@ -48,6 +48,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/export_enrich.py::build_deed_importance` is called by `export_bundle` immediately after `add_pinyin_columns`, before the manifest is written. It reads every `(event_id, person_id, event.type)` triple from the snapshot's `event_participants JOIN events`, computes a blended importance score for each participation (global type-weight × log-scaled participant and citation counts × within-person rarity salience), and writes results into `deed_importance(event_id, person_id, score PRIMARY KEY (event_id, person_id))`. The table uses `INSERT OR REPLACE` so multi-role participations (where one person appears in one event under more than one role) collapse to a single row per `(event_id, person_id)` pair — a known v1 limitation noted in the export contract. `TYPE_WEIGHTS`, `DEFAULT_WEIGHT`, and `SALIENCE_WEIGHT` constants in `pipeline/export_enrich.py` are explicitly tunable.
 
+## Stage 9 — texts/ copy pass
+
+`export_bundle` copies `data/readable/ch*.md` files into `out_dir/texts/` in sorted order after the manifest write. The copy is gated on `readable_dir.is_dir()`, so an absent `data/readable/` directory silently produces an empty `texts/` subdirectory. The source path is `cfg.readable_dir` (`data/readable/`). This is the phase-2 Reader payload; the v1 web bundle ships only `graph.sqlite`. `export_bundle` gains the required kw-only param `readable_dir: Path`; all call sites must supply it. `Config.readable_dir` is the canonical accessor.
+
 ## Stage 9 — dynamic table enumeration in counts
 
 `_count_rows` in `stage9_export.py` enumerates tables via `sqlite_master` rather than a hardcoded list, matching the same dynamic approach used in `_snapshot_canonical_only`. Since the snapshot has `candidate_*` and `llm_cache` already stripped, the dynamic set equals the canonical set exactly. No separate constant to keep in sync.

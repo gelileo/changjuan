@@ -1,5 +1,14 @@
 # Build Log
 
+## [2026-05-30] feat(export): emit texts/ payload from readable chapters
+
+- `pipeline/config.py`: added `readable_dir` property → `data/readable/`. Matches existing property style (derives from `data_dir`).
+- `pipeline/stage9_export.py`: `export_bundle` gains required kw-only param `readable_dir: Path`. After manifest write, creates `out_dir/texts/`, then copies `readable_dir/ch*.md` files in sorted order if `readable_dir.is_dir()`. `shutil` already imported. Enrichment order is now: snapshot → citations → pinyin → deed_importance → manifest → texts copy.
+- `pipeline/cli.py`: `export` command passes `readable_dir=cfg.readable_dir` to `export_bundle`. If `data/readable/` is absent the `is_dir()` guard silently skips the copy.
+- `tests/unit/test_stage9_export.py`: added `test_export_copies_readable_texts` (new); updated all 6 existing `export_bundle` call sites to pass `readable_dir=tmp_path / "readable"` (non-existent, tolerated by guard). 7/7 pass.
+- `tests/integration/test_roundtrip.py`: updated `export_bundle` call to pass `readable_dir=cfg.readable_dir`. 303/303 pass.
+- Articles touched: `concepts/pipeline/export-contract.md` (new `texts/` directory section; updated "What this is" to list three artefacts), `concepts/runtime/configuration.md` (`readable_dir` added to Config property list), `concepts/pipeline/architecture.md` (new Stage 9 texts/ copy pass section), `concepts/runtime/cli.md` (export command updated to note `texts/` output and `readable_dir` passthrough), `concepts/verification/testing.md` (`test_export_copies_readable_texts` documented; all-seven-tests note updated).
+
 ## [2026-05-30] feat(export): build-time deed_importance (global x within-person salience)
 
 - `pipeline/export_enrich.py`: added `TYPE_WEIGHTS`, `DEFAULT_WEIGHT`, `SALIENCE_WEIGHT` constants; `deed_importance(*, event_type, participants, citations, person_type_fraction)` pure function (blended global weight × log-scaled participant/citation counts × within-person rarity salience); `build_deed_importance(graph_db)` DB pass (creates `deed_importance(event_id, person_id, score)` table using `INSERT OR REPLACE`). Added `import math`.

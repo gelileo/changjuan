@@ -39,7 +39,14 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
             "INSERT INTO persons (id, canonical_name, confidence, provenance)"
             " VALUES ('per:a', 'a', 0.9, 'auto');"
         )
-    export_bundle(src, out, version="test-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="test-v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
     assert (out / "manifest.json").is_file()
     assert (out / "graph.sqlite").is_file()
     assert not (out / "changjuan.sqlite").exists()
@@ -55,7 +62,14 @@ def test_export_snapshot_is_readable_sqlite(tmp_path: Path) -> None:
     corpus = _empty_corpus(tmp_path)
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    export_bundle(src, out, version="test-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="test-v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute("SELECT name FROM sqlite_master WHERE type='table';")
         names = {r[0] for r in cur}
@@ -74,7 +88,14 @@ def test_export_strips_all_candidate_tables(tmp_path: Path) -> None:
             " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
             " VALUES ('cper:1', 'x', 0.5, 'r', 'c', 'q');"
         )
-    export_bundle(src, out, version="x-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="x-v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'candidate_%';"
@@ -89,7 +110,14 @@ def test_export_strips_llm_cache(tmp_path: Path) -> None:
     corpus = _empty_corpus(tmp_path)
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    export_bundle(src, out, version="x-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="x-v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_cache';"
@@ -116,7 +144,14 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
             "INSERT INTO events (id, type, confidence, provenance)"
             " VALUES ('evt:1', 'battle', 0.8, 'auto');"
         )
-    export_bundle(src, out, version="rt-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="rt-v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
 
     # Fresh handle on the snapshot
     with sqlite3.connect(out / "graph.sqlite") as snap:
@@ -136,13 +171,42 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
     assert manifest["counts"]["events"] == 1
 
 
+def test_export_copies_readable_texts(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    corpus = tmp_path / "corpus.sqlite"
+    readable = tmp_path / "readable"
+    readable.mkdir()
+    (readable / "ch01.md").write_text("第一回 正文", encoding="utf-8")
+    (readable / "ch02.md").write_text("第二回 正文", encoding="utf-8")
+    out = tmp_path / "exports" / "t"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    with sqlite3.connect(corpus) as cc:
+        cc.execute(
+            "CREATE TABLE chunks (id TEXT PRIMARY KEY, document_id TEXT, "
+            "paragraph_start INTEGER, paragraph_end INTEGER, text TEXT, hash TEXT);"
+        )
+    export_bundle(
+        src, out, version="t", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META, readable_dir=readable
+    )
+    assert (out / "texts" / "ch01.md").read_text(encoding="utf-8") == "第一回 正文"
+    assert (out / "texts" / "ch02.md").is_file()
+
+
 def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> None:
     src = tmp_path / "changjuan.sqlite"
     corpus = _empty_corpus(tmp_path)
     out = tmp_path / "exports" / "b"
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    export_bundle(src, out, version="b", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
+    export_bundle(
+        src,
+        out,
+        version="b",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["book_id"] == _MINIMAL_BOOK_META["book_id"]
     assert manifest["title"] == _MINIMAL_BOOK_META["title"]

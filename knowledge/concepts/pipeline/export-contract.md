@@ -11,10 +11,17 @@ affects:
 
 ## What this is
 
-Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/changjuan-export-<version>/` with two artefacts:
+Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/changjuan-export-<version>/` with three artefacts:
 
 1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables.
 2. **`manifest.json`** — metadata describing the bundle contents.
+3. **`texts/chNN.md`** — full reading prose, one file per chapter. Phase-2 Reader payload; NOT consumed by the v1 web target, which bundles only `graph.sqlite`.
+
+## `texts/` directory: chapter prose payload
+
+`texts/` is populated by copying `data/readable/ch*.md` files into `out_dir/texts/` in sorted order. The copy is performed after the manifest write. The `is_dir()` guard means an absent or empty `readable_dir` is tolerated without error — the `texts/` directory will be created but left empty. In production, `cfg.readable_dir` resolves to `data/readable/`.
+
+The `readable_dir` parameter is a required keyword argument of `export_bundle`. The CLI passes `cfg.readable_dir` unconditionally; if `data/readable/` is absent the guard silently skips the copy. The v1 web bundle ships only `graph.sqlite`; the `texts/` payload is reserved for the phase-2 Reader that will display chapter prose alongside the knowledge graph.
 
 ## `pinyin` columns: romanized name search support
 

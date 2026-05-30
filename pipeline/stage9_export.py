@@ -28,6 +28,7 @@ def export_bundle(
     version: str,
     corpus_db: Path,
     book_meta: Mapping[str, object],
+    readable_dir: Path,
 ) -> Path:
     """Export a versioned bundle: manifest.json + canonical-only sqlite snapshot.
 
@@ -64,6 +65,11 @@ def export_bundle(
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    texts_out = out_dir / "texts"
+    texts_out.mkdir(parents=True, exist_ok=True)
+    if readable_dir.is_dir():
+        for md in sorted(readable_dir.glob("ch*.md")):
+            shutil.copyfile(md, texts_out / md.name)
     return out_dir
 
 

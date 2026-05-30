@@ -105,7 +105,12 @@ def export(
     meta = _json.loads(meta_path.read_text("utf-8"))
     out_dir = cfg.exports_dir / f"changjuan-export-{version}"
     export_bundle(
-        cfg.canonical_db, out_dir, version=version, corpus_db=cfg.corpus_db, book_meta=meta
+        cfg.canonical_db,
+        out_dir,
+        version=version,
+        corpus_db=cfg.corpus_db,
+        book_meta=meta,
+        readable_dir=cfg.readable_dir,
     )
     typer.echo(f"export bundle written to {out_dir}")
 

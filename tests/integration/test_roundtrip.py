@@ -75,7 +75,14 @@ def test_phase1_roundtrip(tmp_path: Path) -> None:
         "cover": None,
         "capabilities": ["cast", "timeline", "states"],
     }
-    export_bundle(cfg.canonical_db, out, version="rt-v1", corpus_db=cfg.corpus_db, book_meta=_meta)
+    export_bundle(
+        cfg.canonical_db,
+        out,
+        version="rt-v1",
+        corpus_db=cfg.corpus_db,
+        book_meta=_meta,
+        readable_dir=cfg.readable_dir,
+    )
 
     # Bundle assertions
     manifest = json.loads((out / "manifest.json").read_text())
