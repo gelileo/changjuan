@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pipeline.export_enrich import build_citations_table
+from pipeline.export_enrich import add_pinyin_columns, build_citations_table
 
 SCHEMA_VERSION = 2
 
@@ -44,6 +44,7 @@ def export_bundle(
     snap_path = out_dir / "graph.sqlite"
     _snapshot_canonical_only(src_db, snap_path)
     build_citations_table(snap_path, corpus_db)
+    add_pinyin_columns(snap_path)
 
     counts = _count_rows(snap_path)
     manifest: dict[str, object] = {

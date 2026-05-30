@@ -91,12 +91,14 @@ Phase 6.5 follow-on (Ch.6 audit) adds `test_load_propagates_social_category_on_c
 
 ## Export enrichment tests
 
-`tests/unit/test_export_enrich.py` exercises `pipeline.export_enrich.build_citations_table`. Two tests:
+`tests/unit/test_export_enrich.py` exercises `pipeline.export_enrich`. Four tests:
 
 - `test_build_citations_table_denormalizes_cited_chunks` — seeds `entity_citations` with two distinct chunk ids (one duplicate row) and a `chunks` table in a separate corpus DB with three rows (two cited, one uncited); asserts the resulting `citations` table in `graph.sqlite` has exactly the two cited rows with correct text. Verifies duplicate `citation_id` values in `entity_citations` are deduplicated (DISTINCT query).
 - `test_build_citations_table_raises_when_chunk_missing` — seeds `entity_citations` with two distinct chunk ids but supplies an empty `chunks` table; asserts `ValueError` is raised with a message matching "2 cited chunk" — the fail-loud contract for missing passages.
+- `test_to_pinyin_toneless_joined_lowercase` — verifies the pure `to_pinyin` helper: `"管仲"→"guanzhong"`, `"赵盾"→"zhaodun"`, `""→""`. Non-polyphonic names chosen to avoid surprise readings; actual library output verified before the test was written.
+- `test_add_pinyin_columns_populates_persons_and_variants` — creates a minimal two-table SQLite (`persons`, `person_variants`), calls `add_pinyin_columns`, then reads back `persons.pinyin` and `person_variants.pinyin`; asserts `"管仲"→"guanzhong"` and `"夷吾"→"yiwu"`. Verifies the idempotent ALTER + populate contract.
 
-These tests use `sqlite3.connect` directly (no `apply_schema`), building the minimal two-table shape that the enrichment pass expects. No pipeline fixtures or LLM calls needed.
+These tests use `sqlite3.connect` directly (no `apply_schema`), building the minimal table shape that each enrichment pass expects. No pipeline fixtures or LLM calls needed.
 
 ## CLI tests
 

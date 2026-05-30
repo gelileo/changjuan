@@ -10,6 +10,38 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from pypinyin import Style, lazy_pinyin
+
+
+def to_pinyin(text: str) -> str:
+    """Toneless, joined, lowercased pinyin. Non-Han chars pass through.
+
+    NOTE: polyphonic name characters (e.g. 重 in 重耳) may romanize to their
+    most-common reading rather than the name reading; pinyin-quality tuning is
+    tracked as an open question in the reader spec, not solved here.
+    """
+    if not text:
+        return ""
+    return "".join(lazy_pinyin(text, style=Style.NORMAL)).lower()
+
+
+def add_pinyin_columns(graph_db: Path) -> None:
+    """Add and populate a `pinyin` column on persons.canonical_name and
+    person_variants.variant."""
+    with sqlite3.connect(graph_db) as g:
+        for table, name_col in (
+            ("persons", "canonical_name"),
+            ("person_variants", "variant"),
+        ):
+            cols = [r[1] for r in g.execute(f"PRAGMA table_info({table});")]
+            if "pinyin" not in cols:
+                g.execute(f"ALTER TABLE {table} ADD COLUMN pinyin TEXT;")
+            rows = g.execute(f"SELECT rowid, {name_col} FROM {table};").fetchall()
+            g.executemany(
+                f"UPDATE {table} SET pinyin = ? WHERE rowid = ?;",
+                [(to_pinyin(n or ""), rid) for rid, n in rows],
+            )
+
 
 def build_citations_table(graph_db: Path, corpus_db: Path) -> None:
     """Create `citations` in graph_db, denormalizing each distinct cited chunk's

@@ -1,5 +1,13 @@
 # Build Log
 
+## [2026-05-30] feat(export): build-time pinyin columns on persons + variants
+
+- `pipeline/export_enrich.py`: added `to_pinyin(text)` (toneless joined lowercase using `pypinyin` `Style.NORMAL`) and `add_pinyin_columns(graph_db)` (idempotent ALTER + populate on `persons.canonical_name` → `persons.pinyin` and `person_variants.variant` → `person_variants.pinyin`).
+- `pipeline/stage9_export.py`: `export_bundle` now calls `add_pinyin_columns(snap_path)` after `build_citations_table` and before manifest write.
+- `pyproject.toml` + `uv.lock`: added `pypinyin>=0.51` (resolved to 0.55.0).
+- `tests/unit/test_export_enrich.py`: added `test_to_pinyin_toneless_joined_lowercase` and `test_add_pinyin_columns_populates_persons_and_variants`; both passed. Actual library outputs verified: 管仲→guanzhong, 赵盾→zhaodun, 夷吾→yiwu.
+- Articles touched: `concepts/pipeline/export-contract.md` (new "pinyin columns" section; v2 description updated to reflect citations and pinyin are now present, not forthcoming).
+
 ## [2026-05-30] fix(export): reuse shared test fixtures, assert all manifest identity fields, clean missing-book-meta error
 
 - `tests/unit/test_stage9_export.py::test_manifest_includes_book_identity_and_capabilities` rewritten to use `_empty_corpus(tmp_path)` and `_MINIMAL_BOOK_META` instead of inline corpus creation and a local `meta` dict. Now asserts all six identity keys (`book_id`, `title`, `author`, `edition`, `capabilities`, `cover`) against `_MINIMAL_BOOK_META`, including the `cover=None` → JSON null optional branch.

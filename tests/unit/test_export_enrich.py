@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from pipeline.export_enrich import build_citations_table
+from pipeline.export_enrich import add_pinyin_columns, build_citations_table, to_pinyin
 
 
 def _mk_graph(path: Path) -> None:
@@ -51,6 +51,33 @@ def test_build_citations_table_denormalizes_cited_chunks(tmp_path: Path) -> None
         "chk:dzl:1:0": "周幽王嬖褒姒。",
         "chk:dzl:2:5": "郑伯克段于鄢。",
     }
+
+
+def test_to_pinyin_toneless_joined_lowercase() -> None:
+    assert to_pinyin("管仲") == "guanzhong"
+    assert to_pinyin("赵盾") == "zhaodun"
+    assert to_pinyin("") == ""
+
+
+def test_add_pinyin_columns_populates_persons_and_variants(tmp_path: Path) -> None:
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, canonical_name TEXT);")
+        c.execute(
+            "CREATE TABLE person_variants (id INTEGER PRIMARY KEY, "
+            "person_id TEXT, variant TEXT, kind TEXT);"
+        )
+        c.execute("INSERT INTO persons VALUES ('per:gz', '管仲');")
+        c.execute(
+            "INSERT INTO person_variants (person_id, variant, kind) "
+            "VALUES ('per:gz', '夷吾', '本名');"
+        )
+    add_pinyin_columns(graph)
+    with sqlite3.connect(graph) as c:
+        p = c.execute("SELECT pinyin FROM persons WHERE id='per:gz';").fetchone()[0]
+        v = c.execute("SELECT pinyin FROM person_variants WHERE variant='夷吾';").fetchone()[0]
+    assert p == "guanzhong"
+    assert v == "yiwu"
 
 
 def test_build_citations_table_raises_when_chunk_missing(tmp_path: Path) -> None:

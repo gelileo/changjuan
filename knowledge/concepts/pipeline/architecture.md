@@ -40,6 +40,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/export_enrich.py::build_citations_table` is called by `export_bundle` immediately after `_snapshot_canonical_only`, before the manifest is written. It reads every distinct `citation_id` from `entity_citations` in the snapshot, fetches the matching rows from `corpus.sqlite::chunks`, and writes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table into the export-only `graph.sqlite`. Fail-loud on any missing chunk id. The `export_bundle` signature requires `corpus_db: Path` and `book_meta: dict[str, object]`; the latter is sourced from `data/books/<book_id>/book-meta.json` and provides book identity and capability metadata written into `manifest.json`. `_source_editions` accepts `corpus_db` directly (and guards against a missing `documents` table for tests that supply a chunk-only corpus).
 
+## Stage 9 — pinyin enrichment pass
+
+`pipeline/export_enrich.py::add_pinyin_columns` is called by `export_bundle` immediately after `build_citations_table`, before the manifest is written. It adds a `pinyin` TEXT column (idempotently via `PRAGMA table_info`) to both `persons` and `person_variants` in the snapshot, then populates each row using `to_pinyin` — a pure function wrapping `pypinyin.lazy_pinyin` with `Style.NORMAL` (toneless joined lowercase). This enables client-side romanized-input search without any query-time conversion. Non-Han characters pass through pypinyin as-is; polyphonic characters resolve to their most-common reading (documented limitation).
+
 ## Stage 9 — dynamic table enumeration in counts
 
 `_count_rows` in `stage9_export.py` enumerates tables via `sqlite_master` rather than a hardcoded list, matching the same dynamic approach used in `_snapshot_canonical_only`. Since the snapshot has `candidate_*` and `llm_cache` already stripped, the dynamic set equals the canonical set exactly. No separate constant to keep in sync.
