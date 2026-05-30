@@ -64,7 +64,7 @@ def test_add_pinyin_columns_populates_persons_and_variants(tmp_path: Path) -> No
     with sqlite3.connect(graph) as c:
         c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, canonical_name TEXT);")
         c.execute(
-            "CREATE TABLE person_variants (id INTEGER PRIMARY KEY, "
+            "CREATE TABLE person_variants (id TEXT PRIMARY KEY, "
             "person_id TEXT, variant TEXT, kind TEXT);"
         )
         c.execute("INSERT INTO persons VALUES ('per:gz', '管仲');")

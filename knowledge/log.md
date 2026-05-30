@@ -1,5 +1,10 @@
 # Build Log
 
+## [2026-05-30] fix(test): match person_variants fixture to canonical TEXT PK schema
+
+- `tests/unit/test_export_enrich.py::test_add_pinyin_columns_populates_persons_and_variants`: changed `person_variants` CREATE TABLE from `id INTEGER PRIMARY KEY` to `id TEXT PRIMARY KEY` to match the production canonical schema. Behavior unchanged (`add_pinyin_columns` uses `rowid`). All 4 export_enrich tests and all 6 stage9_export tests pass.
+- Articles touched: `concepts/verification/testing.md` (added one-line note to the export enrichment tests bullet for `test_add_pinyin_columns_populates_persons_and_variants`).
+
 ## [2026-05-30] feat(export): build-time pinyin columns on persons + variants
 
 - `pipeline/export_enrich.py`: added `to_pinyin(text)` (toneless joined lowercase using `pypinyin` `Style.NORMAL`) and `add_pinyin_columns(graph_db)` (idempotent ALTER + populate on `persons.canonical_name` → `persons.pinyin` and `person_variants.variant` → `person_variants.pinyin`).
