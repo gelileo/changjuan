@@ -93,12 +93,16 @@ def load(
 @app.command()
 def export(
     version: str = typer.Argument(..., help="Export bundle version label (e.g., 2026-05-v1)."),
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
     repo_root: Path | None = typer.Option(None),
 ) -> None:
     """Stage 9: freeze a versioned export bundle."""
     cfg = _cfg(repo_root)
+    meta = _json.loads((cfg.books_dir / book_id / "book-meta.json").read_text("utf-8"))
     out_dir = cfg.exports_dir / f"changjuan-export-{version}"
-    export_bundle(cfg.canonical_db, out_dir, version=version, corpus_db=cfg.corpus_db)
+    export_bundle(
+        cfg.canonical_db, out_dir, version=version, corpus_db=cfg.corpus_db, book_meta=meta
+    )
     typer.echo(f"export bundle written to {out_dir}")
 
 

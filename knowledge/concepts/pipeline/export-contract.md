@@ -38,6 +38,12 @@ After the drops, `VACUUM` is called to reclaim space.
   "version": "<caller-supplied label>",
   "schema_version": 2,
   "generated_at": "<ISO 8601 UTC>",
+  "book_id": "dzl",
+  "title": "东周列国志",
+  "author": "冯梦龙 / 蔡元放",
+  "edition": "明刊本",
+  "cover": null,
+  "capabilities": ["cast", "timeline", "states"],
   "counts": {
     "persons": N,
     "person_variants": N,
@@ -50,6 +56,8 @@ After the drops, `VACUUM` is called to reclaim space.
 ```
 
 `schema_version` is the integer constant `SCHEMA_VERSION = 2` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+
+`book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
 `source_corpus_editions` is pulled from `corpus.sqlite.documents.MAX(source_edition) GROUP BY corpus`. If `corpus.sqlite` is absent (e.g. in tests that only exercise the canonical side), this field is an empty object.
 

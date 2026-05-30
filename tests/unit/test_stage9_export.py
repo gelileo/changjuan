@@ -11,6 +11,15 @@ _CHUNKS_DDL = (
     "paragraph_start INTEGER, paragraph_end INTEGER, text TEXT, hash TEXT);"
 )
 
+_MINIMAL_BOOK_META = {
+    "book_id": "dzl",
+    "title": "东周列国志",
+    "author": "冯梦龙 / 蔡元放",
+    "edition": "明刊本",
+    "cover": None,
+    "capabilities": ["cast", "timeline", "states"],
+}
+
 
 def _empty_corpus(tmp_path: Path) -> Path:
     """Return a path to an empty-but-valid corpus.sqlite (no chunks, no citations needed)."""
@@ -30,7 +39,7 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
             "INSERT INTO persons (id, canonical_name, confidence, provenance)"
             " VALUES ('per:a', 'a', 0.9, 'auto');"
         )
-    export_bundle(src, out, version="test-v1", corpus_db=corpus)
+    export_bundle(src, out, version="test-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
     assert (out / "manifest.json").is_file()
     assert (out / "graph.sqlite").is_file()
     assert not (out / "changjuan.sqlite").exists()
@@ -46,7 +55,7 @@ def test_export_snapshot_is_readable_sqlite(tmp_path: Path) -> None:
     corpus = _empty_corpus(tmp_path)
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    export_bundle(src, out, version="test-v1", corpus_db=corpus)
+    export_bundle(src, out, version="test-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute("SELECT name FROM sqlite_master WHERE type='table';")
         names = {r[0] for r in cur}
@@ -65,7 +74,7 @@ def test_export_strips_all_candidate_tables(tmp_path: Path) -> None:
             " (id, canonical_name, confidence, pipeline_run_id, chunk_id, quote)"
             " VALUES ('cper:1', 'x', 0.5, 'r', 'c', 'q');"
         )
-    export_bundle(src, out, version="x-v1", corpus_db=corpus)
+    export_bundle(src, out, version="x-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'candidate_%';"
@@ -80,7 +89,7 @@ def test_export_strips_llm_cache(tmp_path: Path) -> None:
     corpus = _empty_corpus(tmp_path)
     with connect(src) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-    export_bundle(src, out, version="x-v1", corpus_db=corpus)
+    export_bundle(src, out, version="x-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
     with sqlite3.connect(out / "graph.sqlite") as snap:
         cur = snap.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='llm_cache';"
@@ -107,7 +116,7 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
             "INSERT INTO events (id, type, confidence, provenance)"
             " VALUES ('evt:1', 'battle', 0.8, 'auto');"
         )
-    export_bundle(src, out, version="rt-v1", corpus_db=corpus)
+    export_bundle(src, out, version="rt-v1", corpus_db=corpus, book_meta=_MINIMAL_BOOK_META)
 
     # Fresh handle on the snapshot
     with sqlite3.connect(out / "graph.sqlite") as snap:
@@ -125,3 +134,30 @@ def test_export_roundtrip_preserves_canonical_data(tmp_path: Path) -> None:
     manifest = _json.loads((out / "manifest.json").read_text())
     assert manifest["counts"]["persons"] == 2
     assert manifest["counts"]["events"] == 1
+
+
+def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    corpus = tmp_path / "corpus.sqlite"
+    out = tmp_path / "exports" / "b"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    with connect(corpus) as cc:
+        cc.execute(
+            "CREATE TABLE chunks (id TEXT PRIMARY KEY, document_id TEXT, "
+            "paragraph_start INTEGER, paragraph_end INTEGER, text TEXT, hash TEXT);"
+        )
+    meta = {
+        "book_id": "dzl",
+        "title": "东周列国志",
+        "author": "冯梦龙 / 蔡元放",
+        "edition": "明刊本",
+        "cover": None,
+        "capabilities": ["cast", "timeline", "states"],
+    }
+    export_bundle(src, out, version="b", corpus_db=corpus, book_meta=meta)
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["title"] == "东周列国志"
+    assert manifest["author"] == "冯梦龙 / 蔡元放"
+    assert manifest["capabilities"] == ["cast", "timeline", "states"]
+    assert manifest["book_id"] == "dzl"

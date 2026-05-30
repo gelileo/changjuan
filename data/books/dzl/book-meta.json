@@ -1,0 +1,8 @@
+{
+  "book_id": "dzl",
+  "title": "东周列国志",
+  "author": "冯梦龙 / 蔡元放",
+  "edition": "明刊本",
+  "cover": null,
+  "capabilities": ["cast", "timeline", "states"]
+}

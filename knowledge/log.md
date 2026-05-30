@@ -1,5 +1,14 @@
 # Build Log
 
+## [2026-05-30] feat(export): manifest book identity + capabilities from book-meta.json
+
+- 2026-05-30 — `export_bundle` signature extended: new required kwarg `book_meta: dict` carries book identity and capability metadata into `manifest.json`. New manifest keys: `book_id`, `title`, `author`, `edition`, `cover`, `capabilities`. Sourced at call time from `data/books/<book_id>/book-meta.json` (authored JSON, not inferred).
+- `data/books/dzl/book-meta.json` created with 东周列国志 metadata (book_id=dzl, capabilities=[cast, timeline, states]).
+- `pipeline/config.py::Config` gains `books_dir` property (`data/books/`), consistent with existing path-property pattern.
+- `pipeline/cli.py` export command gains `--book-id` option (default "dzl"); loads `book-meta.json` and passes as `book_meta=`.
+- All call sites updated: 5 existing calls in `tests/unit/test_stage9_export.py` + 1 in `tests/integration/test_roundtrip.py` now pass `book_meta=_MINIMAL_BOOK_META` / inline dict.
+- Articles touched: concepts/pipeline/export-contract.md (manifest schema block extended with new identity/capability keys).
+
 ## [2026-05-30] feat(export): denormalize citation passages from corpus into graph.sqlite
 
 - 2026-05-30 — New `pipeline/export_enrich.py::build_citations_table` reads every distinct `citation_id` from `entity_citations` in the snapshot, fetches matching rows from `corpus.sqlite.chunks`, and writes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table into the export copy of `graph.sqlite`. Fails loud with `ValueError` if any cited chunk is absent from the corpus.

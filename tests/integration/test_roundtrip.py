@@ -67,7 +67,15 @@ def test_phase1_roundtrip(tmp_path: Path) -> None:
 
     # 4. Export
     out = cfg.exports_dir / "changjuan-export-rt-v1"
-    export_bundle(cfg.canonical_db, out, version="rt-v1", corpus_db=cfg.corpus_db)
+    _meta = {
+        "book_id": "dzl",
+        "title": "东周列国志",
+        "author": "冯梦龙 / 蔡元放",
+        "edition": "明刊本",
+        "cover": None,
+        "capabilities": ["cast", "timeline", "states"],
+    }
+    export_bundle(cfg.canonical_db, out, version="rt-v1", corpus_db=cfg.corpus_db, book_meta=_meta)
 
     # Bundle assertions
     manifest = json.loads((out / "manifest.json").read_text())

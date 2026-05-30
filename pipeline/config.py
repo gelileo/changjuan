@@ -36,6 +36,10 @@ class Config:
         return self.data_dir / "exports"
 
     @property
+    def books_dir(self) -> Path:
+        return self.data_dir / "books"
+
+    @property
     def corpora_dir(self) -> Path:
         return self.repo_root / "corpora"
 

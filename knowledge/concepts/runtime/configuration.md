@@ -21,7 +21,7 @@ affects:
 
 The module contains two kinds of configuration:
 
-1. **`Config` dataclass**: Frozen, immutable configuration object bundling repo root and pipeline tunables (chunk sizing, paths to corpus and canonical SQLite stores, data and export directories).
+1. **`Config` dataclass**: Frozen, immutable configuration object bundling repo root and pipeline tunables (chunk sizing, paths to corpus and canonical SQLite stores, data and export directories). Path properties: `data_dir`, `corpus_db`, `canonical_db`, `exports_dir`, `books_dir` (`data/books/`), `corpora_dir`. `books_dir` is the root for per-book authored metadata; each book lives at `books_dir / <book_id> / book-meta.json`.
 
 2. **Module-level constants**: Tunable thresholds and limits for specific pipeline stages and features.
 

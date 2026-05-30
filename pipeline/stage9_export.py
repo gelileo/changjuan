@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import shutil
 import sqlite3
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -20,11 +21,22 @@ from pipeline.export_enrich import build_citations_table
 SCHEMA_VERSION = 2
 
 
-def export_bundle(src_db: Path, out_dir: Path, *, version: str, corpus_db: Path) -> Path:
+def export_bundle(
+    src_db: Path,
+    out_dir: Path,
+    *,
+    version: str,
+    corpus_db: Path,
+    book_meta: Mapping[str, object],
+) -> Path:
     """Export a versioned bundle: manifest.json + canonical-only sqlite snapshot.
 
     corpus_db must be the path to corpus.sqlite; it is used to denormalize cited
     chunk passages into graph.sqlite's `citations` table.
+
+    book_meta must contain at least "book_id" and "capabilities"; optionally
+    "title", "author", "edition", "cover".  Source this from
+    data/books/<book_id>/book-meta.json.
 
     Returns out_dir.
     """
@@ -38,6 +50,12 @@ def export_bundle(src_db: Path, out_dir: Path, *, version: str, corpus_db: Path)
         "version": version,
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(UTC).isoformat(),
+        "book_id": book_meta["book_id"],
+        "title": book_meta.get("title"),
+        "author": book_meta.get("author"),
+        "edition": book_meta.get("edition"),
+        "cover": book_meta.get("cover"),
+        "capabilities": book_meta["capabilities"],
         "counts": counts,
         "source_corpus_editions": _source_editions(corpus_db),
     }
