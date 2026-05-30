@@ -19,7 +19,7 @@ Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `dat
 
 ## `texts/` directory: chapter prose payload
 
-`texts/` is populated by copying `data/readable/ch*.md` files into `out_dir/texts/` in sorted order. The copy is performed after the manifest write. The `is_dir()` guard means an absent or empty `readable_dir` is tolerated without error — the `texts/` directory will be created but left empty. In production, `cfg.readable_dir` resolves to `data/readable/`.
+`texts/` is populated by copying `data/readable/ch[0-9]*.md` files into `out_dir/texts/` in sorted order. The glob intentionally uses `ch[0-9]*.md` (not `ch*.md`) so that non-chapter files like `changelog.md` are excluded. The copy is performed after the manifest write. The `is_dir()` guard means an absent or empty `readable_dir` is tolerated without error — the `texts/` directory will be created but left empty. In production, `cfg.readable_dir` resolves to `data/readable/`.
 
 The `readable_dir` parameter is a required keyword argument of `export_bundle`. The CLI passes `cfg.readable_dir` unconditionally; if `data/readable/` is absent the guard silently skips the copy. The v1 web bundle ships only `graph.sqlite`; the `texts/` payload is reserved for the phase-2 Reader that will display chapter prose alongside the knowledge graph.
 

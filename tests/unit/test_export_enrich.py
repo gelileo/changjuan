@@ -115,9 +115,8 @@ def test_deed_importance_high_weight_beats_low_for_same_person() -> None:
 
 
 def test_deed_importance_rarity_boosts_sole_defining_act() -> None:
-    # same low-weight event type; the person for whom it is their ONLY deed of
-    # that type (fraction=1.0 -> rare relative to a rich record) is boosted vs.
-    # a person for whom that type is common (fraction=0.5).
+    # fraction=1/8: only 1 of 8 deeds is this type -> high rarity -> boosted.
+    # fraction=4/8: 4 of 8 deeds are this type -> lower rarity -> smaller boost.
     sole = deed_importance(
         event_type="谏", participants=2, citations=1, person_type_fraction=1.0 / 8
     )

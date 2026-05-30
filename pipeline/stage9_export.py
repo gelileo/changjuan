@@ -30,10 +30,14 @@ def export_bundle(
     book_meta: Mapping[str, object],
     readable_dir: Path,
 ) -> Path:
-    """Export a versioned bundle: manifest.json + canonical-only sqlite snapshot.
+    """Export a versioned bundle: manifest.json + canonical-only sqlite snapshot + texts/ payload.
 
     corpus_db must be the path to corpus.sqlite; it is used to denormalize cited
     chunk passages into graph.sqlite's `citations` table.
+
+    texts/ is populated by copying ch*.md prose files from readable_dir (the chapter-readable
+    directory, typically data/readable/). If readable_dir is absent or not a directory the
+    texts/ dir is still created but left empty.
 
     book_meta must contain at least "book_id" and "capabilities"; optionally
     "title", "author", "edition", "cover".  Source this from
@@ -68,7 +72,7 @@ def export_bundle(
     texts_out = out_dir / "texts"
     texts_out.mkdir(parents=True, exist_ok=True)
     if readable_dir.is_dir():
-        for md in sorted(readable_dir.glob("ch*.md")):
+        for md in sorted(readable_dir.glob("ch[0-9]*.md")):
             shutil.copyfile(md, texts_out / md.name)
     return out_dir
 

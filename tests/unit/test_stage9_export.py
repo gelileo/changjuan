@@ -50,6 +50,7 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
     assert (out / "manifest.json").is_file()
     assert (out / "graph.sqlite").is_file()
     assert not (out / "changjuan.sqlite").exists()
+    assert (out / "texts").is_dir()  # absent readable_dir → empty texts/ still created
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["version"] == "test-v1"
     assert manifest["schema_version"] == 2

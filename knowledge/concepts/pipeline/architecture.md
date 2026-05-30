@@ -54,7 +54,7 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 ## Stage 9 — texts/ copy pass
 
-`export_bundle` copies `data/readable/ch*.md` files into `out_dir/texts/` in sorted order after the manifest write. The copy is gated on `readable_dir.is_dir()`, so an absent `data/readable/` directory silently produces an empty `texts/` subdirectory. The source path is `cfg.readable_dir` (`data/readable/`). This is the phase-2 Reader payload; the v1 web bundle ships only `graph.sqlite`. `export_bundle` gains the required kw-only param `readable_dir: Path`; all call sites must supply it. `Config.readable_dir` is the canonical accessor.
+`export_bundle` copies `data/readable/ch[0-9]*.md` files into `out_dir/texts/` in sorted order after the manifest write. The glob uses `ch[0-9]*.md` (not `ch*.md`) to exclude non-chapter files such as `changelog.md`. The copy is gated on `readable_dir.is_dir()`, so an absent `data/readable/` directory silently produces an empty `texts/` subdirectory. The source path is `cfg.readable_dir` (`data/readable/`). This is the phase-2 Reader payload; the v1 web bundle ships only `graph.sqlite`. `export_bundle` gains the required kw-only param `readable_dir: Path`; all call sites must supply it. `Config.readable_dir` is the canonical accessor.
 
 ## Stage 9 — dynamic table enumeration in counts
 

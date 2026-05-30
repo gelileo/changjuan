@@ -1,5 +1,21 @@
 # Build Log
 
+## [2026-05-30] chore(export): address minor review notes (comments, docstrings, glob tightening, test assertions)
+
+Non-functional cleanup of code-review notes from the export-bundle-v1 work:
+
+- `pipeline/export_enrich.py::build_citations_table`: added comment above the IN-list SELECT noting the ~hundreds bound-variable assumption and the ATTACH fallback for future large corpora.
+- `pipeline/export_enrich.py::deed_importance` docstring: added honest limitation note that a person with a single deed (person_type_fraction=1.0 → rarity=1 → salience=1) gets no within-person boost; the global component alone ranks them.
+- `pipeline/export_enrich.py::build_deed_importance`: added comment before `INSERT OR REPLACE` explaining multi-role collapse (known v1 limitation; per-person type counts double-count such events).
+- `tests/unit/test_export_enrich.py::test_deed_importance_rarity_boosts_sole_defining_act`: replaced misleading comment referencing `fraction=1.0` with accurate `fraction=1/8` / `fraction=4/8` wording matching the actual test inputs.
+- `pipeline/stage9_export.py::export_bundle` docstring: extended to mention the `texts/` payload (chapter prose from `readable_dir`; empty dir if `readable_dir` absent).
+- `pipeline/stage9_export.py`: tightened the texts glob from `ch*.md` to `ch[0-9]*.md` to exclude non-chapter files (e.g. `changelog.md`); existing `ch01.md`/`ch02.md` fixtures still match.
+- `tests/unit/test_stage9_export.py::test_export_creates_manifest_and_sqlite`: added `assert (out / "texts").is_dir()` to pin the negative-path contract (absent `readable_dir` → `texts/` still created, just empty).
+
+No behavior change except the glob narrowing (intentional; all pre-existing tests pass). 304/304 tests green.
+
+Articles touched: `concepts/pipeline/export-contract.md` (`texts/` glob note updated to `ch[0-9]*.md`), `concepts/verification/testing.md` (empty-texts assertion and glob noted in Stage 9 export tests section).
+
 ## [2026-05-30] fix(export): WAL-safe snapshot via VACUUM INTO
 
 `_snapshot_canonical_only` used `shutil.copyfile(src_db, snap_path)`, which

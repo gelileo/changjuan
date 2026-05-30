@@ -45,6 +45,10 @@ def deed_importance(
     how often it is attested. within-person salience: deeds whose type is rare
     in *this person's* record (small fraction) are boosted, so a minor figure's
     single defining act is not buried by global weighting.
+
+    Note: when a person has only a single deed (person_type_fraction=1.0),
+    rarity=1 and salience=1, so the within-person component gives no boost at
+    all — the global component alone ranks such minor figures.
     """
     weight = TYPE_WEIGHTS.get(event_type, DEFAULT_WEIGHT)
     global_component = weight * (1 + math.log1p(participants)) * (1 + math.log1p(citations))
@@ -95,6 +99,9 @@ def build_deed_importance(graph_db: Path) -> None:
                 person_type_fraction=frac,
             )
             rows.append((eid, pid, score))
+        # A person appearing in one event under multiple roles yields multiple participation rows
+        # that collapse to one (event_id, person_id) score row here (known v1 limitation; the
+        # per-person type counts double-count such events — tunable later).
         g.executemany("INSERT OR REPLACE INTO deed_importance VALUES (?,?,?);", rows)
 
 
@@ -141,6 +148,8 @@ def build_citations_table(graph_db: Path, corpus_db: Path) -> None:
         # Those are not passage-resolvable — only `chk:` chunk pointers have text in the
         # corpus. Scope the denormalization to chk: ids; run: (and any non-chk:) ids are
         # intentionally ignored here, not treated as missing chunks.
+        # distinct chk: ids (~hundreds) stay well under SQLite's bound-variable limit;
+        # if a future corpus pushes this into the thousands, switch to ATTACH + INSERT...SELECT.
         cited = [
             r[0]
             for r in g.execute(
