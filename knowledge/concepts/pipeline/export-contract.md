@@ -69,9 +69,13 @@ score = global_component × salience
 
 The client uses this table to rank a person's deeds cheaply without recomputing weights at query time.
 
-## SQLite snapshot: copy-then-drop
+## SQLite snapshot: VACUUM INTO then drop
 
-The snapshot is built by copying `graph.sqlite` verbatim and then dropping implementation tables. This preserves all indexes, views, and constraints without having to re-create them. Two classes of tables are dropped:
+The snapshot (`_snapshot_canonical_only`) is built by opening a connection to the canonical `src_db` and running `VACUUM INTO <snap_path>`, then dropping implementation tables from the snapshot. `VACUUM INTO` writes a complete, defragmented copy and preserves all indexes, views, and constraints without re-creating them.
+
+**Why not `shutil.copyfile`.** The canonical `data/changjuan.sqlite` runs in **WAL journal mode**. `shutil.copyfile` copies only the main `.sqlite` file and ignores the `-wal` sidecar, so any transaction committed-but-not-yet-checkpointed lives only in the WAL and is **silently dropped** from the export. This was a real, measured data-loss bug: a 4.6 MB WAL left the exported bundle missing rows (488 distinct `chk:` citations seen by a live connection vs. 482 in the copyfile snapshot), with manifest counts understated accordingly. A connection to `src_db` sees the full main+WAL view; `VACUUM INTO` snapshots exactly that view, so committed-but-un-checkpointed data is included with no need to checkpoint the canonical DB first. `VACUUM INTO` requires the target path not to exist, so `_snapshot_canonical_only` unlinks any pre-existing `graph.sqlite` first.
+
+After the snapshot, two classes of tables are dropped from it:
 
 - Every table whose name matches `LIKE 'candidate_%'` — these are the staging tables used by stage 7; they are enumerated dynamically at export time so any future `candidate_*` table is stripped automatically (fail-loud if the schema grows a new candidate table without this code being updated).
 - `llm_cache` — an extraction implementation detail (content-addressed LLM response cache) that is not part of the knowledge-graph contract.

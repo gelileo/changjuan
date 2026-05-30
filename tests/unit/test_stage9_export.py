@@ -193,6 +193,44 @@ def test_export_copies_readable_texts(tmp_path: Path) -> None:
     assert (out / "texts" / "ch02.md").is_file()
 
 
+def test_snapshot_includes_uncheckpointed_wal_data(tmp_path: Path) -> None:
+    """A row committed to the WAL but not checkpointed must survive the snapshot.
+
+    shutil.copyfile copies only the main DB file, silently dropping
+    un-checkpointed WAL frames. VACUUM INTO reads the live (main+WAL) view, so
+    the sentinel row must appear in the exported graph.sqlite.
+    """
+    src = tmp_path / "changjuan.sqlite"
+    writer = sqlite3.connect(src)
+    writer.execute("PRAGMA journal_mode=WAL;")
+    writer.execute("PRAGMA wal_autocheckpoint=0;")  # never auto-merge to main
+    apply_schema(writer, CANONICAL_SCHEMA)
+    writer.execute(
+        "INSERT INTO persons (id, canonical_name, confidence, provenance) "
+        "VALUES ('per:wal', '王在WAL', 0.9, 'auto');"
+    )
+    writer.commit()  # committed, but lives in -wal, not the main file
+    # IMPORTANT: do NOT close `writer` before snapshotting — closing may checkpoint.
+
+    corpus = tmp_path / "corpus.sqlite"
+    with connect(corpus) as cc:
+        cc.execute(_CHUNKS_DDL)
+    out = tmp_path / "exports" / "wal"
+    export_bundle(
+        src,
+        out,
+        version="wal",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
+    writer.close()
+
+    with sqlite3.connect(out / "graph.sqlite") as snap:
+        got = snap.execute("SELECT canonical_name FROM persons WHERE id='per:wal';").fetchone()
+    assert got is not None and got[0] == "王在WAL"
+
+
 def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> None:
     src = tmp_path / "changjuan.sqlite"
     corpus = _empty_corpus(tmp_path)

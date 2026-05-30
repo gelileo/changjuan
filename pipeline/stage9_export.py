@@ -74,11 +74,21 @@ def export_bundle(
 
 
 def _snapshot_canonical_only(src_db: Path, snap_path: Path) -> None:
-    """Copy src_db to snap_path then DROP every candidate_* table and llm_cache, then VACUUM."""
+    """Write a candidate-stripped snapshot of src_db to snap_path.
+
+    Uses VACUUM INTO (not shutil.copyfile) so that data committed to the WAL
+    but not yet checkpointed into the main file is included — a connection to
+    src_db sees the full main+WAL view, and VACUUM INTO writes a complete,
+    defragmented snapshot of that view. copyfile would copy only the main file
+    and silently drop un-checkpointed WAL data.
+
+    After snapshotting, DROP every candidate_* table and llm_cache, then VACUUM
+    to reclaim the freed pages.
+    """
     if snap_path.exists():
-        snap_path.unlink()
-    # Copy file first — simpler than building from scratch; preserves indexes + views.
-    shutil.copyfile(src_db, snap_path)
+        snap_path.unlink()  # VACUUM INTO requires the target not to exist
+    with sqlite3.connect(src_db) as src:
+        src.execute("VACUUM INTO ?;", (str(snap_path),))
     with sqlite3.connect(snap_path) as conn:
         conn.execute("PRAGMA foreign_keys = OFF;")  # dropping tables; FK constraints would block
         cur = conn.execute(

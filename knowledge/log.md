@@ -1,5 +1,22 @@
 # Build Log
 
+## [2026-05-30] fix(export): WAL-safe snapshot via VACUUM INTO
+
+`_snapshot_canonical_only` used `shutil.copyfile(src_db, snap_path)`, which
+copies only the main `.sqlite` file and ignores the `-wal` sidecar. Under the
+canonical DB's WAL journal mode, committed-but-un-checkpointed transactions
+living in the 4.6 MB WAL were silently dropped from the export (measured: 482
+of 488 distinct `chk:` citations made it through), understating manifest counts
+across events/persons/relations. Replaced with `VACUUM INTO`, which snapshots
+the full main+WAL view a live connection sees. Post-fix real rebuild of
+`2026-05-v1`: citations 482 → 488, persons 1482, events 1780. Added regression
+test `test_snapshot_includes_uncheckpointed_wal_data` (keeps a WAL writer open
+with `wal_autocheckpoint=0` across the snapshot to reproduce un-checkpointed
+data). TDD red→green confirmed.
+
+Articles touched: concepts/pipeline/export-contract.md,
+concepts/pipeline/architecture.md, concepts/verification/testing.md.
+
 ## [2026-05-30] fix(export): scope citation denormalization to chk: ids (run: are provenance)
 
 - `pipeline/export_enrich.py::build_citations_table`: changed `SELECT DISTINCT citation_id FROM entity_citations` to `WHERE citation_id LIKE 'chk:%'`. `run:`-prefixed ids in `entity_citations` are pipeline-run provenance on edge entities (not passage-resolvable); treating them as missing chunks raised `ValueError: 95 cited chunk(s) absent from corpus` on real data. Fail-loud behaviour preserved for genuinely-missing `chk:` chunks.

@@ -36,6 +36,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/stage4_normalize.py` provides `normalize_date_string(original, anchor_json=None) -> str`, a thin wrapper over `pipeline.dates.parse_date`. Callers pass a raw date string and optionally a prior date's JSON (for relative references); the function returns a JSON string ready to insert into any `*_date_json` column. This is the only stage-4 entry point in Phase 1; extraction prompts and batch normalization land in Phase 2.
 
+## Stage 9 — canonical snapshot
+
+`_snapshot_canonical_only` produces the candidate-stripped `graph.sqlite` that the enrichment passes below mutate. It snapshots `src_db` via `VACUUM INTO` (not `shutil.copyfile`), then drops `candidate_*` tables and `llm_cache` and `VACUUM`s. The `VACUUM INTO` choice is load-bearing: the canonical DB runs in WAL journal mode, and `shutil.copyfile` would copy only the main `.sqlite` file — silently dropping committed-but-un-checkpointed transactions living in the `-wal` sidecar. A live connection sees the full main+WAL view, which `VACUUM INTO` snapshots intact. See `concepts/pipeline/export-contract.md` for the full rationale and the data-loss measurement that motivated the fix.
+
 ## Stage 9 — citation enrichment pass
 
 `pipeline/export_enrich.py::build_citations_table` is called by `export_bundle` immediately after `_snapshot_canonical_only`, before the manifest is written. It reads every distinct `citation_id` from `entity_citations` in the snapshot, fetches the matching rows from `corpus.sqlite::chunks`, and writes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table into the export-only `graph.sqlite`. Fail-loud on any missing chunk id. The `export_bundle` signature requires `corpus_db: Path` and `book_meta: dict[str, object]`; the latter is sourced from `data/books/<book_id>/book-meta.json` and provides book identity and capability metadata written into `manifest.json`. `_source_editions` accepts `corpus_db` directly (and guards against a missing `documents` table for tests that supply a chunk-only corpus).
