@@ -1,23 +1,25 @@
 # HANDOFF — continue 东周列国志 ETL
 
-Pick up the ETL exactly where Ch.50 ended. Self-contained — no prior conversation needed.
+Pick up the ETL exactly where Ch.94 ended. Self-contained — no prior conversation needed.
 
 ---
 
-## Status snapshot (as of 2026-05-26, end of Ch.50)
+## Status snapshot (as of 2026-05-30, end of Ch.94)
 
 | Metric | Value |
 | --- | --- |
-| Chapters loaded (v2) | **Ch.6–50** (Ch.1–5 are golden / pre-v2; do not re-extract) |
-| `persons` | 696 |
-| `events` | 982 |
-| `places` | 330 |
-| `states` | 61 |
-| Open `merge_candidates` | 6 (see Curator backlog) |
+| Chapters loaded (v2) | **Ch.6–94** (Ch.1–5 are golden / pre-v2; do not re-extract) |
+| `persons` | 1559 |
+| `events` | 1859 |
+| `places` | 610 |
+| `states` | 78 |
+| Open `merge_candidates` | 12 (query for current list — see Curator backlog) |
 | Auto-merge rate (recent batches) | ~98% |
 | Pipeline threshold | `LINKER_AUTO_MERGE_THRESHOLD=0.70`, `LINKER_QUEUE_THRESHOLD=0.40` |
 
-Next chapter to extract: **Ch.51**. Target era end: Ch.108.
+Next chapter to extract: **Ch.95**. Target era end: Ch.108.
+
+> Note: the export bundle `data/exports/changjuan-export-2026-05-v1/` was frozen mid-ETL (≈Ch.50-era counts) for the reader-app Phase-0 spike; it is NOT current. Re-freeze (`changjuan export <version>`) when the reader app needs up-to-date data.
 
 ---
 
@@ -34,7 +36,7 @@ Wall-clock: ~15–25 min per batch. Ch.49 was longest at ~28 min (densely popula
 ### 2. After all 4 return, sequentially load
 
 ```bash
-for ch in 51 52 53 54; do  # adjust to current batch
+for ch in 95 96 97 98; do  # adjust to current batch
     RUN_ID="run:phase6c-ch${ch}-$(date +%s)"
     echo "=== Ch.${ch} RUN_ID=${RUN_ID} ==="
     uv run changjuan extract-load --chapter $ch \
@@ -155,18 +157,24 @@ When the linker queues a `partial` overlap, it usually means the next chapter's 
 
 ---
 
-## Curator backlog (6 open mcs as of Ch.50)
+## Curator backlog (12 open mcs as of Ch.94)
 
-User will merge/reject these in the Streamlit app. Don't auto-merge from the agent — surface them and wait.
+User will merge/reject these in the Streamlit app. Don't auto-merge from the agent — surface them and wait. The list is no longer enumerated here (it churns every batch); query the current open queue:
 
-| Candidate | Canonical | Verdict |
-| --- | --- | --- |
-| `僖负羁之妻 (ch39)` | `per:吕氏` | ✅ merge (same 曹 noblewoman) |
-| `齐昭公` | `per:公子昭` | ✅ merge (本名 潘 — but the linker matched on 公子昭 surface) |
-| `郑穆公` | `per:公子兰` | ✅ merge (穆公 本名 兰) |
-| `宋昭公` | `per:宋殇公` | ❌ **reject — false positive** (different rulers, ~100 yrs apart, template collision `宋+公`) |
-| `文公夫人姜氏` | `per:哀姜` | ✅ merge (鲁文公 wife 出姜/哀姜) |
-| `鲁太子恶` | `per:鲁世子恶` | ✅ merge (太子=世子) |
+```bash
+uv run python -c "
+import sqlite3, json
+db = sqlite3.connect('data/changjuan.sqlite')
+for r in db.execute(\"SELECT score, candidate_a_id, candidate_b_id, surface_features_json FROM merge_candidates WHERE status='open' ORDER BY score DESC\"):
+    score, cand_id, canon_id, feats = r
+    cand = db.execute('SELECT canonical_name, social_category, state_id FROM candidate_persons WHERE id=?', (cand_id,)).fetchone()
+    canon = db.execute('SELECT canonical_name, social_category, state_id FROM persons WHERE id=?', (canon_id,)).fetchone()
+    print(f'  {score:.3f}: {cand} vs {canon}')
+    print(f'    {json.loads(feats)[\"features\"]}')
+"
+```
+
+Recurring false-positive pattern to watch: `<state>+<title>` template collisions between different rulers (e.g. 宋昭公↔宋殇公, 晋文公↔晋惠公) — same state + social_category + shared template chars, different person. Curator should reject these (Phase 7 candidate: a personal-name-char gate in the linker).
 
 ---
 
@@ -211,4 +219,4 @@ To resume this session: `claude --dangerously-skip-permissions --resume ffa9b518
 
 To start a clean parallel ETL session: `cd changjuan/` and paste:
 
-> Read `HANDOFF-ETL.md`. Continue ETL from Ch.51. Run one 4-chapter batch (Ch.51–54), report counts and any queued candidates, then stop and wait for me to say "onward".
+> Read `HANDOFF-ETL.md`. Continue ETL from Ch.95. Run one 4-chapter batch (Ch.95–98), report counts and any queued candidates, then stop and wait for me to say "onward".
