@@ -2124,3 +2124,19 @@ the other 124 sibling rows remain NULL pending a back-tag curation sweep.
 
 Articles touched: concepts/data-model/knowledge-graph.md,
 concepts/pipeline/export-contract.md.
+
+## 2026-05-31 — person prominence flagging (export schema_version 3)
+
+Added `persons.prominence` (REAL) + `persons.prominence_tier`
+('major'/'notable'/'minor') to the export snapshot via
+`export_enrich.py::add_prominence` (runs after build_deed_importance).
+Score = SUM(deed_importance) per person; rank cutoffs 40 / 250; curated
+`data/prominence_overrides.yaml` promotes iconic-but-sparse figures
+(荆轲/卞和/孟姜/…) and can demote functionaries. Bumped SCHEMA_VERSION 2->3;
+CLI passes the overrides path. Lets the reader default to {major,notable}
+(~263/1706) with an "All" toggle; per-user favorites stay reader-side
+(unioned by stable persons.id, not stored in the shared bundle).
+
+Articles touched: concepts/pipeline/export-contract.md,
+concepts/verification/testing.md (new add_prominence unit test),
+concepts/runtime/cli.md (export passes the overrides path).

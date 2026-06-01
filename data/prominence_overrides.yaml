@@ -1,0 +1,28 @@
+# Curated prominence overrides, applied AFTER the automatic deed_importance-based
+# tiering in pipeline/export_enrich.py::add_prominence.
+#
+# - promote: figures that are narratively iconic but appear in few events, so the
+#   auto-score ranks them too low to make the default reader list. Promoted to
+#   at least 'notable' (default-visible). Match by persons.canonical_name.
+# - demote: high-activity functionaries that aren't reader-interesting. Forced to
+#   'minor' (hidden unless "All"). (Empty for now.)
+#
+# Keys are canonical_name strings (human-editable). Unknown names no-op.
+# Edit freely + re-export; this is the curation knob for the default person list.
+
+promote:
+  - 荆轲        # 刺秦王
+  - 西施
+  - 专诸        # 刺王僚
+  - 要离        # 刺庆忌
+  - 聂政        # 刺侠累
+  - 豫让        # 刺赵襄子 ("士为知己者死")
+  - 介子推      # 寒食 / 割股
+  - 孟姜        # 哭长城
+  - 钟离春      # 无盐丑女谏齐宣王
+  - 卞和        # 和氏璧 (0 events, rank ~#1490)
+  - 曹刿        # 曹刿论战
+  - 弦高        # 犒师退秦
+  - 优孟        # 优孟衣冠
+
+demote: []

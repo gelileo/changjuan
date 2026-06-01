@@ -151,3 +151,48 @@ def test_build_deed_importance_writes_a_row_per_participation(tmp_path: Path) ->
         )
     assert set(scores) == {"evt:war", "evt:visit"}
     assert scores["evt:war"] > scores["evt:visit"]
+
+
+def test_add_prominence_tiers_and_overrides(tmp_path: Path) -> None:
+    """deed-sum ranks tiers; promote raises a sparse figure to 'notable'."""
+    from pipeline.export_enrich import add_prominence
+
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, canonical_name TEXT);")
+        c.execute("CREATE TABLE deed_importance (event_id TEXT, person_id TEXT, score REAL);")
+        c.executemany(
+            "INSERT INTO persons VALUES (?,?);",
+            [("per:big", "霸主"), ("per:mid", "中人"), ("per:icon", "卞和"), ("per:none", "路人")],
+        )
+        c.executemany(
+            "INSERT INTO deed_importance VALUES (?,?,?);",
+            [
+                ("e1", "per:big", 900.0),
+                ("e2", "per:big", 100.0),
+                ("e3", "per:mid", 50.0),
+                ("e4", "per:icon", 0.5),
+            ],  # per:none has no deeds
+        )
+    overrides = tmp_path / "ov.yaml"
+    overrides.write_text("promote:\n  - 卞和\ndemote: []\n", encoding="utf-8")
+
+    # tiny cutoffs so the 4-person fixture exercises all tiers
+    import pipeline.export_enrich as ee
+
+    orig = (ee.PROMINENCE_MAJOR_TOP, ee.PROMINENCE_NOTABLE_TOP)
+    ee.PROMINENCE_MAJOR_TOP, ee.PROMINENCE_NOTABLE_TOP = 1, 2
+    try:
+        add_prominence(graph, overrides)
+    finally:
+        ee.PROMINENCE_MAJOR_TOP, ee.PROMINENCE_NOTABLE_TOP = orig
+
+    with sqlite3.connect(graph) as c:
+        tiers = dict(c.execute("SELECT id, prominence_tier FROM persons;"))
+        scores = dict(c.execute("SELECT id, prominence FROM persons;"))
+    assert tiers["per:big"] == "major"  # rank 1 (1000.0)
+    assert tiers["per:mid"] == "notable"  # rank 2 (50.0)
+    assert tiers["per:icon"] == "notable"  # rank 3 -> minor, but promoted by override
+    assert tiers["per:none"] == "minor"  # no deeds
+    assert scores["per:big"] == 1000.0
+    assert scores["per:none"] == 0.0

@@ -69,6 +69,17 @@ score = global_component × salience
 
 The client uses this table to rank a person's deeds cheaply without recomputing weights at query time.
 
+## `persons.prominence` + `persons.prominence_tier`: default-list flagging
+
+Added in schema_version **3** by `pipeline/export_enrich.py::add_prominence`, which runs **after** `build_deed_importance` (it derives from it). Two columns on the persons snapshot:
+
+- `prominence` (REAL) = `SUM(deed_importance.score)` per person — the proven prominence proxy (top ranks are 齐桓公/晋文公/秦穆公/… with no junk).
+- `prominence_tier` (TEXT) = `'major'` (ranks 1..`PROMINENCE_MAJOR_TOP`=40), `'notable'` (..`PROMINENCE_NOTABLE_TOP`=250), else `'minor'`. Cutoffs are rank-based and tunable.
+
+**Curated overrides** (`data/prominence_overrides.yaml`, passed via `export_bundle(prominence_overrides=…)`) are applied **last**: `promote:` raises a `'minor'` figure to `'notable'` (narratively iconic but event-sparse — 荆轲/卞和/孟姜/专诸…, which the auto-score ranks #270–#1490), `demote:` forces `'minor'`. Matched on `canonical_name`; unknown names no-op; absent file → auto-only. This is the curator knob for the reader's default person list.
+
+**Reader contract:** default the person list to `prominence_tier IN ('major','notable')` (~263/1706); an **"All"** toggle drops the filter. **Per-user favorites are deliberately NOT stored here** — `graph.sqlite` is a read-only shared bundle. Because prominence is keyed on the stable `persons.id`, the reader unions its own local bookmark/favorite ids with the prominent set at read time; no export structure is needed for runtime favorites.
+
 ## SQLite snapshot: VACUUM INTO then drop
 
 The snapshot (`_snapshot_canonical_only`) is built by opening a connection to the canonical `src_db` and running `VACUUM INTO <snap_path>`, then dropping implementation tables from the snapshot. `VACUUM INTO` writes a complete, defragmented copy and preserves all indexes, views, and constraints without re-creating them.

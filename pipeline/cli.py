@@ -111,6 +111,7 @@ def export(
         corpus_db=cfg.corpus_db,
         book_meta=meta,
         readable_dir=cfg.readable_dir,
+        prominence_overrides=cfg.data_dir / "prominence_overrides.yaml",
     )
     typer.echo(f"export bundle written to {out_dir}")
 

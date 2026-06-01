@@ -35,6 +35,11 @@ TYPE_WEIGHTS: dict[str, float] = {
 DEFAULT_WEIGHT = 1.0
 SALIENCE_WEIGHT = 1.5  # how strongly within-person rarity boosts a deed
 
+# Prominence tiering (default reader-list membership). Rank-based on the
+# aggregate deed_importance score; tunable. Reader defaults to {major, notable}.
+PROMINENCE_MAJOR_TOP = 40  # ranks 1..40        -> 'major'
+PROMINENCE_NOTABLE_TOP = 250  # ranks 41..250    -> 'notable' (rest -> 'minor')
+
 
 def deed_importance(
     *, event_type: str, participants: int, citations: int, person_type_fraction: float
@@ -103,6 +108,72 @@ def build_deed_importance(graph_db: Path) -> None:
         # that collapse to one (event_id, person_id) score row here (known v1 limitation; the
         # per-person type counts double-count such events — tunable later).
         g.executemany("INSERT OR REPLACE INTO deed_importance VALUES (?,?,?);", rows)
+
+
+def add_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
+    """Add `persons.prominence` (REAL) and `persons.prominence_tier` (TEXT:
+    'major' | 'notable' | 'minor') to the snapshot.
+
+    `prominence` = SUM(deed_importance.score) per person — so this MUST run after
+    build_deed_importance(). Tier is a rank-based cutoff (PROMINENCE_MAJOR_TOP /
+    PROMINENCE_NOTABLE_TOP), then curated overrides are applied last: `promote`
+    raises a 'minor' figure to 'notable' (iconic-but-sparse, e.g. 荆轲/卞和);
+    `demote` forces 'minor'. Overrides match on canonical_name.
+
+    The reader defaults its person list to tier IN ('major','notable'); an "All"
+    toggle drops the filter. Per-user favorites are intentionally NOT stored here
+    — graph.sqlite is a read-only shared bundle. Because prominence is keyed on
+    the stable persons.id, the reader unions its own local bookmark/favorite ids
+    with the prominent set at read time; no export structure is needed for that.
+    """
+    promote: set[str] = set()
+    demote: set[str] = set()
+    if overrides_path and overrides_path.exists():
+        import yaml
+
+        data = yaml.safe_load(overrides_path.read_text("utf-8")) or {}
+        promote = set(data.get("promote") or [])
+        demote = set(data.get("demote") or [])
+
+    with sqlite3.connect(graph_db) as g:
+        cols = [r[1] for r in g.execute("PRAGMA table_info(persons);")]
+        if "prominence" not in cols:
+            g.execute("ALTER TABLE persons ADD COLUMN prominence REAL;")
+        if "prominence_tier" not in cols:
+            g.execute("ALTER TABLE persons ADD COLUMN prominence_tier TEXT;")
+
+        scores = dict(
+            g.execute(
+                "SELECT person_id, COALESCE(SUM(score),0) FROM deed_importance GROUP BY person_id;"
+            )
+        )
+        persons = g.execute("SELECT id, canonical_name FROM persons;").fetchall()
+        # rank by score desc, stable tiebreak by id
+        ranked = sorted(persons, key=lambda r: (-scores.get(r[0], 0.0), r[0]))
+        tier: dict[str, str] = {}
+        for i, (pid, _name) in enumerate(ranked):
+            if i < PROMINENCE_MAJOR_TOP:
+                tier[pid] = "major"
+            elif i < PROMINENCE_NOTABLE_TOP:
+                tier[pid] = "notable"
+            else:
+                tier[pid] = "minor"
+
+        name_to_ids: dict[str, list[str]] = {}
+        for pid, name in persons:
+            name_to_ids.setdefault(name, []).append(pid)
+        for nm in promote:
+            for pid in name_to_ids.get(nm, []):
+                if tier.get(pid) == "minor":
+                    tier[pid] = "notable"
+        for nm in demote:
+            for pid in name_to_ids.get(nm, []):
+                tier[pid] = "minor"
+
+        g.executemany(
+            "UPDATE persons SET prominence = ?, prominence_tier = ? WHERE id = ?;",
+            [(round(scores.get(pid, 0.0), 2), tier[pid], pid) for pid, _ in persons],
+        )
 
 
 def to_pinyin(text: str) -> str:

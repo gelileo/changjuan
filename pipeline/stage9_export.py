@@ -16,9 +16,14 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 
-from pipeline.export_enrich import add_pinyin_columns, build_citations_table, build_deed_importance
+from pipeline.export_enrich import (
+    add_pinyin_columns,
+    add_prominence,
+    build_citations_table,
+    build_deed_importance,
+)
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3  # v3: persons.prominence + persons.prominence_tier
 
 
 def export_bundle(
@@ -29,6 +34,7 @@ def export_bundle(
     corpus_db: Path,
     book_meta: Mapping[str, object],
     readable_dir: Path,
+    prominence_overrides: Path | None = None,
 ) -> Path:
     """Export a versioned bundle: manifest.json + canonical-only sqlite snapshot + texts/ payload.
 
@@ -51,6 +57,7 @@ def export_bundle(
     build_citations_table(snap_path, corpus_db)
     add_pinyin_columns(snap_path)
     build_deed_importance(snap_path)
+    add_prominence(snap_path, prominence_overrides)  # after deed_importance (derives from it)
 
     counts = _count_rows(snap_path)
     manifest: dict[str, object] = {
