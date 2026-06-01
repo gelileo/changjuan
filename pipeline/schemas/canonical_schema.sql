@@ -130,6 +130,9 @@ CREATE TABLE IF NOT EXISTS person_relations (
     citation_id     TEXT,
     confidence      REAL NOT NULL,
     provenance      TEXT NOT NULL CHECK (provenance IN ('auto','curated')),
+    -- qualifier on `kind`; NULL = default/unspecified (e.g. blood sibling).
+    -- Tag only exceptions: '结义' (sworn), '异母'/'同母异父' (half), '养' (adoptive), …
+    relation_detail TEXT,
     PRIMARY KEY (from_person_id, to_person_id, kind)
 );
 
@@ -266,6 +269,7 @@ CREATE TABLE IF NOT EXISTS candidate_person_relations (
     to_candidate_person_id   TEXT NOT NULL,
     kind                     TEXT NOT NULL,
     date_json                TEXT,
+    relation_detail          TEXT,   -- qualifier on `kind` (see person_relations)
     pipeline_run_id          TEXT NOT NULL,
     PRIMARY KEY (from_candidate_person_id, to_candidate_person_id, kind)
 );

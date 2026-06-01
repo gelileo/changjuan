@@ -13,7 +13,7 @@ affects:
 
 Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/changjuan-export-<version>/` with three artefacts:
 
-1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables.
+1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables. Because the snapshot copies canonical tables wholesale, schema additions ride along automatically — e.g. `person_relations.relation_detail` (the 结义/blood sibling qualifier added 2026-05-31) appears in the bundle with no export-code change. Bump the manifest version when such a column lands so consumers can detect it.
 2. **`manifest.json`** — metadata describing the bundle contents.
 3. **`texts/chNN.md`** — full reading prose, one file per chapter. Phase-2 Reader payload; NOT consumed by the v1 web target, which bundles only `graph.sqlite`.
 

@@ -2111,3 +2111,16 @@ pytest markers `integration` and `golden` registered in `pyproject.toml`
 
 Articles touched: concepts/pipeline/load-and-merge.md,
 concepts/data-model/knowledge-graph.md, concepts/verification/testing.md.
+
+## 2026-05-31 — person_relations.relation_detail qualifier
+
+Added nullable `relation_detail TEXT` to `person_relations` and
+`candidate_person_relations` (source `pipeline/schemas/canonical_schema.sql`
++ live `data/changjuan.sqlite` via ADD COLUMN). Distinguishes 结义 (sworn)
+from blood siblings without growing the `kind` CHECK enum (SQLite can't
+ALTER a CHECK → would force a table rebuild). Convention: NULL = default/
+blood; tag only exceptions. Tagged 伍员↔专诸 as `结义` (audit-logged);
+the other 124 sibling rows remain NULL pending a back-tag curation sweep.
+
+Articles touched: concepts/data-model/knowledge-graph.md,
+concepts/pipeline/export-contract.md.
