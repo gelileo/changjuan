@@ -2151,3 +2151,15 @@ First scan of the full graph: 114 high (incl. the 共叔段 756→~722 cluster),
 45 low (collisions/table-gaps), 3 outliers, 576 undated.
 
 Articles touched: concepts/data-model/dates-and-reigns.md.
+
+## 2026-06-01 — scan-dates conflict-aware suppression
+
+scripts/scan-dates now consults the `conflicts` table: a reign_window violation
+whose ruler-participant has an open `preserve_source` conflict on a reign/date
+field is downgraded to severity `adjudicated` (annotated with the conflict id)
+instead of `high`. Settled novel-vs-史记 discrepancies (recorded as conflicts)
+no longer resurface in the actionable worklist — e.g. 郑定公/506 (cfl:zheng-
+dinggong-reign-506-novel-vs-shiji). After the 共叔段 fix + this, reign_window
+high = 0.
+
+Articles touched: concepts/data-model/dates-and-reigns.md.

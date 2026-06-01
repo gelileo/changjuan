@@ -77,6 +77,23 @@ def main() -> int:
     db = sqlite3.connect(f"file:{args.db}?mode=ro", uri=True)
     reign = load_reign_index(Path(args.reigns))
 
+    # rulers with an adjudicated novel-vs-canon reign/date discrepancy already recorded
+    # in `conflicts` (resolution_rule='preserve_source'): their reign-window violations
+    # are known/accepted, so suppress them from the actionable worklist.
+    REIGN_FIELDS = ("reign_end", "reign_start", "reign", "death_date", "birth_date",
+                    "death_date_json", "birth_date_json", "reign_window")
+    adjudicated: dict[str, str] = {}  # person_id -> conflict_id
+    try:
+        q = (
+            "SELECT subject_id, id FROM conflicts "
+            "WHERE subject_kind='person' AND status='open' AND resolution_rule='preserve_source' "
+            f"AND field IN ({','.join('?' * len(REIGN_FIELDS))})"
+        )
+        for sid, cid in db.execute(q, REIGN_FIELDS):
+            adjudicated.setdefault(sid, cid)
+    except sqlite3.OperationalError:
+        pass  # conflicts table absent in early-stage DBs
+
     # state id -> chinese name (DB), and 本名 variants per person
     state_name = dict(db.execute("SELECT id, name FROM states;"))
     benming: dict[str, list[str]] = {}
@@ -169,7 +186,9 @@ def main() -> int:
             sovereign = etype in SOVEREIGN_TYPES and role in GOV_ROLES
 
             posthumous = etype in POSTHUMOUS_TYPES or role in {"显灵", "显圣", "托梦", "报梦"}
-            if not near:
+            if pid in adjudicated:  # novel-vs-canon discrepancy already recorded in conflicts
+                sev, interp = "adjudicated", f"preserve_source conflict {adjudicated[pid]}"
+            elif not near:
                 sev, interp = "low", "likely_wrong_ruler_match_collision"
             elif posthumous and direction == "after_reign":
                 sev, interp = "low", "posthumous_apparition_or_dream"
@@ -223,7 +242,8 @@ def main() -> int:
                 }
             )
 
-    issues.sort(key=lambda i: ({"high": 0, "medium": 1, "low": 2}[i["severity"]], -i["deviation"]))
+    sev_rank = {"high": 0, "medium": 1, "low": 2, "adjudicated": 3}
+    issues.sort(key=lambda i: (sev_rank.get(i["severity"], 4), -i["deviation"]))
 
     # undated grouped by chapter
     und_by_ch: dict[int | None, int] = {}
@@ -245,6 +265,9 @@ def main() -> int:
             "reign_window_low": sum(
                 1 for i in issues if i["check"] == "reign_window" and i["severity"] == "low"
             ),
+            "reign_window_adjudicated": sum(
+                1 for i in issues if i["check"] == "reign_window" and i["severity"] == "adjudicated"
+            ),
             "chapter_outlier": sum(1 for i in issues if i["check"] == "chapter_outlier"),
         },
         "issues": issues,
@@ -256,7 +279,8 @@ def main() -> int:
     print(f"events: {s['events_total']}  dated: {s['dated']}  undated: {s['undated']}")
     print(
         f"reign_window: {s['reign_window_high']} high (likely date error) + "
-        f"{s['reign_window_low']} low (table-gap/collision)"
+        f"{s['reign_window_low']} low (table-gap/collision) + "
+        f"{s['reign_window_adjudicated']} adjudicated (preserve_source conflict)"
     )
     print(f"chapter_outlier: {s['chapter_outlier']}")
     print(f"\nreport -> {args.out}")

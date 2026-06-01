@@ -150,7 +150,11 @@ Drafted inline following the schema above; curator-trimmed during Phase 4 Task 5
 violations stay `high` only for sovereign acts (封邑/会盟/任命… as 主行); other
 pre-accession acts (谋叛/出奔 by a 公子) → `medium`. Births (`出生`) and posthumous
 apparitions (显灵/托梦, by type or role) are exempt. Each issue carries a
-`direction` (before_accession / after_reign). Plus **chapter_outlier** (year far from chapter median) and an
+`direction` (before_accession / after_reign). A reign_window violation whose ruler-participant already has an open
+`preserve_source` conflict on a reign/date field (a recorded novel-vs-史记
+discrepancy) is downgraded to severity `adjudicated` and annotated with the
+conflict id, so settled cases (e.g. 郑定公 ruling past his 514 death in the novel)
+stop resurfacing in the worklist. Plus **chapter_outlier** (year far from chapter median) and an
 **undated** backlog grouped by chapter. This is the check that catches the
 共叔段 case (events dated 756 vs 郑庄公 reign 743–701).
 
