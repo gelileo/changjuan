@@ -1,25 +1,23 @@
-# HANDOFF — continue 东周列国志 ETL
+# HANDOFF — 东周列国志 ETL ✅ COMPLETE
 
-Pick up the ETL exactly where Ch.94 ended. Self-contained — no prior conversation needed.
+**ETL is complete — all 108 chapters loaded (as of 2026-06-01).** This document is retained for reference and for the *re-extraction* workflow (the per-chapter procedure + subagent template below still apply if any chapter needs re-running with a newer prompt).
 
 ---
 
-## Status snapshot (as of 2026-05-30, end of Ch.94)
+## Status snapshot (as of 2026-06-01, full corpus)
 
 | Metric | Value |
 | --- | --- |
-| Chapters loaded (v2) | **Ch.6–94** (Ch.1–5 are golden / pre-v2; do not re-extract) |
-| `persons` | 1559 |
-| `events` | 1859 |
-| `places` | 610 |
-| `states` | 78 |
-| Open `merge_candidates` | 12 (query for current list — see Curator backlog) |
-| Auto-merge rate (recent batches) | ~98% |
+| Chapters loaded (v2) | **Ch.6–108** (Ch.1–5 are golden / pre-v2; do not re-extract) — **all 108 done** |
+| `persons` | 1706 |
+| `events` | 2141 |
+| `places` | 683 |
+| `states` | 80 |
+| Open `merge_candidates` | 4 (query for current list — see Curator backlog) |
+| Event year range | 789–221 BCE (full 春秋 + 战国 span) |
 | Pipeline threshold | `LINKER_AUTO_MERGE_THRESHOLD=0.70`, `LINKER_QUEUE_THRESHOLD=0.40` |
 
-Next chapter to extract: **Ch.95**. Target era end: Ch.108.
-
-> Note: the export bundle `data/exports/changjuan-export-2026-05-v1/` was frozen mid-ETL (≈Ch.50-era counts) for the reader-app Phase-0 spike; it is NOT current. Re-freeze (`changjuan export <version>`) when the reader app needs up-to-date data.
+No further chapters to extract. Next pipeline steps are curation (resolve open merge candidates / data-quality issues) and freezing export bundles for the reader app.
 
 ---
 
