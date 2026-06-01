@@ -12,7 +12,7 @@ references:
 affects:
   - pipeline/schemas/corpus_schema.sql
   - pipeline/schemas/canonical_schema.sql
-  - pipeline/stage5_link/**
+  - pipeline/stage5_link/scoring.py
 ---
 
 ## What this is

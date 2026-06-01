@@ -2239,3 +2239,19 @@ re-vendored into changjuan-reader (browser-verified 阖闾's card shows 父 诸�
 
 Articles touched: none (data-only curation; no schema/behaviour change — same
 mechanism as the documented fix-jin-duplicates.sql precedent).
+
+## 2026-06-01 — fix reject-path FK for candidate-vs-candidate merges
+
+reject_merge / _load_reject_payload: a candidate-vs-candidate merge_candidate has a
+`cand:` id on the B side, so using it as rejected_merges.canonical_id (FK → persons)
+raised IntegrityError. Added _resolve_canonical (follows match_target_id to a real
+persons.id; None if no canonical anchor) and guarded the rejected_merges insert on
+canonical_id is not None. Lets curators reject same-本名 false positives
+(赵鞅/赵简子 vs 士鞅/范献子; 季孙肥 vs 季孙斯) cleanly. +2 unit tests. Also resolved
+those 2 FPs in the live dzl DB (the curator_smoke unblock).
+
+Articles touched: concepts/pipeline/linking.md, concepts/verification/testing.md.
+Also narrowed the `affects:` glob in both configuration.md and knowledge-graph.md
+from `pipeline/stage5_link/**` to `pipeline/stage5_link/scoring.py` — the over-broad
+glob false-flagged this merge.py edit against two unrelated articles; the note in each
+only concerns the scoring.py promotion-waiver.

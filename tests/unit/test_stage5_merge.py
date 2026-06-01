@@ -12,7 +12,8 @@ from typing import Any
 
 import pytest
 
-from pipeline.db import connect
+from pipeline.db import apply_schema, connect
+from pipeline.schemas import CANONICAL_SCHEMA
 from pipeline.stage5_link.merge import (
     MergeResult,
     SplitValidationError,
@@ -465,3 +466,68 @@ def test_accept_merge_candidate_persons_variants_json_folded(
     assert ("靖", "本名") in variants
     # Exactly these two (no extras seeded).
     assert len(variants) == 2
+
+
+# --- candidate-vs-candidate reject (rejected_merges.canonical_id FK robustness) ---
+
+
+def _seed_cand_vs_cand(db_path: Path, *, b_match_target: str | None, with_canonical: bool) -> None:
+    with connect(db_path) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        if with_canonical:
+            conn.execute(
+                "INSERT INTO persons (id, canonical_name, gender, confidence, provenance) "
+                "VALUES ('per:范鞅', '范鞅', 'M', 0.9, 'auto')"
+            )
+        conn.execute(
+            "INSERT INTO candidate_persons (id, canonical_name, gender, state_id, confidence, "
+            "pipeline_run_id, chunk_id, quote, variants_json) "
+            "VALUES ('cand:per:a', '赵鞅', 'M', 'sta:jin', 0.8, 'run:x', 'c', 'q', '[]')"
+        )
+        conn.execute(
+            "INSERT INTO candidate_persons (id, canonical_name, gender, state_id, confidence, "
+            "pipeline_run_id, chunk_id, quote, variants_json, match_target_id) "
+            "VALUES ('cand:per:b', '士鞅', 'M', 'sta:jin', 0.8, 'run:x', 'c', 'q', '[]', ?)",
+            (b_match_target,),
+        )
+        conn.execute(
+            "INSERT INTO merge_candidates "
+            "(id, kind, candidate_a_id, candidate_b_id, score, status) "
+            "VALUES ('mc:cc', 'person', 'cand:per:a', 'cand:per:b', 0.5, 'open')"
+        )
+
+
+def test_reject_candidate_vs_candidate_no_canonical_skips_rejected_merges(tmp_path: Path) -> None:
+    """Rejecting a candidate-vs-candidate pair (B is a cand: id) must not FK-fail on
+    rejected_merges.canonical_id; it marks rejected + audits and skips the row."""
+    db_path = tmp_path / "m.sqlite"
+    _seed_cand_vs_cand(db_path, b_match_target=None, with_canonical=False)
+    with connect(db_path) as conn:
+        result = reject_merge(conn, "mc:cc", note="赵鞅≠士鞅")
+    assert result.mc_id == "mc:cc"
+    with connect(db_path) as conn:
+        assert (
+            conn.execute("SELECT status FROM merge_candidates WHERE id='mc:cc'").fetchone()[
+                "status"
+            ]
+            == "rejected"
+        )
+        assert conn.execute("SELECT COUNT(*) FROM rejected_merges").fetchone()[0] == 0
+        assert (
+            conn.execute(
+                "SELECT COUNT(*) FROM audit_log WHERE change_kind='merge_rejected'"
+            ).fetchone()[0]
+            == 1
+        )
+
+
+def test_reject_candidate_vs_candidate_resolves_match_target(tmp_path: Path) -> None:
+    """When B's match_target_id points at a canonical person, rejected_merges anchors on
+    that resolved persons.id (no FK error)."""
+    db_path = tmp_path / "m.sqlite"
+    _seed_cand_vs_cand(db_path, b_match_target="per:范鞅", with_canonical=True)
+    with connect(db_path) as conn:
+        reject_merge(conn, "mc:cc", note="x")
+    with connect(db_path) as conn:
+        row = conn.execute("SELECT canonical_id FROM rejected_merges").fetchone()
+    assert row is not None and row["canonical_id"] == "per:范鞅"

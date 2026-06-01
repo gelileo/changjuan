@@ -103,6 +103,8 @@ Stage 7's `load_candidate_persons` honors this column as the first match check, 
 
 The `match_target_id` column is never cleared by Stage 7. If `link_run` wrote it but `load_candidate_persons` is never called, there is no side-effect — the column is read-only from Stage 7's perspective.
 
+**Reject-path canonical resolution (2026-06).** `reject_merge`'s `_load_reject_payload` derives `rejected_merges.canonical_id` (an FK into `persons`) from the candidate's B side. For a **candidate-vs-candidate** pair, B is itself a `cand:` id, not a `persons.id` — inserting it would violate the FK. `_resolve_canonical` follows `match_target_id` (chaining candidate → candidate → canonical) to a real `persons.id`; if none exists it returns `None` and `reject_merge` **skips** the `rejected_merges` row (the candidate is still marked `rejected` + audited; a completed-run candidate won't re-queue). This is what lets a curator reject same-本名 false positives like `赵鞅`(赵简子) vs `士鞅`(范献子) without an `IntegrityError`.
+
 ## `merge_candidates` queue
 
 When a pair scores in the queue band (`[0.40, 0.75)`), the linker inserts a `merge_candidates` row with:

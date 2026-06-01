@@ -491,20 +491,50 @@ def accept_merge(
     )
 
 
+def _resolve_canonical(conn: sqlite3.Connection, cid: str) -> str | None:
+    """Resolve `cid` to a real persons.id for `rejected_merges.canonical_id` (an FK
+    into persons).
+
+    A merge_candidate's B side is usually already a canonical persons.id, but for a
+    candidate-vs-candidate pair it is itself a `cand:` id. Follow
+    `candidate_persons.match_target_id` (which may chain candidate → candidate →
+    canonical) to the canonical person. Returns None when no canonical anchor exists —
+    the caller then skips the `rejected_merges` row rather than violating the FK (a
+    candidate from a completed run won't be re-queued anyway).
+    """
+    if conn.execute("SELECT 1 FROM persons WHERE id = ?", (cid,)).fetchone():
+        return cid
+    seen: set[str] = set()
+    cur: str | None = cid
+    while cur and cur not in seen:
+        seen.add(cur)
+        row = conn.execute(
+            "SELECT match_target_id FROM candidate_persons WHERE id = ?", (cur,)
+        ).fetchone()
+        tgt: str | None = row["match_target_id"] if row is not None else None
+        if tgt is None:
+            return None
+        if conn.execute("SELECT 1 FROM persons WHERE id = ?", (tgt,)).fetchone():
+            return str(tgt)
+        cur = tgt  # chain through a sibling candidate
+    return None
+
+
 def _load_reject_payload(
     conn: sqlite3.Connection, cand_a_id: str, cand_b_id: str
-) -> tuple[str, list[str], str]:
+) -> tuple[str, list[str], str | None]:
     """Return (name, variants, canonical_id_for_rejected_merges) for reject_merge.
 
     Phase 5.1 dual-table reality:
       - Typical: A in candidate_persons; B in persons.
-        → name from candidate_persons.canonical_name
-        → variants from candidate_persons.variants_json
         → canonical_id = B (persons.id)
+      - Candidate-vs-candidate: A and B both in candidate_persons.
+        → canonical_id = B resolved to its canonical via match_target_id, or None.
       - Escape-hatch: A in persons; B in persons.
-        → name from persons.canonical_name
-        → variants from person_variants
         → canonical_id = A (the rejected pair means "don't merge B into A")
+
+    canonical_id may be None (candidate-vs-candidate with no canonical anchor); the
+    caller skips the rejected_merges insert in that case.
     """
     cp = conn.execute(
         "SELECT canonical_name, variants_json FROM candidate_persons WHERE id = ?",
@@ -516,7 +546,7 @@ def _load_reject_payload(
         if raw:
             parsed = json.loads(raw)
             variants = [v["variant"] for v in parsed if isinstance(v, dict) and "variant" in v]
-        return cp["canonical_name"], variants, cand_b_id
+        return cp["canonical_name"], variants, _resolve_canonical(conn, cand_b_id)
 
     p = conn.execute("SELECT canonical_name FROM persons WHERE id = ?", (cand_a_id,)).fetchone()
     if p is None:
@@ -573,12 +603,17 @@ def reject_merge(
             now,
         ),
     )
-    conn.execute(
-        "INSERT OR IGNORE INTO rejected_merges "
-        "(canonical_id, candidate_fingerprint, rejected_at, audit_log_id) "
-        "VALUES (?, ?, ?, ?)",
-        (canonical_id, fingerprint, now, audit_id),
-    )
+    # Skip the fingerprint-block row when there is no canonical anchor (candidate-vs-
+    # candidate with no resolvable canonical) — inserting a candidate id would violate
+    # the rejected_merges.canonical_id FK into persons. The candidate is still marked
+    # 'rejected' + audited above; it won't re-queue from a completed run.
+    if canonical_id is not None:
+        conn.execute(
+            "INSERT OR IGNORE INTO rejected_merges "
+            "(canonical_id, candidate_fingerprint, rejected_at, audit_log_id) "
+            "VALUES (?, ?, ?, ?)",
+            (canonical_id, fingerprint, now, audit_id),
+        )
     return RejectResult(mc_id=mc_id, note=note)
 
 

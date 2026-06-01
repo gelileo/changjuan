@@ -10,7 +10,7 @@ references:
   - concepts/pipeline/architecture.md
 affects:
   - pipeline/config.py
-  - pipeline/stage5_link/**
+  - pipeline/stage5_link/scoring.py
 ---
 
 # Runtime Configuration

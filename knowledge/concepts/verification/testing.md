@@ -572,6 +572,13 @@ Total test count after Phase 6 Task A2: **273**.
 
 All three tests use `_fresh_db()` (`:memory:` + `CANONICAL_SCHEMA`), no fixtures, no I/O.
 
+### Candidate-vs-candidate reject path (2026-06)
+
+`tests/unit/test_stage5_merge.py` adds 2 tests for `reject_merge` on a candidate-vs-candidate `merge_candidate` (both sides `cand:` ids), guarding the `_resolve_canonical` FK fix. A `_seed_cand_vs_cand(db_path, *, b_match_target, with_canonical)` helper seeds both candidates in `candidate_persons` (本名 collision like 赵鞅/士鞅) plus an `mc:cc` `merge_candidates` row, optionally seeding a canonical `persons` row and pointing candidate B's `match_target_id` at it.
+
+- `test_reject_candidate_vs_candidate_no_canonical_skips_rejected_merges` — B has no `match_target_id` and no canonical anchor exists; asserts `reject_merge` raises no `IntegrityError`, the candidate's status flips to `rejected`, an audit row is written, and **no** `rejected_merges` row is inserted (nothing to anchor the FK on; a completed-run candidate won't re-queue anyway).
+- `test_reject_candidate_vs_candidate_resolves_match_target` — B's `match_target_id` points at a canonical `persons.id`; asserts `_resolve_canonical` follows it and the `rejected_merges` row anchors on that canonical id.
+
 `tests/integration/test_curator_smoke.py` gains `_migrate_rejected_merges(db_path)` — an idempotent migration helper that adds the Phase 6 `rejected_merges` table and its index to the live-DB copy. Called from the `db_copy` fixture alongside the existing `_migrate_audit_log_check`. This was required because the smoke test's live DB was created before Phase 6 and lacked the table.
 
 Total test count after Phase 6 Task A3: **276**.
