@@ -2140,3 +2140,14 @@ CLI passes the overrides path. Lets the reader default to {major,notable}
 Articles touched: concepts/pipeline/export-contract.md,
 concepts/verification/testing.md (new add_prominence unit test),
 concepts/runtime/cli.md (export passes the overrides path).
+
+## 2026-05-31 — date-quality audit tooling
+
+Added scripts/scan-dates (read-only collector → data/date_issues.yaml) and
+scripts/resolve-dates (interactive/batch fixer, audit-logged, WAL-safe). Surfaces
+deed-date anomalies (reign-window violations matched by state+本名 with
+chapter-era proximity disambiguation; chapter outliers; undated backlog).
+First scan of the full graph: 114 high (incl. the 共叔段 756→~722 cluster),
+45 low (collisions/table-gaps), 3 outliers, 576 undated.
+
+Articles touched: concepts/data-model/dates-and-reigns.md.

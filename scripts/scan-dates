@@ -1,0 +1,232 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Read-only scanner for suspect deed (event) dates in the canonical graph.
+
+Collects candidates for interactive resolution; does NOT modify the DB.
+Writes a ranked YAML report (default data/date_issues.yaml) and prints a summary.
+
+Checks
+------
+1. reign_window  (HIGH precision) — an event's year_bce falls outside the reign
+   span of a ruler-participant, matched by (state + 本名/given-name) so same-named
+   figures across eras do NOT collide. A hit means EITHER a wrong event date OR an
+   incomplete reign table (e.g. a ruler's second reign) — the curator decides.
+   This is the check that catches the 共叔段 case (756 < 郑庄公 743).
+2. chapter_outlier (recall net) — the book is ~monotonic by chapter; an event whose
+   year deviates from its chapter's median by more than --band years. Expect some
+   legitimate flashback/朝代综述 outliers; ranked by deviation for review.
+3. undated — year_bce is null. Collected and grouped by chapter (+ relative-chain
+   note), since fixing a relative_to_prior_event anchor usually re-flows the cluster.
+
+Usage:  scripts/scan-dates [--db PATH] [--reigns DIR] [--band 40] [--out PATH]
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import json
+import re
+import sqlite3
+import statistics
+from pathlib import Path
+
+import yaml
+
+CH_RE = re.compile(r"-ch(\d+)")
+
+
+def chapter_of(run_id: str | None) -> int | None:
+    if not run_id:
+        return None
+    m = CH_RE.search(run_id)
+    return int(m.group(1)) if m else None
+
+
+def load_reign_index(reigns_dir: Path) -> dict[tuple[str, str], list[tuple[int, int, str]]]:
+    """(state_name, given_name) -> [ (reign_start_bce, reign_end_bce, ruler_id), ... ].
+
+    A list because some rulers reign more than once (e.g. expelled then restored);
+    an event is a violation only if it lies outside ALL of that ruler's windows.
+    """
+    idx: dict[tuple[str, str], list[tuple[int, int, str]]] = {}
+    for f in sorted(glob.glob(str(reigns_dir / "*.yaml"))):
+        d = yaml.safe_load(Path(f).read_text("utf-8")) or {}
+        state = d.get("state_name") or d.get("state_id") or Path(f).stem
+        for r in d.get("rulers", []):
+            gn = r.get("given_name")
+            s, e = r.get("reign_start_bce"), r.get("reign_end_bce")
+            if gn and s:
+                idx.setdefault((state, gn), []).append((s, e if e else s, r.get("id") or gn))
+    return idx
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", default="data/changjuan.sqlite")
+    ap.add_argument("--reigns", default="data/reigns")
+    ap.add_argument("--band", type=int, default=25, help="chapter-outlier deviation (years)")
+    ap.add_argument("--out", default="data/date_issues.yaml")
+    args = ap.parse_args()
+
+    db = sqlite3.connect(f"file:{args.db}?mode=ro", uri=True)
+    reign = load_reign_index(Path(args.reigns))
+
+    # state id -> chinese name (DB), and 本名 variants per person
+    state_name = dict(db.execute("SELECT id, name FROM states;"))
+    benming: dict[str, list[str]] = {}
+    for pid, v in db.execute("SELECT person_id, variant FROM person_variants WHERE kind='本名';"):
+        benming.setdefault(pid, []).append(v)
+
+    # all dated events with their chapter
+    # life-events that legitimately predate a person's reign — exempt from reign_window
+    BIRTH_TYPES = {"出生", "生", "诞生"}
+    ev_type: dict[str, str] = dict(db.execute("SELECT id, type FROM events;"))
+
+    ev_year: dict[str, int] = {}
+    ev_kind: dict[str, str] = {}
+    ev_ch: dict[str, int | None] = {}
+    by_chapter: dict[int, list[int]] = {}
+    undated: list[tuple[str, int | None, str]] = []
+    for eid, dj, run in db.execute("SELECT id, date_json, pipeline_run_id FROM events;"):
+        d = json.loads(dj) if dj else {}
+        y = d.get("year_bce")
+        ch = chapter_of(run)
+        ev_ch[eid] = ch
+        if y is None:
+            undated.append((eid, ch, d.get("inference_kind") or "unknown"))
+            continue
+        ev_year[eid] = y
+        ev_kind[eid] = d.get("inference_kind") or ""
+        if ch is not None:
+            by_chapter.setdefault(ch, []).append(y)
+
+    ch_median = {c: statistics.median(ys) for c, ys in by_chapter.items() if ys}
+
+    issues: list[dict] = []
+
+    # --- Check 1: reign_window (state + 本名 match) ---
+    parts = db.execute(
+        """SELECT ep.event_id, ep.person_id, p.canonical_name, p.state_id, ep.role
+           FROM event_participants ep JOIN persons p ON p.id = ep.person_id;"""
+    ).fetchall()
+    seen: set[tuple[str, str]] = set()
+    for eid, pid, cname, sid, role in parts:
+        if eid not in ev_year:
+            continue
+        if ev_type.get(eid) in BIRTH_TYPES:  # births legitimately precede a reign
+            continue
+        sname = state_name.get(sid or "", "")
+        names = set(benming.get(pid, []))
+        # also allow the canonical_name's given form if it's a 本名-style record
+        cand = [(sname, n) for n in names]
+        for key in cand:
+            if key not in reign:
+                continue
+            windows = reign[key]
+            y = ev_year[eid]
+            # violation only if outside EVERY reign window for this ruler
+            if any(min(s, e) <= y <= max(s, e) for s, e, _ in windows):
+                continue
+            rid = windows[0][2]
+            k = (eid, rid)
+            if k in seen:
+                continue
+            seen.add(k)
+            ch = ev_ch.get(eid)
+            # nearest window bound + signed deviation to it
+            spans = [(min(s, e), max(s, e)) for s, e, _ in windows]
+            dev = min(min(abs(y - lo), abs(y - hi)) for lo, hi in spans)
+            wtxt = ", ".join(f"{s}-{e}" for s, e, _ in windows)
+            # Discriminator: is the matched ruler's reign plausibly the governing era for
+            # THIS event's chapter? If the reign window sits near the chapter's date cluster,
+            # a year-outside-window is a real date anomaly (e.g. 共叔段 756 vs 郑庄公 743, chapter
+            # era ~740). If the reign is centuries from the chapter era, we matched the WRONG
+            # same-本名 ruler (collision, e.g. 阳生 659 vs 齐悼公 488) -> downgrade.
+            NEAR = 30
+            chera = ch_median.get(ch)
+            near = chera is not None and any(lo - NEAR <= chera <= hi + NEAR for lo, hi in spans)
+            issues.append(
+                {
+                    "check": "reign_window",
+                    "event_id": eid,
+                    "chapter": ch,
+                    "year_bce": y,
+                    "inference_kind": ev_kind.get(eid, ""),
+                    "detail": f"{key[1]} ({sname}) reign {wtxt}; event year {y} outside all windows"
+                    + ("" if chera is None else f"; ch{ch} era ~{int(chera)}"),
+                    "deviation": dev,
+                    "suggested": f"within {wtxt} BCE",
+                    "interpretation": (
+                        "likely_event_date_error_or_reign_table_gap"
+                        if near
+                        else "likely_wrong_ruler_match_collision"
+                    ),
+                    "severity": "high" if near else "low",
+                    "cluster": f"ch{ch}",
+                }
+            )
+
+    # --- Check 2: chapter_outlier ---
+    for eid, y in ev_year.items():
+        ch = ev_ch.get(eid)
+        if ch is None or ch not in ch_median:
+            continue
+        dev = abs(y - ch_median[ch])
+        if dev > args.band:
+            issues.append(
+                {
+                    "check": "chapter_outlier",
+                    "event_id": eid,
+                    "chapter": ch,
+                    "year_bce": y,
+                    "inference_kind": ev_kind.get(eid, ""),
+                    "detail": f"year {y} deviates {int(dev)}y from ch{ch} median {int(ch_median[ch])}",
+                    "deviation": int(dev),
+                    "suggested": f"~{int(ch_median[ch])} BCE (chapter median)",
+                    "interpretation": "outlier_or_flashback",
+                    "severity": "medium",
+                    "cluster": f"ch{ch}",
+                }
+            )
+
+    issues.sort(key=lambda i: ({"high": 0, "medium": 1, "low": 2}[i["severity"]], -i["deviation"]))
+
+    # undated grouped by chapter
+    und_by_ch: dict[int | None, int] = {}
+    for _eid, ch, _k in undated:
+        und_by_ch[ch] = und_by_ch.get(ch, 0) + 1
+
+    report = {
+        "generated_from": args.db,
+        "summary": {
+            "events_total": len(ev_year) + len(undated),
+            "dated": len(ev_year),
+            "undated": len(undated),
+            "reign_window_high": sum(
+                1 for i in issues if i["check"] == "reign_window" and i["severity"] == "high"
+            ),
+            "reign_window_low": sum(
+                1 for i in issues if i["check"] == "reign_window" and i["severity"] == "low"
+            ),
+            "chapter_outlier": sum(1 for i in issues if i["check"] == "chapter_outlier"),
+        },
+        "issues": issues,
+        "undated_by_chapter": {str(k): v for k, v in sorted(und_by_ch.items(), key=lambda x: (x[0] is None, x[0]))},
+    }
+    Path(args.out).write_text(yaml.safe_dump(report, allow_unicode=True, sort_keys=False), "utf-8")
+
+    s = report["summary"]
+    print(f"events: {s['events_total']}  dated: {s['dated']}  undated: {s['undated']}")
+    print(
+        f"reign_window: {s['reign_window_high']} high (likely date error) + "
+        f"{s['reign_window_low']} low (table-gap/collision)"
+    )
+    print(f"chapter_outlier: {s['chapter_outlier']}")
+    print(f"\nreport -> {args.out}")
+    print("\n=== top HIGH-severity (likely real date errors) ===")
+    for i in [x for x in issues if x["severity"] == "high"][:25]:
+        print(f"  [{i['check']}] {i['event_id']:26s} y={i['year_bce']} :: {i['detail']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

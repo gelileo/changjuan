@@ -138,3 +138,22 @@ Drafted inline following the schema above; curator-trimmed during Phase 4 Task 5
 - `pipeline/reign_table.json` source: 杨伯峻《春秋左传注》, cross-checked against 史记·十二诸侯年表.
 - `pipeline/dates.py` parsers handle: `explicit_reign_lu`, `explicit_reign_zhou`, `explicit_reign_other` (implemented Phase 4 Task 2), `relative_to_prior_event`, `era_only`, `unknown`.
 - Reign-year arithmetic: BCE year = `start_bce - (N - 1)` for reign year N.
+
+## Date-quality audit tools (read-only scan + interactive resolve)
+
+`scripts/scan-dates` (read-only) collects suspect deed dates into a ranked
+`data/date_issues.yaml` (gitignored). Checks: **reign_window** — an event's
+`year_bce` falls outside the reign span of a ruler-participant, matched by
+**state + 本名** (avoids same-谥号 collisions) and multi-reign aware; a hit is
+classified `high` only when the matched reign sits near the event's *chapter
+era* (else it is a wrong-ruler collision → `low`); birth-type events (`出生`)
+are exempt. Plus **chapter_outlier** (year far from chapter median) and an
+**undated** backlog grouped by chapter. This is the check that catches the
+共叔段 case (events dated 756 vs 郑庄公 reign 743–701).
+
+`scripts/resolve-dates` walks that report and patches `events.date_json.year_bce`
+(marking `provenance='curated'` + a `date_json.curated` flag), writing an
+`audit_log` row per change. Snapshots the DB first (WAL checkpoint + `.bak-datefix`).
+Prefer `--cluster chN YEAR` for `relative_to_prior_event` chains (e.g. the 共叔段
+cluster all share one mis-set anchor) over row-by-row fixes; re-run `scan-dates`
+afterward to refresh the report.
