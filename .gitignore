@@ -42,3 +42,7 @@ dist/
 .pytest_cache/
 .coverage
 htmlcov/
+.playwright-mcp
+# local DB snapshots (never commit binary backups)
+data/changjuan.sqlite.*-bak
+data/changjuan.sqlite.bak-*
