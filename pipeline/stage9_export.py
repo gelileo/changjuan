@@ -17,13 +17,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pipeline.export_enrich import (
+    add_event_prominence,
     add_pinyin_columns,
     add_prominence,
+    add_state_prominence,
     build_citations_table,
     build_deed_importance,
 )
 
-SCHEMA_VERSION = 3  # v3: persons.prominence + persons.prominence_tier
+SCHEMA_VERSION = 4  # v4: events.prominence(_tier) + states.prominence(_tier)
 
 
 def export_bundle(
@@ -58,6 +60,8 @@ def export_bundle(
     add_pinyin_columns(snap_path)
     build_deed_importance(snap_path)
     add_prominence(snap_path, prominence_overrides)  # after deed_importance (derives from it)
+    add_event_prominence(snap_path)  # after deed_importance (derives from it)
+    add_state_prominence(snap_path, prominence_overrides)  # curated states: allow-list
 
     counts = _count_rows(snap_path)
     manifest: dict[str, object] = {

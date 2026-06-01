@@ -26,3 +26,22 @@ promote:
   - 优孟        # 优孟衣冠
 
 demote: []
+
+# Curated default-visible states for the reader's 列国 list (add_state_prominence).
+# tier='major' for these names; everything else 'minor' (hidden unless 全部 /
+# bookmarked). Matched on states.name. Edit freely + re-export.
+states:
+  - 周
+  - 郑
+  - 鲁
+  - 宋
+  - 吴
+  - 越
+  - 晋
+  - 赵
+  - 魏
+  - 齐
+  - 楚
+  - 秦
+  - 韩
+  - 燕

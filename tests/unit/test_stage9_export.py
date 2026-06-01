@@ -53,7 +53,7 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
     assert (out / "texts").is_dir()  # absent readable_dir → empty texts/ still created
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["version"] == "test-v1"
-    assert manifest["schema_version"] == 3
+    assert manifest["schema_version"] == 4
     assert manifest["counts"]["persons"] == 1
 
 

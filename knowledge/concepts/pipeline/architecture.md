@@ -19,7 +19,7 @@ affects:
 
 ## What this is
 
-The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v2 layout; `schema_version=2`).
+The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v4 layout; `schema_version=4`).
 
 ## Storage layout (multi-book, 2026-06)
 
@@ -68,6 +68,14 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 ## Stage 9 — prominence enrichment pass
 
 `pipeline/export_enrich.py::add_prominence` is called by `export_bundle` immediately after `build_deed_importance` (it derives from that table), before the manifest is written. It adds `persons.prominence` (REAL = `SUM(deed_importance.score)` per person) and `persons.prominence_tier` (`'major'`/`'notable'`/`'minor'` by rank cutoffs `PROMINENCE_MAJOR_TOP`=40 / `PROMINENCE_NOTABLE_TOP`=250), then applies the curated `data/prominence_overrides.yaml` (`promote` raises a sparse-but-iconic figure to `notable`; `demote` forces `minor`). This bumped the export `SCHEMA_VERSION` to 3. Full rationale, reader contract, and the favorites boundary are in `concepts/pipeline/export-contract.md`.
+
+## Stage 9 — event prominence enrichment pass
+
+`pipeline/export_enrich.py::add_event_prominence` is called by `export_bundle` immediately after `add_prominence` (persons pass), before the manifest is written. It adds `events.prominence` (REAL = `SUM(deed_importance.score)` over participations) and `events.prominence_tier` (`'major'`/`'notable'`/`'minor'` by rank cutoffs `EVENT_MAJOR_TOP`=80 / `EVENT_NOTABLE_TOP`=280), then applies a boundary-type promotion: any `minor` event whose `type` ∈ `EVENT_BOUNDARY_TYPES` (即位/继位/嗣位/立君/弑君/薨/灭国) is raised to `notable` so reign and state boundaries always survive the default timeline filter. This bumped `SCHEMA_VERSION` from 3 to 4. Full contract in `concepts/pipeline/export-contract.md`.
+
+## Stage 9 — state prominence enrichment pass
+
+`pipeline/export_enrich.py::add_state_prominence` is called by `export_bundle` immediately after `add_event_prominence`, before the manifest is written. It adds `states.prominence` (REAL = `SUM(deed_importance.score)` over the state's persons via JOIN) and `states.prominence_tier` (`'major'` iff the state's name appears in the `states:` key of `prominence_overrides.yaml`, else `'minor'`). The tier is a curated allow-list (14 states), not rank-based — this is the key distinction from the persons and events passes. Full contract in `concepts/pipeline/export-contract.md`.
 
 ## Stage 9 — texts/ copy pass
 

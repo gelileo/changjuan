@@ -1,5 +1,15 @@
 # Build Log
 
+## 2026-06-01 — feat(export): event + state prominence (schema_version 4)
+
+Added events.prominence(_tier) + states.prominence(_tier) for the reader's
+Timeline/States default filters (design:
+docs/superpowers/specs/2026-06-01-event-state-prominence-design.md). Event tier
+= deed-sum rank with reign/state-boundary type promotion (即位/继位/嗣位/立君/
+弑君/薨/灭国); state tier = curated 14-state allow-list in prominence_overrides.yaml.
+
+Articles touched: concepts/pipeline/export-contract.md, concepts/pipeline/architecture.md, concepts/verification/testing.md.
+
 ## [2026-06-01] feat(export): state prominence pass (deed-sum sort + curated allow-list tier)
 
 Added `add_state_prominence` to `pipeline/export_enrich.py`. The function adds

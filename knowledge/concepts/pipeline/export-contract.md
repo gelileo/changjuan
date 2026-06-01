@@ -80,6 +80,25 @@ Added in schema_version **3** by `pipeline/export_enrich.py::add_prominence`, wh
 
 **Reader contract:** default the person list to `prominence_tier IN ('major','notable')` (~263/1706); an **"All"** toggle drops the filter. **Per-user favorites are deliberately NOT stored here** — `graph.sqlite` is a read-only shared bundle. Because prominence is keyed on the stable `persons.id`, the reader unions its own local bookmark/favorite ids with the prominent set at read time; no export structure is needed for runtime favorites.
 
+## `events.prominence` + `states.prominence`: Timeline & States default filters
+
+Added in schema_version **4** by `pipeline/export_enrich.py::add_event_prominence`
+and `add_state_prominence`, both running after `build_deed_importance`.
+
+- **events**: `prominence` (REAL) = `SUM(deed_importance.score)` over the event's
+  participations; `prominence_tier` = rank-based `major` (top `EVENT_MAJOR_TOP`) /
+  `notable` (..`EVENT_NOTABLE_TOP`) / `minor`, then any `minor` event whose `type`
+  ∈ `EVENT_BOUNDARY_TYPES` (即位/继位/嗣位/立君/弑君/薨/灭国) is promoted to
+  `notable` so reign/state boundaries always survive the default filter. Reader
+  Timeline defaults to `tier IN ('major','notable')` (~400 of 1759 dated events).
+- **states**: `prominence` (REAL) = `SUM(deed_importance.score)` over the state's
+  persons (sort only, big states first); `prominence_tier` = `major` iff the
+  state's name is in the `states:` allow-list of `prominence_overrides.yaml`, else
+  `minor`. Reader 列国 defaults to `tier = 'major'` (the curated 14).
+
+Both mirror the persons contract: per-user favorites are NOT stored here; the
+reader unions its local bookmark ids with the prominent set at read time.
+
 ## SQLite snapshot: VACUUM INTO then drop
 
 The snapshot (`_snapshot_canonical_only`) is built by opening a connection to the canonical `src_db` and running `VACUUM INTO <snap_path>`, then dropping implementation tables from the snapshot. `VACUUM INTO` writes a complete, defragmented copy and preserves all indexes, views, and constraints without re-creating them.
@@ -98,7 +117,7 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 3,
+  "schema_version": 4,
   "generated_at": "<ISO 8601 UTC>",
   "book_id": "dzl",
   "title": "东周列国志",
@@ -117,7 +136,7 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 3` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 4` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
@@ -141,12 +160,16 @@ v1 is the initial schema. Snapshot artifact named `changjuan.sqlite`. No denorma
 
 v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible additions (`citations` table, `pinyin` columns, `deed_importance` table) did not require a `schema_version` bump beyond 2; all three enrichments are present in v2 exports.
 
-### v3 (current)
+### v3
 
 v3 adds `persons.prominence` (REAL) + `persons.prominence_tier` (TEXT) — see the `persons.prominence` section above. The bump to 3 is deliberate even though the columns are additive: the reader's default-list contract gates on these columns being present, so a consumer must be able to detect their absence via `schema_version`. The live bundle is `changjuan-export-2026-06-v3`.
 
+### v4 (current)
+
+v4 adds `events.prominence(_tier)` + `states.prominence(_tier)` — see the section above. Live bundle: `dongzhoulieguozhi-export-2026-06-v6`.
+
 ## What would invalidate this article
 
-- Schema version bumped beyond v3 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v4 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.
