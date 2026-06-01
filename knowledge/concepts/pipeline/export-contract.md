@@ -90,7 +90,8 @@ and `add_state_prominence`, both running after `build_deed_importance`.
   `notable` (..`EVENT_NOTABLE_TOP`) / `minor`, then any `minor` event whose `type`
   ∈ `EVENT_BOUNDARY_TYPES` (即位/继位/嗣位/立君/弑君/薨/灭国) is promoted to
   `notable` so reign/state boundaries always survive the default filter. Reader
-  Timeline defaults to `tier IN ('major','notable')` (~400 of 1759 dated events).
+  Timeline defaults to `tier IN ('major','notable')` (~410 of 2137 dated events;
+  the reader shows a live `显示 N / <dated total>` count, so this figure tracks data).
 - **states**: `prominence` (REAL) = `SUM(deed_importance.score)` over the state's
   persons (sort only, big states first); `prominence_tier` = `major` iff the
   state's name is in the `states:` allow-list of `prominence_overrides.yaml`, else
