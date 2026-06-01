@@ -98,7 +98,7 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 2,
+  "schema_version": 3,
   "generated_at": "<ISO 8601 UTC>",
   "book_id": "dzl",
   "title": "东周列国志",
@@ -117,7 +117,7 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 2` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 3` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
@@ -137,12 +137,16 @@ Tables are dropped by name-prefix enumeration (`name LIKE 'candidate_%'`), not f
 
 v1 is the initial schema. Snapshot artifact named `changjuan.sqlite`. No denormalized JSON files are written alongside the SQLite snapshot. If a downstream consumer requires flat JSON it should query the snapshot directly.
 
-### v2 (current)
+### v2
 
-v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible additions (`citations` table, `pinyin` columns, `deed_importance` table) do not require a further `schema_version` bump. All three enrichments are now present in v2 exports.
+v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible additions (`citations` table, `pinyin` columns, `deed_importance` table) did not require a `schema_version` bump beyond 2; all three enrichments are present in v2 exports.
+
+### v3 (current)
+
+v3 adds `persons.prominence` (REAL) + `persons.prominence_tier` (TEXT) — see the `persons.prominence` section above. The bump to 3 is deliberate even though the columns are additive: the reader's default-list contract gates on these columns being present, so a consumer must be able to detect their absence via `schema_version`. The live bundle is `changjuan-export-2026-06-v3`.
 
 ## What would invalidate this article
 
-- Schema version bumped beyond v2 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v3 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.

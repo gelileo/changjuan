@@ -2163,3 +2163,15 @@ dinggong-reign-506-novel-vs-shiji). After the 共叔段 fix + this, reign_window
 high = 0.
 
 Articles touched: concepts/data-model/dates-and-reigns.md.
+
+## 2026-06-01 — docs(export-contract): finish schema_version 3 drift fixup
+
+Froze the live schema-3 bundle `changjuan-export-2026-06-v3` (`changjuan export
+2026-06-v3`): 1706 persons tiered 40 major / 223 notable / 1443 minor,
+manifest.schema_version == 3, top ranks 齐桓公/晋文公/秦穆公, 卞和 promoted to
+notable. The prominence *code* (4ca7f36) was already at SCHEMA_VERSION = 3 but
+export-contract.md still showed v2 in the manifest example, the SCHEMA_VERSION
+prose, and the version history. Reconciled all three to v3 and added the v3
+history entry. No code change — doc-only reconciliation.
+
+Articles touched: concepts/pipeline/export-contract.md.
