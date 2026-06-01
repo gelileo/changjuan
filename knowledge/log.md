@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-06-01] feat(export): event prominence pass (deed-sum rank + boundary-type promotion)
+
+Added `add_event_prominence` to `pipeline/export_enrich.py`. New constants:
+`EVENT_MAJOR_TOP=80`, `EVENT_NOTABLE_TOP=280`, `EVENT_BOUNDARY_TYPES` (7 reign/state-boundary
+types). The function mirrors `add_prominence` for persons: idempotent ALTER on `events`
+(`prominence REAL`, `prominence_tier TEXT`), aggregate deed-sum scores, rank-based tier
+assignment, then a boundary-type promotion pass that raises any `minor` event whose `type`
+∈ EVENT_BOUNDARY_TYPES to `notable`. Test: `test_add_event_prominence_tiers_with_boundary_promotion`
+in `tests/unit/test_export_enrich.py`. 9/9 tests pass.
+
+Articles touched: `concepts/verification/testing.md` (added Task A1 test description to Export enrichment tests section).
+
 ## [2026-06-01] feat(dates): clear the undated long tail (382 → 4)
 
 Tackled the 382 effectively-undated events (91 no date_json + 291 null-year). Fixed the

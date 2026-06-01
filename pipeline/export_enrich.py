@@ -40,6 +40,16 @@ SALIENCE_WEIGHT = 1.5  # how strongly within-person rarity boosts a deed
 PROMINENCE_MAJOR_TOP = 40  # ranks 1..40        -> 'major'
 PROMINENCE_NOTABLE_TOP = 250  # ranks 41..250    -> 'notable' (rest -> 'minor')
 
+# Event prominence tiering. Rank-based on the per-event aggregate deed_importance;
+# tunable. Reader timeline defaults to {major, notable}.
+EVENT_MAJOR_TOP = 80  # ranks 1..80           -> 'major'
+EVENT_NOTABLE_TOP = 280  # ranks 81..280       -> 'notable' (rest -> 'minor')
+# Reign/state-boundary event types: narratively pivotal even when participant
+# scores are low (accession, succession, regicide, ruler death, state end).
+# Any 'minor' event of one of these types is promoted to 'notable' (always
+# default-visible). Structural constant, like TYPE_WEIGHTS.
+EVENT_BOUNDARY_TYPES = frozenset({"即位", "继位", "嗣位", "立君", "弑君", "薨", "灭国"})
+
 
 def deed_importance(
     *, event_type: str, participants: int, citations: int, person_type_fraction: float
@@ -173,6 +183,47 @@ def add_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
         g.executemany(
             "UPDATE persons SET prominence = ?, prominence_tier = ? WHERE id = ?;",
             [(round(scores.get(pid, 0.0), 2), tier[pid], pid) for pid, _ in persons],
+        )
+
+
+def add_event_prominence(graph_db: Path) -> None:
+    """Add `events.prominence` (REAL) + `events.prominence_tier` (TEXT:
+    'major' | 'notable' | 'minor') to the snapshot.
+
+    `prominence` = SUM(deed_importance.score) over the event's participations — so
+    this MUST run after build_deed_importance(). Tier is a rank-based cutoff
+    (EVENT_MAJOR_TOP / EVENT_NOTABLE_TOP); then any 'minor' event whose `type` is a
+    reign/state boundary (EVENT_BOUNDARY_TYPES) is promoted to 'notable' so reign
+    starts/ends and state ends always survive the reader's default filter.
+    """
+    with sqlite3.connect(graph_db) as g:
+        cols = [r[1] for r in g.execute("PRAGMA table_info(events);")]
+        if "prominence" not in cols:
+            g.execute("ALTER TABLE events ADD COLUMN prominence REAL;")
+        if "prominence_tier" not in cols:
+            g.execute("ALTER TABLE events ADD COLUMN prominence_tier TEXT;")
+
+        scores = dict(
+            g.execute(
+                "SELECT event_id, COALESCE(SUM(score),0) FROM deed_importance GROUP BY event_id;"
+            )
+        )
+        events = g.execute("SELECT id, type FROM events;").fetchall()
+        ranked = sorted(events, key=lambda r: (-scores.get(r[0], 0.0), r[0]))
+        tier: dict[str, str] = {}
+        for i, (eid, _type) in enumerate(ranked):
+            if i < EVENT_MAJOR_TOP:
+                tier[eid] = "major"
+            elif i < EVENT_NOTABLE_TOP:
+                tier[eid] = "notable"
+            else:
+                tier[eid] = "minor"
+        for eid, etype in events:
+            if tier.get(eid) == "minor" and etype in EVENT_BOUNDARY_TYPES:
+                tier[eid] = "notable"
+        g.executemany(
+            "UPDATE events SET prominence = ?, prominence_tier = ? WHERE id = ?;",
+            [(round(scores.get(eid, 0.0), 2), tier[eid], eid) for eid, _ in events],
         )
 
 

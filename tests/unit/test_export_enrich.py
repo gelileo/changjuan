@@ -196,3 +196,40 @@ def test_add_prominence_tiers_and_overrides(tmp_path: Path) -> None:
     assert tiers["per:none"] == "minor"  # no deeds
     assert scores["per:big"] == 1000.0
     assert scores["per:none"] == 0.0
+
+
+def test_add_event_prominence_tiers_with_boundary_promotion(tmp_path: Path) -> None:
+    """deed-sum ranks event tiers; a low-score reign/state-boundary type is promoted."""
+    from pipeline.export_enrich import add_event_prominence
+
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE events (id TEXT PRIMARY KEY, type TEXT);")
+        c.execute("CREATE TABLE deed_importance (event_id TEXT, person_id TEXT, score REAL);")
+        c.executemany(
+            "INSERT INTO events VALUES (?,?);",
+            [("evt:big", "战"), ("evt:mid", "盟会"), ("evt:acc", "即位"), ("evt:dull", "朝议")],
+        )
+        c.executemany(
+            "INSERT INTO deed_importance VALUES (?,?,?);",
+            [("evt:big", "p1", 900.0), ("evt:big", "p2", 100.0), ("evt:mid", "p1", 50.0)],
+        )  # evt:acc and evt:dull have no deeds -> score 0
+
+    import pipeline.export_enrich as ee
+
+    orig = (ee.EVENT_MAJOR_TOP, ee.EVENT_NOTABLE_TOP)
+    ee.EVENT_MAJOR_TOP, ee.EVENT_NOTABLE_TOP = 1, 2
+    try:
+        add_event_prominence(graph)
+    finally:
+        ee.EVENT_MAJOR_TOP, ee.EVENT_NOTABLE_TOP = orig
+
+    with sqlite3.connect(graph) as c:
+        tiers = dict(c.execute("SELECT id, prominence_tier FROM events;"))
+        scores = dict(c.execute("SELECT id, prominence FROM events;"))
+    assert tiers["evt:big"] == "major"  # rank 1 (1000.0)
+    assert tiers["evt:mid"] == "notable"  # rank 2 (50.0)
+    assert tiers["evt:acc"] == "notable"  # rank 3 -> minor, promoted by 即位 boundary type
+    assert tiers["evt:dull"] == "minor"  # rank 4, non-boundary, no deeds
+    assert scores["evt:big"] == 1000.0
+    assert scores["evt:dull"] == 0.0

@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-05-23
+updated: 2026-06-01
 status: mature
 load_bearing: false
 references:
@@ -112,6 +112,10 @@ Export-bundle-v1 Task 5 adds three deed_importance tests:
 - `test_build_deed_importance_writes_a_row_per_participation` — DB pass test: seeds minimal `events` + `event_participants` + `entity_citations` tables (one war event, one sickbed-visit event, one person); calls `build_deed_importance`; asserts both `(event_id, person_id)` rows appear in `deed_importance` with the war row scoring higher than the visit row.
 
 These tests use `sqlite3.connect` directly (no `apply_schema`), building the minimal table shape that each enrichment pass expects. No pipeline fixtures or LLM calls needed.
+
+Task A1 (event prominence pass) adds one more test:
+
+- `test_add_event_prominence_tiers_with_boundary_promotion` — DB pass test for `add_event_prominence`. Seeds four events (`战`, `盟会`, `即位`, `朝议`) and three `deed_importance` rows (evt:big=1000, evt:mid=50, two others=0). Temporarily patches `EVENT_MAJOR_TOP=1` / `EVENT_NOTABLE_TOP=2` so 4 events exercise all three tiers. Asserts: evt:big → major (rank 1 / 1000.0), evt:mid → notable (rank 2), evt:acc → notable (rank 3 = minor, but `即位` ∈ EVENT_BOUNDARY_TYPES → promoted), evt:dull → minor (rank 4, `朝议` not a boundary type). Also asserts `prominence` column values (1000.0 and 0.0). Verifies both the rank-cutoff path and the boundary-type promotion pass in one fixture.
 
 ## CLI tests
 
