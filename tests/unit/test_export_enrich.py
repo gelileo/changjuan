@@ -233,3 +233,35 @@ def test_add_event_prominence_tiers_with_boundary_promotion(tmp_path: Path) -> N
     assert tiers["evt:dull"] == "minor"  # rank 4, non-boundary, no deeds
     assert scores["evt:big"] == 1000.0
     assert scores["evt:dull"] == 0.0
+
+
+def test_add_state_prominence_curated_allowlist(tmp_path: Path) -> None:
+    """state score = deed-sum over its persons; tier = curated allow-list (major) else minor."""
+    from pipeline.export_enrich import add_state_prominence
+
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE states (id TEXT PRIMARY KEY, name TEXT);")
+        c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, state_id TEXT);")
+        c.execute("CREATE TABLE deed_importance (event_id TEXT, person_id TEXT, score REAL);")
+        c.executemany("INSERT INTO states VALUES (?,?);", [("sta:晋", "晋"), ("sta:滑", "滑")])
+        c.executemany(
+            "INSERT INTO persons VALUES (?,?);",
+            [("per:a", "sta:晋"), ("per:b", "sta:晋"), ("per:c", "sta:滑")],
+        )
+        c.executemany(
+            "INSERT INTO deed_importance VALUES (?,?,?);",
+            [("e1", "per:a", 300.0), ("e2", "per:b", 100.0), ("e3", "per:c", 5.0)],
+        )
+    overrides = tmp_path / "ov.yaml"
+    overrides.write_text("states:\n  - 晋\n", encoding="utf-8")
+
+    add_state_prominence(graph, overrides)
+
+    with sqlite3.connect(graph) as c:
+        tiers = dict(c.execute("SELECT id, prominence_tier FROM states;"))
+        scores = dict(c.execute("SELECT id, prominence FROM states;"))
+    assert tiers["sta:晋"] == "major"  # on the allow-list
+    assert tiers["sta:滑"] == "minor"  # not on the allow-list
+    assert scores["sta:晋"] == 400.0  # 300 + 100
+    assert scores["sta:滑"] == 5.0

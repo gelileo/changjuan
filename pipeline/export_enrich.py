@@ -227,6 +227,47 @@ def add_event_prominence(graph_db: Path) -> None:
         )
 
 
+def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
+    """Add `states.prominence` (REAL) + `states.prominence_tier` (TEXT:
+    'major' | 'minor') to the snapshot.
+
+    `prominence` = SUM(deed_importance.score) over the state's persons — used for
+    SORT order only (big states first); MUST run after build_deed_importance().
+    `prominence_tier` is 'major' iff the state's name is in the curated allow-list
+    under the `states:` key of prominence_overrides.yaml, else 'minor'. Only ~80
+    states, so the default reader list is a curated editorial set, not a rank.
+    """
+    major_names: set[str] = set()
+    if overrides_path and overrides_path.exists():
+        import yaml
+
+        data = yaml.safe_load(overrides_path.read_text("utf-8")) or {}
+        major_names = set(data.get("states") or [])
+
+    with sqlite3.connect(graph_db) as g:
+        cols = [r[1] for r in g.execute("PRAGMA table_info(states);")]
+        if "prominence" not in cols:
+            g.execute("ALTER TABLE states ADD COLUMN prominence REAL;")
+        if "prominence_tier" not in cols:
+            g.execute("ALTER TABLE states ADD COLUMN prominence_tier TEXT;")
+
+        scores = dict(
+            g.execute(
+                "SELECT p.state_id, COALESCE(SUM(d.score),0) "
+                "FROM deed_importance d JOIN persons p ON p.id = d.person_id "
+                "WHERE p.state_id IS NOT NULL GROUP BY p.state_id;"
+            )
+        )
+        states = g.execute("SELECT id, name FROM states;").fetchall()
+        g.executemany(
+            "UPDATE states SET prominence = ?, prominence_tier = ? WHERE id = ?;",
+            [
+                (round(scores.get(sid, 0.0), 2), "major" if name in major_names else "minor", sid)
+                for sid, name in states
+            ],
+        )
+
+
 def to_pinyin(text: str) -> str:
     """Toneless, joined, lowercased pinyin. Non-Han chars pass through.
 

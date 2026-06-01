@@ -1,5 +1,17 @@
 # Build Log
 
+## [2026-06-01] feat(export): state prominence pass (deed-sum sort + curated allow-list tier)
+
+Added `add_state_prominence` to `pipeline/export_enrich.py`. The function adds
+`states.prominence` (REAL, = SUM deed_importance.score over the state's persons via JOIN)
+and `states.prominence_tier` (TEXT: 'major' if the state's name appears in the `states:`
+key of the overrides YAML, else 'minor'). Tier is a curated allow-list, not rank-based —
+this is the key distinction from the persons and events passes. Must run after
+`build_deed_importance()`. Test: `test_add_state_prominence_curated_allowlist` in
+`tests/unit/test_export_enrich.py`. 10/10 tests pass.
+
+Articles touched: `concepts/verification/testing.md` (added Task A2 test description to Export enrichment tests section).
+
 ## [2026-06-01] feat(export): event prominence pass (deed-sum rank + boundary-type promotion)
 
 Added `add_event_prominence` to `pipeline/export_enrich.py`. New constants:
