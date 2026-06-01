@@ -1,0 +1,163 @@
+#!/usr/bin/env -S uv run --quiet python
+"""Read-only: propose year_bce for UNDATED events. Emits data/undated_fills.yaml
+for review; apply with `scripts/resolve-dates --apply-fills`.
+
+Tier 0 — reign_parse (exact): an `explicit_reign_{zhou,lu}` event whose `original`
+  contains a Zhou-king reign phrase the Stage-4 resolver missed (it anchors on
+  `^周…年$`, so phrases like "平王十三年，卫武公薨" — no 周 prefix, trailing text —
+  slip through). Lenient search + the pipeline's reign table → exact year.
+Tier 1 — chain_inherit (circa): a `relative_to_prior_event` event that shares a
+  chunk with a dated event inherits that year, nudged by its time-word
+  (明年/次年 → −1 BCE; 越N年 → −N; same-year/bracketed → unchanged). Marked circa.
+
+Only proposes for null-year events; never overwrites. Does not write the DB.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import statistics
+import sqlite3
+import sys
+from collections import Counter
+from pathlib import Path
+
+import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from pipeline.dates import _cn_to_int, _reigns  # noqa: E402  (reuse pipeline reign table)
+
+_ZHOU_KINGS = "平桓庄釐惠襄顷匡定简灵景敬"
+_ZHOU_PHRASE = re.compile(rf"周?([{_ZHOU_KINGS}])王?([元一二三四五六七八九十]+)年")
+
+
+def zhou_year(original: str | None) -> int | None:
+    """Lenient Zhou reign-phrase → BCE (search anywhere; tolerate missing 周 / trailing text)."""
+    if not original:
+        return None
+    m = _ZHOU_PHRASE.search(original)
+    if not m:
+        return None
+    king = m.group(1) + "王"  # reign_table.json keys are bare ("平王", not "周平王")
+    zhou = _reigns()["zhou"]
+    if not isinstance(zhou, dict) or king not in zhou:
+        return None
+    return int(zhou[king]["start_bce"]) - (_cn_to_int(m.group(2)) - 1)
+
+
+_PLUS1 = ("明年", "次年", "翌年", "明岁", "明春")
+_SAME = ("次日", "是日", "即日", "是年", "是岁", "当年", "是春", "是夏", "是秋", "是冬")
+
+
+def adjust(base: int, original: str | None) -> int:
+    o = original or ""
+    if any(w in o for w in _PLUS1):
+        return base - 1  # next calendar year = smaller BCE
+    m = re.search(r"(越|后|居)([元一二三四五六七八九十\d]+)年", o)
+    if m:
+        tok = m.group(2)
+        try:
+            n = _cn_to_int(tok)
+        except Exception:
+            n = int(tok) if tok.isdigit() else 0
+        return base - n
+    if "去年" in o:
+        return base + 1
+    if "前年" in o:
+        return base + 2
+    return base  # same-year / bracketed / 次日 / 是年
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--db", default="data/changjuan.sqlite")
+    ap.add_argument("--out", default="data/undated_fills.yaml")
+    ap.add_argument(
+        "--spread",
+        type=int,
+        default=5,
+        help="Tier-1 max chunk date-spread (years) to trust the inherited base; "
+        "chunks spanning more than this are skipped as ambiguous (need narrative ordering)",
+    )
+    ap.add_argument(
+        "--chapter-band",
+        type=int,
+        default=30,
+        help="Tier-1 reject a fill whose year deviates more than this from the event's "
+        "chapter median (catches mis-chunked/anomalous events, e.g. a ch7 event whose "
+        "chunk anchor lands in 546)",
+    )
+    a = ap.parse_args()
+    db = sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)
+
+    ev_chunk: dict[str, str] = {}
+    for _, eid, c in db.execute(
+        "SELECT entity_kind, entity_id, citation_id FROM entity_citations "
+        "WHERE entity_kind='event' AND citation_id LIKE 'chk:%'"
+    ):
+        ev_chunk.setdefault(eid, c)
+
+    chunk_years: dict[str, list[int]] = {}
+    chapter_years: dict[int, list[int]] = {}
+    ev_chapter: dict[str, int | None] = {}
+    rows = db.execute("SELECT id, date_json, pipeline_run_id FROM events").fetchall()
+    for eid, dj, run in rows:
+        d = json.loads(dj) if dj else {}
+        y = d.get("year_bce")
+        c = ev_chunk.get(eid)
+        m = re.search(r"-ch(\d+)", run or "")
+        ch = int(m.group(1)) if m else None
+        ev_chapter[eid] = ch
+        if y is not None:
+            if c:
+                chunk_years.setdefault(c, []).append(y)
+            if ch is not None:
+                chapter_years.setdefault(ch, []).append(y)
+    chapter_median = {ch: int(statistics.median(ys)) for ch, ys in chapter_years.items() if ys}
+
+    fills = []
+    for eid, dj, _run in rows:
+        d = json.loads(dj) if dj else {}
+        if d.get("year_bce") is not None:
+            continue
+        kind = d.get("inference_kind") or ""
+        orig = d.get("original")
+        # Tier 0
+        if kind.startswith("explicit_reign"):
+            zy = zhou_year(orig)
+            if zy is not None:
+                fills.append({
+                    "event_id": eid, "suggested_year": zy, "method": "reign_parse",
+                    "uncertainty": "point", "confidence": "high", "original": orig,
+                })
+                continue
+        # Tier 1 — inherit only from a tightly-clustered chunk (else the median base is
+        # ambiguous, e.g. a chunk mixing eras → 战-10 wrongly got 698 vs true ~604).
+        if kind == "relative_to_prior_event":
+            ys = chunk_years.get(ev_chunk.get(eid, ""))
+            if ys and (max(ys) - min(ys)) <= a.spread:
+                base = int(statistics.median(ys))
+                sug = adjust(base, orig)
+                # chapter-consistency guard: the inherited year must match the event's
+                # chapter era, else the chunk anchor is anomalous/mis-chunked → skip.
+                cm = chapter_median.get(ev_chapter.get(eid))
+                if cm is not None and abs(sug - cm) > a.chapter_band:
+                    continue
+                fills.append({
+                    "event_id": eid, "suggested_year": sug, "method": "chain_inherit",
+                    "uncertainty": "circa", "confidence": "high", "original": orig,
+                    "chunk_spread": max(ys) - min(ys),
+                })
+
+    Path(a.out).write_text(yaml.safe_dump({"fills": fills}, allow_unicode=True, sort_keys=False), "utf-8")
+    print(f"proposed {len(fills)} fills:", dict(Counter(f["method"] for f in fills)))
+    print("report ->", a.out)
+    for f in fills[:10]:
+        print(f"  {f['method']:13s} {f['event_id'][:24]:24s} -> {f['suggested_year']} "
+              f"({f['uncertainty']}) [{f['original']}]")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

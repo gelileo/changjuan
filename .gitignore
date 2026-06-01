@@ -49,3 +49,4 @@ data/changjuan.sqlite.bak-*
 
 # generated date-audit report (scripts/scan-dates)
 data/date_issues.yaml
+data/undated_fills.yaml

@@ -164,3 +164,19 @@ stop resurfacing in the worklist. Plus **chapter_outlier** (year far from chapte
 Prefer `--cluster chN YEAR` for `relative_to_prior_event` chains (e.g. the 共叔段
 cluster all share one mis-set anchor) over row-by-row fixes; re-run `scan-dates`
 afterward to refresh the report.
+
+### Undated backfill: scripts/propose-undated
+
+`scripts/propose-undated` (read-only) proposes `year_bce` for null-year events into
+`data/undated_fills.yaml` (gitignored), applied via `resolve-dates --apply-fills`
+(audit-logged; stamps `uncertainty` + a `fill_method` marker so approximate fills
+stay honest):
+- **Tier 0 reign_parse (exact, `point`):** lenient Zhou reign-phrase search reusing
+  `pipeline.dates` reign table — catches phrases the Stage-4 resolver's anchored
+  `^周…年$` regex misses (e.g. "平王十三年，卫武公薨" → 758).
+- **Tier 1 chain_inherit (`circa`):** a `relative_to_prior_event` event inherits the
+  dated year of its chunk, nudged by time-word (明年/次年 → −1 BCE; 越N年 → −N). Two
+  guards keep it honest: the chunk's dated events must cluster within `--spread` (5y),
+  and the result must be within `--chapter-band` (30y) of the event's chapter median
+  (rejects mis-chunked anomalies). First run filled 194/576; the remainder need
+  narrative ordering or are genuinely undatable.

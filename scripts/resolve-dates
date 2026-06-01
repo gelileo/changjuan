@@ -36,10 +36,21 @@ def snapshot(db_path: Path) -> Path:
     return bak
 
 
-def patch_year(conn: sqlite3.Connection, event_id: str, new_year: int, *, actor: str, reason: str) -> str:
+def patch_year(
+    conn: sqlite3.Connection,
+    event_id: str,
+    new_year: int,
+    *,
+    actor: str,
+    reason: str,
+    uncertainty: str | None = None,
+    fill_method: str | None = None,
+) -> str:
     """Set events.date_json.year_bce = new_year; mark curated; audit-log it.
 
-    Returns one of: 'set' | 'noop' | 'missing'. Pure DB op — no I/O, testable.
+    Optional `uncertainty` ('point'|'circa'|…) and `fill_method` (provenance of an
+    interpolated date) are stamped into date_json so approximate fills stay honest.
+    Returns 'set' | 'noop' | 'missing'. Pure DB op — no I/O, testable.
     """
     row = conn.execute("SELECT date_json FROM events WHERE id=?", (event_id,)).fetchone()
     if row is None:
@@ -50,6 +61,10 @@ def patch_year(conn: sqlite3.Connection, event_id: str, new_year: int, *, actor:
         return "noop"
     d["year_bce"] = new_year
     d["curated"] = True
+    if uncertainty:
+        d["uncertainty"] = uncertainty
+    if fill_method:
+        d["fill_method"] = fill_method
     conn.execute(
         "UPDATE events SET date_json=?, provenance='curated', updated_at=datetime('now') WHERE id=?",
         (json.dumps(d, ensure_ascii=False), event_id),
@@ -91,6 +106,7 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="print issues; no writes")
     ap.add_argument("--set", nargs=2, metavar=("EVENT_ID", "YEAR"), help="fix one event")
     ap.add_argument("--cluster", nargs=2, metavar=("CLUSTER", "YEAR"), help="fix all report events in a cluster")
+    ap.add_argument("--apply-fills", metavar="FILE", help="batch-apply a propose-undated fills.yaml")
     ap.add_argument("--actor", default="curator")
     args = ap.parse_args()
 
@@ -111,7 +127,17 @@ def main() -> int:
     conn = sqlite3.connect(db_path)
     changed = 0
     try:
-        if args.set:
+        if args.apply_fills:
+            doc = yaml.safe_load(Path(args.apply_fills).read_text("utf-8")) or {}
+            for f in doc.get("fills", []):
+                res = patch_year(
+                    conn, f["event_id"], int(f["suggested_year"]),
+                    actor=args.actor, reason=f"undated fill ({f.get('method')})",
+                    uncertainty=f.get("uncertainty"), fill_method=f.get("method"),
+                )
+                changed += res == "set"
+            print(f"  applied fills from {args.apply_fills}")
+        elif args.set:
             eid, yr = args.set[0], int(args.set[1])
             res = patch_year(conn, eid, yr, actor=args.actor, reason="manual --set")
             print(f"  {res}: {eid} -> {yr}")

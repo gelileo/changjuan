@@ -2175,3 +2175,14 @@ prose, and the version history. Reconciled all three to v3 and added the v3
 history entry. No code change — doc-only reconciliation.
 
 Articles touched: concepts/pipeline/export-contract.md.
+
+## 2026-06-01 — undated backfill tooling (Tier 0 + Tier 1)
+
+scripts/propose-undated (read-only) + resolve-dates --apply-fills batch mode.
+Reign-parse (exact) recovers Stage-4 resolver misses (平王十三年→758); chain-inherit
+(circa) fills relative events from their chunk's dated anchor, guarded by chunk-spread
+(<=5y) and chapter-consistency (<=30y). Applied 194 fills: undated 576 -> 382. Two
+chapter-consistent fills surfaced anachronistic participants (出使/卫桓公, 暴卒/晋景公)
+as new reign_window highs — person-review items, not date errors.
+
+Articles touched: concepts/data-model/dates-and-reigns.md.
