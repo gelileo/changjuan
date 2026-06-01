@@ -61,7 +61,7 @@ def load_reign_index(reigns_dir: Path) -> dict[tuple[str, str], list[tuple[int, 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", default="data/changjuan.sqlite")
+    ap.add_argument("--db", default="data/books/dzl/canonical.sqlite")
     ap.add_argument("--reigns", default="data/reigns")
     ap.add_argument("--band", type=int, default=25, help="chapter-outlier deviation (years)")
     ap.add_argument(

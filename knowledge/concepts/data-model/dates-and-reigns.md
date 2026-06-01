@@ -180,3 +180,39 @@ stay honest):
   and the result must be within `--chapter-band` (30y) of the event's chapter median
   (rejects mis-chunked anomalies). First run filled 194/576; the remainder need
   narrative ordering or are genuinely undatable.
+- **Tier 2 neighborhood_circa (`circa`):** when an event has no tight *same-chunk*
+  anchor (Tier 1 missed it, or it is a non-relative undated event), borrow the median
+  of dated events in nearby chunks of the *same chapter* — within `--window` (8)
+  chunk-indices — provided that local window clusters within `--tier2-spread` (20y).
+  Relative events still get the time-word nudge; others take the median as-is. The
+  `--chapter-band` guard still applies. This relies on narrative order placing adjacent
+  chunks chronologically close. Loose windows (span > 20y) and chapters with no dated
+  anchor are deliberately left undated — those go to knowledge-dating. The 2026-06 run
+  filled 198/382 this way (median window-spread 0; 187/198 from windows spanning ≤5y).
+
+All three scripts (`scan-dates`, `resolve-dates`, `propose-undated`) default `--db`
+to `data/books/dzl/canonical.sqlite` (the multi-book layout); pass `--db` for another
+book. `--reigns` stays shared at `data/reigns`.
+
+### Knowledge-dating the long tail (`fill_method=knowledge_date`)
+
+The mechanical tiers bottom out at events with no resolvable in-text or in-chapter
+anchor (relative chains whose root is itself undated; anchorless chapters). These are
+dated by **historical knowledge** against 春秋/史记/左传 chronology, not arithmetic.
+The 2026-06 pass ran a verification workflow (`knowledge-date-undated`): one *dater*
+agent per chapter proposed `year_bce` + basis + confidence, then an **independent
+skeptic** verified each against era/reign plausibility (accept / adjust / reject).
+Only accepted/adjusted fills are written (`uncertainty` honest: `point` only for
+firmly attested years like 707 繻葛之战 / 720 周郑交质, else `circa`); rejected ones
+stay null. This cleared 180/184, leaving **4 genuinely undatable** folklore events
+(干将莫邪剑化青龙, 陈仓陈宝 prophecy, …) — final coverage 2137/2141 (99.8%).
+
+Two cross-checks the skeptic surfaced are worth noting as patterns: (1) a 左传 *flashback*
+year ≠ event-occurrence year — e.g. the murder of 急子 is narrated under 左传桓公十六年
+(696) but happened ~701 in 卫宣公's reign (he died 700); date the occurrence, not the
+narration. (2) the novel narrates some events **out of chronological order** (信陵君迎
+侯嬴 ~257 appears in ch94 whose main line is ~298); knowledge-dating assigns the true
+historical year, so a resulting `chapter_outlier` flag is correct, not an error. Note:
+`evt:任命` is cited in **both ch7 and ch66** (a 郑庄公-era appointment surfacing as a
+ch66 flashback) — dated to its true ~701, but the stray ch66 citation is a candidate
+event-identity collision for later curation.

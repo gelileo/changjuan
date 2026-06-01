@@ -104,7 +104,7 @@ def event_summary(conn: sqlite3.Connection, eid: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--db", default="data/changjuan.sqlite")
+    ap.add_argument("--db", default="data/books/dzl/canonical.sqlite")
     ap.add_argument("--report", default="data/date_issues.yaml")
     ap.add_argument("--list", action="store_true", help="print issues; no writes")
     ap.add_argument("--set", nargs=2, metavar=("EVENT_ID", "YEAR"), help="fix one event")

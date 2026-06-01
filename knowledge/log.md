@@ -1,5 +1,19 @@
 # Build Log
 
+## [2026-06-01] feat(dates): clear the undated long tail (382 → 4)
+
+Tackled the 382 effectively-undated events (91 no date_json + 291 null-year). Fixed the
+three date scripts' stale `--db` default (dead `data/changjuan.sqlite` → multi-book
+`data/books/dzl/canonical.sqlite`). Added **Tier-2 neighborhood_circa** to
+`propose-undated` (borrow median of dated events in nearby same-chapter chunks when the
+local window clusters ≤20y) → 198 fills; one boundary miss (华督弑殇公 706) corrected to
+710. Then **knowledge-dated** the remaining 184 via the `knowledge-date-undated`
+verification workflow (per-chapter dater + independent skeptic against 春秋/史记/左传):
+180 accepted (32 point / 147 circa), 4 left as genuine folklore. One skeptic correction
+(急子 murder 696→701: 左传 flashback year vs occurrence year). Final: 2137/2141 dated
+(99.8%), 0 high-severity reign_window errors. Flagged `evt:任命` ch7/ch66 citation as a
+candidate event-collision for later. Articles touched: concepts/data-model/dates-and-reigns.md.
+
 ## [2026-05-30] chore(export): address minor review notes (comments, docstrings, glob tightening, test assertions)
 
 Non-functional cleanup of code-review notes from the export-bundle-v1 work:
