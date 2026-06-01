@@ -2186,3 +2186,14 @@ chapter-consistent fills surfaced anachronistic participants (出使/卫桓公, 
 as new reign_window highs — person-review items, not date errors.
 
 Articles touched: concepts/data-model/dates-and-reigns.md.
+
+## 2026-06-01 — resolve-dates --set semantics + 2 fill corrections
+
+resolve-dates --set now stamps uncertainty='point' and clears any stale
+fill_method (a manual set is a deliberate exact date, not an interpolation).
+Used it to correct the 2 reign_window highs the undated backfill surfaced —
+both were bad circa fills, not participant issues: evt:暴卒 (晋景公坠厕死)
+576→581 (reign-end/death), evt:出使 (郑庄公请卫撤兵, 共叔段) 701→722 (卫桓公
+alive 734-719). reign_window high now 0.
+
+Articles touched: (none — scripts/, behavior refinement; data in gitignored DB).

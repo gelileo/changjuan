@@ -45,6 +45,7 @@ def patch_year(
     reason: str,
     uncertainty: str | None = None,
     fill_method: str | None = None,
+    clear_fill: bool = False,
 ) -> str:
     """Set events.date_json.year_bce = new_year; mark curated; audit-log it.
 
@@ -65,6 +66,8 @@ def patch_year(
         d["uncertainty"] = uncertainty
     if fill_method:
         d["fill_method"] = fill_method
+    if clear_fill:
+        d.pop("fill_method", None)  # a deliberate manual set is not an interpolated fill
     conn.execute(
         "UPDATE events SET date_json=?, provenance='curated', updated_at=datetime('now') WHERE id=?",
         (json.dumps(d, ensure_ascii=False), event_id),
@@ -139,7 +142,8 @@ def main() -> int:
             print(f"  applied fills from {args.apply_fills}")
         elif args.set:
             eid, yr = args.set[0], int(args.set[1])
-            res = patch_year(conn, eid, yr, actor=args.actor, reason="manual --set")
+            res = patch_year(conn, eid, yr, actor=args.actor, reason="manual --set",
+                             uncertainty="point", clear_fill=True)
             print(f"  {res}: {eid} -> {yr}")
             changed += res == "set"
         elif args.cluster:
