@@ -2221,3 +2221,21 @@ threading deferred until book #2. Approach B of the multi-book PRD.
 
 Articles touched: concepts/runtime/configuration.md, concepts/pipeline/architecture.md,
 concepts/runtime/cli.md, concepts/pipeline/export-contract.md, concepts/verification/testing.md.
+
+## 2026-06-01 — fix(data): 吴 royal-cluster curation
+
+Reader-reported gap: 吴王阖闾's card was missing his father 诸樊. Investigation
+surfaced a cluster of issues; `scripts/fix-wu-cluster.sql` (committed 5501b23,
+fix-jin-duplicates.sql pattern — transactional, audit-logged, FK-clean) fixes:
+merged 3 duplicate persons (per:吴公子光→per:吴王阖闾, per:公子夷昧→per:吴王夷昧,
+per:公子夫概→per:夫概; identical variant sets, no loss); added curated
+source-grounded kin edges (诸樊→阖闾 "诸樊之子名光…"; 寿梦→诸樊, 寿梦→吴王夷昧
+"召其四子诸樊、馀祭、夷昧、季札"); removed the wrong 阖闾-sibling-季札 edge (季札 is
+阖闾's uncle). Canonical persons 1706→1703. 吴王僚 (cousin) unchanged — already
+shown via the existing `rival` edge; cousin/uncle kinship isn't a chartable edge.
+Applied to data/books/dzl/canonical.sqlite (migration carried it through the
+multi-book refactor); re-exported dongzhoulieguozhi-export-2026-06-v4 and
+re-vendored into changjuan-reader (browser-verified 阖闾's card shows 父 诸樊).
+
+Articles touched: none (data-only curation; no schema/behaviour change — same
+mechanism as the documented fix-jin-duplicates.sql precedent).
