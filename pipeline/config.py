@@ -16,6 +16,9 @@ def _default_repo_root() -> Path:
 @dataclass(frozen=True)
 class Config:
     repo_root: Path = field(default_factory=_default_repo_root)
+    # The book this config addresses. Per-book working files live under
+    # data/books/<book_id>/, so changjuan can host multiple books (东周列国志 = dzl).
+    book_id: str = "dzl"
     chunk_target_chars: int = 1800
     chunk_overlap_chars: int = 200
 
@@ -24,24 +27,45 @@ class Config:
         return self.repo_root / "data"
 
     @property
-    def corpus_db(self) -> Path:
-        return self.data_dir / "corpus.sqlite"
-
-    @property
-    def canonical_db(self) -> Path:
-        return self.data_dir / "changjuan.sqlite"
-
-    @property
-    def exports_dir(self) -> Path:
-        return self.data_dir / "exports"
-
-    @property
     def books_dir(self) -> Path:
+        """The book registry root (shared); each book is a subdir keyed by book_id."""
         return self.data_dir / "books"
 
     @property
+    def book_dir(self) -> Path:
+        """This book's working directory: data/books/<book_id>/."""
+        return self.books_dir / self.book_id
+
+    # --- per-book working files (under book_dir) ---
+    @property
+    def corpus_db(self) -> Path:
+        return self.book_dir / "corpus.sqlite"
+
+    @property
+    def canonical_db(self) -> Path:
+        return self.book_dir / "canonical.sqlite"
+
+    @property
+    def exports_dir(self) -> Path:
+        return self.book_dir / "exports"
+
+    @property
     def readable_dir(self) -> Path:
-        return self.data_dir / "readable"
+        return self.book_dir / "readable"
+
+    @property
+    def extractions_dir(self) -> Path:
+        return self.book_dir / "extractions"
+
+    @property
+    def prominence_overrides(self) -> Path:
+        return self.book_dir / "prominence_overrides.yaml"
+
+    # --- shared across books ---
+    @property
+    def reigns_dir(self) -> Path:
+        """Reign tables are historical reference, shared across books (same calendar)."""
+        return self.data_dir / "reigns"
 
     @property
     def corpora_dir(self) -> Path:

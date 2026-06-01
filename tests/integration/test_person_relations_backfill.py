@@ -17,7 +17,7 @@ from pipeline.stage3_extract import load_extraction
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 EXTRACTION = REPO_ROOT / "data" / "extractions" / "ch01" / "extract-v2.yaml"
-CORPUS = REPO_ROOT / "data" / "corpus.sqlite"
+CORPUS = REPO_ROOT / "data" / "books" / "dzl" / "corpus.sqlite"
 
 
 @pytest.mark.skipif(

@@ -1,5 +1,16 @@
-# Project-local data — generated subdirs are ignored; curated subdirs are not.
-# (Cannot use `!data/X/` exceptions when data/ itself is ignored; explicit per-subdir.)
+# Project-local data — generated per-book artifacts are ignored; curated files
+# (book-meta.json, prominence_overrides.yaml, shared data/reigns/) are tracked.
+# Multi-book layout: per-book working files live under data/books/<book_id>/.
+data/books/*/canonical.sqlite
+data/books/*/corpus.sqlite
+data/books/*/exports/
+data/books/*/extractions/
+data/books/*/logs/
+data/books/*/qa/
+data/books/*/readable/
+data/books/*/canonical.sqlite.*-bak
+data/books/*/*.bak-*
+# legacy top-level (pre-multi-book) — kept so stale files stay ignored
 data/changjuan.sqlite
 data/corpus.sqlite
 data/exports/

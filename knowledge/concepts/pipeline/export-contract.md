@@ -11,7 +11,7 @@ affects:
 
 ## What this is
 
-Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/changjuan-export-<version>/` with three artefacts:
+Stage 9 (`pipeline/stage9_export.py`) produces a versioned export bundle in `data/exports/<slug>-export-<version>/` (the dir is named by the book's human-facing `slug` from `book-meta.json`, falling back to `book_id`; e.g. `dongzhoulieguozhi-export-<version>/`). The manifest carries both `book_id` (stable, machine key — also the chunk-id prefix `chk:dzl:…`) and `slug`. Three artefacts:
 
 1. **`graph.sqlite`** — a read-only SQLite snapshot of all canonical tables. Because the snapshot copies canonical tables wholesale, schema additions ride along automatically — e.g. `person_relations.relation_detail` (the 结义/blood sibling qualifier added 2026-05-31) appears in the bundle with no export-code change. Bump the manifest version when such a column lands so consumers can detect it.
 2. **`manifest.json`** — metadata describing the bundle contents.

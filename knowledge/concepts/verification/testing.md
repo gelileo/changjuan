@@ -49,6 +49,13 @@ Stage tests that require real-looking source files (e.g., ingest stages that rea
 
 Real-corpus smoke tests use `@pytest.mark.skipif` against the `corpora/` symlink so they are silently skipped when the upstream corpus is not present locally.
 
+**Multi-book paths (2026-06):** working files moved under `data/books/<book_id>/`.
+Tests that seed or read DBs at paths now use `…/data/books/dzl/canonical.sqlite`
+(renamed from `changjuan.sqlite`) and `…/data/books/dzl/corpus.sqlite`; integration
+tests copying the live corpus `mkdir(data/books/dzl)` before `copyfile`.
+`pipeline/smoke_checks.py` resolves the canonical DB via `Config(repo_root=…).canonical_db`
+(book-scoped) rather than a hardcoded path.
+
 Chunking tests use a `_seed_doc` helper to insert minimal `documents` rows into a `tmp_path`-based database before exercising `chunk_documents`. The test `test_chunks_emerge_from_single_newline_separated_paragraphs` is a targeted regression for the `_PARA_SEP` regex: it seeds 4 single-`\n`-separated paragraphs with a `chunk_target_chars` smaller than one paragraph, then asserts more than one chunk is produced — which only passes when the regex correctly splits on single newlines. This guards against re-introducing the blank-line-required regex that silently collapsed each chapter into one chunk.
 
 ## Canonical schema tests

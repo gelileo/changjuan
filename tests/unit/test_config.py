@@ -6,10 +6,17 @@ from pipeline.config import Config
 
 def test_config_default_paths(tmp_path: Path) -> None:
     cfg = Config(repo_root=tmp_path)
-    assert cfg.corpus_db == tmp_path / "data" / "corpus.sqlite"
-    assert cfg.canonical_db == tmp_path / "data" / "changjuan.sqlite"
-    assert cfg.exports_dir == tmp_path / "data" / "exports"
+    assert cfg.book_id == "dzl"
+    bd = tmp_path / "data" / "books" / "dzl"
+    assert cfg.corpus_db == bd / "corpus.sqlite"
+    assert cfg.canonical_db == bd / "canonical.sqlite"
+    assert cfg.exports_dir == bd / "exports"
+    assert cfg.reigns_dir == tmp_path / "data" / "reigns"  # shared across books
     assert cfg.corpora_dir == tmp_path / "corpora"
+    # a second book is fully isolated under its own book_id
+    assert Config(repo_root=tmp_path, book_id="sanguo").canonical_db == (
+        tmp_path / "data" / "books" / "sanguo" / "canonical.sqlite"
+    )
 
 
 def test_config_chunk_overlap_defaults() -> None:

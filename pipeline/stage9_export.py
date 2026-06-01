@@ -65,6 +65,7 @@ def export_bundle(
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(UTC).isoformat(),
         "book_id": book_meta["book_id"],
+        "slug": book_meta.get("slug") or book_meta["book_id"],
         "title": book_meta.get("title"),
         "author": book_meta.get("author"),
         "edition": book_meta.get("edition"),

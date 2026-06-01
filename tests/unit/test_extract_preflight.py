@@ -21,7 +21,7 @@ def test_preflight_fails_when_chapter_has_no_chunks(tmp_path: Path) -> None:
     from pipeline.db import open_corpus_db
 
     (tmp_path / "data").mkdir()
-    open_corpus_db(tmp_path / "data" / "corpus.sqlite")  # empty corpus
+    open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")  # empty corpus
     runner = CliRunner()
     result = runner.invoke(app, ["extract", "--chapter", "1", "--repo-root", str(tmp_path)])
     assert result.exit_code != 0
@@ -36,7 +36,7 @@ def test_preflight_passes_when_chunks_and_skill_present(tmp_path: Path) -> None:
     from pipeline.schemas.extract_output import EXTRACT_OUTPUT_SCHEMA
 
     (tmp_path / "data").mkdir()
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
     corpus.execute(
         "INSERT INTO documents"
         " (id, corpus, title, chapter_num, chapter_title, raw_text, source_edition, ingested_at)"

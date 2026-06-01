@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from pipeline.config import Config
 from pipeline.db import open_canonical_db
 
 
@@ -114,7 +115,7 @@ def main() -> int:
     parser.add_argument("--repo-root", default=Path.cwd(), type=Path)
     args = parser.parse_args()
 
-    conn = open_canonical_db(args.repo_root / "data" / "changjuan.sqlite")
+    conn = open_canonical_db(Config(repo_root=args.repo_root).canonical_db)
     result = smoke_check_run(conn, args.run_id)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["status"] == "pass" else 1

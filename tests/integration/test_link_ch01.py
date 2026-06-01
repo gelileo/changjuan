@@ -28,15 +28,15 @@ def test_link_then_load_ch01_yields_thirteen_canonical_persons(tmp_path: Path) -
     """Run extract-load → link → load on Ch.1's v2 fixture. Expect exactly
     13 canonical persons (the golden Ch.1 count). Zero false-positive merges
     within the chapter's own candidate set."""
-    src_corpus = REPO_ROOT / "data" / "corpus.sqlite"
+    src_corpus = REPO_ROOT / "data" / "books" / "dzl" / "corpus.sqlite"
     if not src_corpus.exists():
         pytest.skip(f"corpus.sqlite missing at {src_corpus}")
 
-    (tmp_path / "data").mkdir()
-    shutil.copyfile(src_corpus, tmp_path / "data" / "corpus.sqlite")
+    (tmp_path / "data" / "books" / "dzl").mkdir(parents=True)
+    shutil.copyfile(src_corpus, tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
 
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
 
     fixture = REPO_ROOT / "tests" / "fixtures" / "ch01-extraction-v1.yaml"
     assert fixture.exists()

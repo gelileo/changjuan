@@ -35,8 +35,8 @@ app = typer.Typer(help="changjuan — Eastern-Zhou knowledge graph pipeline.")
 log = structlog.get_logger()
 
 
-def _cfg(repo_root: Path | None) -> Config:
-    return Config(repo_root=repo_root) if repo_root else Config()
+def _cfg(repo_root: Path | None, book_id: str = "dzl") -> Config:
+    return Config(repo_root=repo_root, book_id=book_id) if repo_root else Config(book_id=book_id)
 
 
 @app.command()
@@ -97,13 +97,16 @@ def export(
     repo_root: Path | None = typer.Option(None),
 ) -> None:
     """Stage 9: freeze a versioned export bundle."""
-    cfg = _cfg(repo_root)
+    cfg = _cfg(repo_root, book_id)
     meta_path = cfg.books_dir / book_id / "book-meta.json"
     if not meta_path.exists():
         typer.echo(f"book-meta.json not found for book '{book_id}': {meta_path}", err=True)
         raise typer.Exit(code=1)
     meta = _json.loads(meta_path.read_text("utf-8"))
-    out_dir = cfg.exports_dir / f"changjuan-export-{version}"
+    # Bundle dir is named by the human-facing book slug (falls back to book_id),
+    # so a multi-book repo yields e.g. dongzhoulieguozhi-export-<version>.
+    slug = meta.get("slug") or meta["book_id"]
+    out_dir = cfg.exports_dir / f"{slug}-export-{version}"
     export_bundle(
         cfg.canonical_db,
         out_dir,
@@ -111,7 +114,7 @@ def export(
         corpus_db=cfg.corpus_db,
         book_meta=meta,
         readable_dir=cfg.readable_dir,
-        prominence_overrides=cfg.data_dir / "prominence_overrides.yaml",
+        prominence_overrides=cfg.prominence_overrides,
     )
     typer.echo(f"export bundle written to {out_dir}")
 
@@ -123,7 +126,7 @@ def list_unresolved_dates_cmd(
 ) -> None:
     """List canonical events with relative_to_prior_event dates that have null year_bce
     and no explicit anchor. The curator triages these via `resolve-relative-date`."""
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
     rows = canonical.execute(
         """
         SELECT id, json_extract(date_json, '$.original'),
@@ -157,7 +160,7 @@ def resolve_relative_date_cmd(
 ) -> None:
     """Set relative_anchor_event_id on `event_id`'s date_json, recompute year_bce,
     and write an audit_log entry."""
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
 
     row = canonical.execute("SELECT date_json FROM events WHERE id = ?", (event_id,)).fetchone()
     if row is None:
@@ -217,7 +220,9 @@ def re_extract_cmd(
     from datetime import datetime as _datetime
 
     extraction_file = (
-        repo_root / "data" / "extractions" / f"ch{chapter:02d}" / f"extract-{prompt_version}.yaml"
+        Config(repo_root=repo_root).extractions_dir
+        / f"ch{chapter:02d}"
+        / f"extract-{prompt_version}.yaml"
     )
     if not extraction_file.exists():
         skill_dir = "changjuan-extract" + (f"-{prompt_version}" if prompt_version != "v1" else "")
@@ -231,8 +236,8 @@ def re_extract_cmd(
 
     ts = _datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
     run_id = f"run:re-extract-ch{chapter}-{prompt_version}-{ts}"
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
-    corpus = open_corpus_db(repo_root / "data" / "corpus.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
+    corpus = open_corpus_db(Config(repo_root=repo_root).corpus_db)
     stats = load_extraction(
         canonical,
         corpus_conn=corpus,
@@ -268,7 +273,7 @@ def extract(
     from pipeline.schemas.extract_output import EXTRACT_OUTPUT_SCHEMA
 
     checks: list[tuple[str, bool]] = []
-    corpus_path = repo_root / "data" / "corpus.sqlite"
+    corpus_path = Config(repo_root=repo_root).corpus_db
     checks.append(("corpus.sqlite exists", corpus_path.exists()))
 
     if corpus_path.exists():
@@ -336,7 +341,7 @@ def golden_eval_cmd(
 
     golden_dir = repo_root / "tests" / "golden" / f"ch{chapter:02d}"
     golden = load_golden(golden_dir)
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
 
     if pipeline_run_id is None:
         row = canonical.execute(
@@ -514,7 +519,7 @@ def qa_sample_cmd(
 
     from pipeline.qa_sampling import select_sample
 
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
 
     facts: list[dict[str, object]] = []
 
@@ -653,7 +658,7 @@ def qa_load_cmd(
 
     from pipeline import config
 
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
     verdicts: list[dict[str, object]] = _yaml.safe_load(qa_file.read_text(encoding="utf-8"))
     yes = no = partial = 0
     for v in verdicts:
@@ -735,7 +740,7 @@ def link(
     """
     from pipeline.stage5_link import link_run
 
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
     stats = link_run(canonical, pipeline_run_id, ignore_rejections=ignore_rejections)
     rejected_skipped = stats.get("rejected_filter_skipped", 0)
     suffix = " (ignore-rejections=ON)" if ignore_rejections else ""
@@ -759,8 +764,8 @@ def extract_load_cmd(
         ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         pipeline_run_id = f"run:extract-ch{chapter}-{prompt_version}-{ts}"
 
-    canonical = open_canonical_db(repo_root / "data" / "changjuan.sqlite")
-    corpus = open_corpus_db(repo_root / "data" / "corpus.sqlite")
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
+    corpus = open_corpus_db(Config(repo_root=repo_root).corpus_db)
     stats = load_extraction(
         canonical,
         corpus_conn=corpus,

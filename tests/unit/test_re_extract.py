@@ -14,8 +14,8 @@ def _seed_corpus_with_one_chunk(tmp_path: Path) -> None:
     from pipeline.db import open_canonical_db, open_corpus_db
 
     (tmp_path / "data").mkdir()
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     corpus.execute(
         "INSERT INTO documents "
         "(id, corpus, title, chapter_num, chapter_title, raw_text, source_edition, ingested_at) "
@@ -51,7 +51,7 @@ def test_missing_extraction_file_instructs_user(tmp_path: Path) -> None:
 
 def test_reload_when_file_exists(tmp_path: Path) -> None:
     _seed_corpus_with_one_chunk(tmp_path)
-    extract_dir = tmp_path / "data" / "extractions" / "ch01"
+    extract_dir = tmp_path / "data" / "books" / "dzl" / "extractions" / "ch01"
     extract_dir.mkdir(parents=True)
     (extract_dir / "extract-v1.yaml").write_text(
         yaml.safe_dump({"persons": [], "events": [], "places": [], "states": [], "relations": []}),

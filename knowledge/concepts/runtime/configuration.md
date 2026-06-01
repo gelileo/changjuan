@@ -21,7 +21,11 @@ affects:
 
 The module contains two kinds of configuration:
 
-1. **`Config` dataclass**: Frozen, immutable configuration object bundling repo root and pipeline tunables (chunk sizing, paths to corpus and canonical SQLite stores, data and export directories). Path properties: `data_dir`, `corpus_db`, `canonical_db`, `exports_dir`, `books_dir` (`data/books/`), `readable_dir` (`data/readable/`), `corpora_dir`. `books_dir` is the root for per-book authored metadata; each book lives at `books_dir / <book_id> / book-meta.json`. `readable_dir` is the root for skill-produced chapter prose files (`ch*.md`), consumed by the stage 9 export to populate `texts/` in the bundle.
+1. **`Config` dataclass**: Frozen, immutable configuration object bundling repo root, the target **`book_id`** (default `dzl`), and pipeline tunables. **Multi-book layout (2026-06):** per-book working files live under `data/books/<book_id>/`, so changjuan hosts multiple books. `Config` carries a `book_id` field and its path properties resolve under that book's dir — construct `Config(book_id="…")` to target another book; the CLI threads `--book-id` through `_cfg`. Properties:
+   - **Per-book** (under `book_dir = data/books/<book_id>/`): `canonical_db` (`canonical.sqlite` — renamed from the old top-level `changjuan.sqlite`), `corpus_db` (`corpus.sqlite`), `exports_dir`, `readable_dir`, `extractions_dir`, `prominence_overrides`.
+   - **Shared / registry**: `data_dir`, `books_dir` (`data/books/`, registry root), `reigns_dir` (`data/reigns/` — reign tables are historical reference, shared across books), `corpora_dir`.
+
+   Each book's metadata is `books_dir / <book_id> / book-meta.json` (carries `book_id` + a human-facing `slug` used for the export bundle dir name). `book_id` is the stable machine key (also the chunk-id prefix `chk:dzl:…`); entity ids are *not* book-prefixed because each book is one isolated `canonical.sqlite`/`graph.sqlite`. `readable_dir` holds skill-produced chapter prose (`ch*.md`) for the export `texts/` payload.
 
 2. **Module-level constants**: Tunable thresholds and limits for specific pipeline stages and features.
 

@@ -16,8 +16,8 @@ def _seed_minimal(tmp_path: Path) -> None:
     from pipeline.db import open_canonical_db, open_corpus_db
 
     (tmp_path / "data").mkdir()
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     corpus.execute(
         "INSERT INTO documents "
         "(id, corpus, title, chapter_num, chapter_title, raw_text, source_edition, ingested_at) "
@@ -95,7 +95,7 @@ def test_golden_eval_with_matching_candidate_passes(tmp_path: Path, monkeypatch:
     # Seed a matching candidate_persons row tagged with run:test
     from pipeline.db import open_canonical_db
 
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     # candidate_persons columns: id, canonical_name, gender, birth_date_json,
     # death_date_json, notes, state_id, clan_name, social_category, confidence,
     # pipeline_run_id, chunk_id, quote, created_at

@@ -16,9 +16,9 @@ def _seed(tmp_path: Path) -> sqlite3.Connection:
     # ensure data/ dir exists relative to tmp_path
     (tmp_path / "data").mkdir(parents=True, exist_ok=True)
     open_corpus_db(
-        tmp_path / "data" / "corpus.sqlite"
+        tmp_path / "data" / "books" / "dzl" / "corpus.sqlite"
     )  # ensure corpus exists (may be needed by some paths)
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     # one anchored event
     canonical.execute(
         "INSERT INTO events (id, type, date_json, provenance, confidence, pipeline_run_id) "
@@ -65,7 +65,7 @@ def test_resolve_relative_date_sets_anchor_and_recomputes(tmp_path: Path) -> Non
     )
     assert result.exit_code == 0, result.stdout
 
-    canonical = sqlite3.connect(tmp_path / "data" / "changjuan.sqlite")
+    canonical = sqlite3.connect(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     row = canonical.execute("SELECT date_json FROM events WHERE id = 'evt:rel'").fetchone()
     date = json.loads(row[0])
     assert date["year_bce"] == 770  # 771 + (-1)
@@ -103,7 +103,7 @@ def test_resolve_with_explicit_offset_unknown_token(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0, result.stdout
 
-    canonical = sqlite3.connect(tmp_path / "data" / "changjuan.sqlite")
+    canonical = sqlite3.connect(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     row = canonical.execute(
         "SELECT json_extract(date_json, '$.year_bce') FROM events WHERE id = 'evt:rel'"
     ).fetchone()

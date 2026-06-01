@@ -2197,3 +2197,27 @@ both were bad circa fills, not participant issues: evt:暴卒 (晋景公坠厕�
 alive 734-719). reign_window high now 0.
 
 Articles touched: (none — scripts/, behavior refinement; data in gitignored DB).
+
+## 2026-06-01 — multi-book Tier 1: slug-based bundle naming
+
+book-meta.json gains a `slug` (dzl → dongzhoulieguozhi). Export bundle dir is now
+`data/exports/<slug>-export-<version>/` and the manifest carries both `book_id`
+(stable machine key / chunk-id prefix) and `slug` (human-facing). Tier 1 of the
+multi-book refactor PRD (docs/superpowers/specs/2026-05-31-multi-book-refactor-prd.md);
+storage move is Tier 2. No id/data migration.
+
+Articles touched: concepts/runtime/cli.md, concepts/pipeline/export-contract.md.
+
+## 2026-06-01 — multi-book Tier 2: per-book storage + Config.book_id
+
+Config gains a `book_id` field (default dzl); path properties resolve under
+data/books/<book_id>/. Renamed canonical store changjuan.sqlite → canonical.sqlite.
+Migrated live dzl data under data/books/dzl/ (canonical, corpus, readable,
+extractions, logs, qa, exports, prominence_overrides); data/reigns/ + data/books/
+stay shared. CLI paths repointed to Config (dzl default); export targetable via
+--book-id; .gitignore rewritten per-book. 303 tests pass (curator_smoke fails on a
+pre-existing candidate-vs-candidate reject FK, unrelated). Per-stage --book-id
+threading deferred until book #2. Approach B of the multi-book PRD.
+
+Articles touched: concepts/runtime/configuration.md, concepts/pipeline/architecture.md,
+concepts/runtime/cli.md, concepts/pipeline/export-contract.md, concepts/verification/testing.md.

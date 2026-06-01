@@ -31,9 +31,9 @@ def test_cli_ingest_dry_runs(tmp_path: Path, monkeypatch) -> None:  # type: igno
 def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
     """Integration test: `changjuan load <run_id>` promotes candidates of all five kinds."""
     run_id = "test-run:123"
-    data_dir = tmp_path / "data"
-    data_dir.mkdir(parents=True)
-    db_path = data_dir / "changjuan.sqlite"
+    book_dir = tmp_path / "data" / "books" / "dzl"
+    book_dir.mkdir(parents=True)
+    db_path = book_dir / "canonical.sqlite"
 
     # Seed the database with canonical schema
     with connect(db_path) as conn:
@@ -119,8 +119,8 @@ def test_extract_load_cli_loads_yaml_via_cli(tmp_path: Path) -> None:
     from pipeline.db import open_corpus_db
 
     (tmp_path / "data").mkdir()
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     corpus.execute(
         "INSERT INTO documents "
         "(id, corpus, title, chapter_num, chapter_title, raw_text, "

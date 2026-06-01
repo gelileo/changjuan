@@ -144,18 +144,18 @@ def test_golden_ch01_meets_thresholds(tmp_path: Path) -> None:
     extraction output. Loading it and comparing to golden Ch.1 must pass all 5
     kinds' thresholds in pipeline/config.GOLDEN_PR_THRESHOLDS."""
     # Set up temp dirs
-    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "books" / "dzl").mkdir(parents=True)
     # Copy the real corpus.sqlite so Ch.1 chunks exist for the loader to validate against
-    src_corpus = REPO_ROOT / "data" / "corpus.sqlite"
+    src_corpus = REPO_ROOT / "data" / "books" / "dzl" / "corpus.sqlite"
     if not src_corpus.exists():
         pytest.skip(
             f"corpus.sqlite not present at {src_corpus} — "
             "run `changjuan ingest && changjuan chunk` first"
         )
-    shutil.copyfile(src_corpus, tmp_path / "data" / "corpus.sqlite")
+    shutil.copyfile(src_corpus, tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
 
-    corpus = open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    corpus = open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
 
     # Load the frozen fixture as a new pipeline_run_id
     fixture = REPO_ROOT / "tests" / "fixtures" / "ch01-extraction-v1.yaml"

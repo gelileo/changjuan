@@ -16,8 +16,8 @@ def _seed_corpus(tmp_path: Path) -> sqlite3.Connection:
     from pipeline.db import open_canonical_db, open_corpus_db
 
     (tmp_path / "data").mkdir()
-    open_corpus_db(tmp_path / "data" / "corpus.sqlite")
-    canonical = open_canonical_db(tmp_path / "data" / "changjuan.sqlite")
+    open_corpus_db(tmp_path / "data" / "books" / "dzl" / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
     return canonical
 
 

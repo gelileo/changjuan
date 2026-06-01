@@ -21,6 +21,19 @@ affects:
 
 The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v2 layout; `schema_version=2`).
 
+## Storage layout (multi-book, 2026-06)
+
+changjuan hosts multiple books; per-book working files live under
+`data/books/<book_id>/`: `canonical.sqlite` (the canonical graph — renamed from
+the old top-level `changjuan.sqlite`), `corpus.sqlite`, `readable/`,
+`extractions/`, `logs/`, `qa/`, `exports/<slug>-export-<version>/`,
+`prominence_overrides.yaml`, and the curated `book-meta.json`. **Shared** across
+books: `data/reigns/` (reign tables — same calendar) and `data/books/` (the
+registry). `Config(book_id=…)` resolves all per-book paths; the CLI threads
+`--book-id`. Books are isolated (one `canonical.sqlite` each), so entity ids stay
+unprefixed; only chunk ids carry the book prefix (`chk:dzl:…`). See
+`docs/superpowers/specs/2026-05-31-multi-book-refactor-prd.md` (approach B).
+
 ## Why this shape, not the alternatives
 
 A single-LLM-agent pipeline (one tool-using agent decides everything per chapter) was considered and rejected — hard to evaluate, hard to cache, hard to tune one capability without breaking another, non-deterministic failures. A "curate-as-you-go" pipeline where human review gates downstream stages was considered and rejected because the user is one person extracting from 108 chapters plus 左传/史记; making curation mandatory would mean the system is unusable until hundreds of hours of review are done. Optional retrospective curation lets the system deliver value immediately and improve incrementally.

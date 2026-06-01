@@ -33,7 +33,9 @@ from pipeline.stage5_link.merge import (
     reject_merge,
 )
 
-LIVE_DB = Path(__file__).resolve().parent.parent.parent / "data" / "changjuan.sqlite"
+LIVE_DB = (
+    Path(__file__).resolve().parent.parent.parent / "data" / "books" / "dzl" / "canonical.sqlite"
+)
 
 
 def _migrate_audit_log_check(db_path: Path) -> None:
