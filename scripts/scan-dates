@@ -64,6 +64,13 @@ def main() -> int:
     ap.add_argument("--db", default="data/changjuan.sqlite")
     ap.add_argument("--reigns", default="data/reigns")
     ap.add_argument("--band", type=int, default=25, help="chapter-outlier deviation (years)")
+    ap.add_argument(
+        "--grace",
+        type=int,
+        default=2,
+        help="reign-window tolerance (years) — absorbs accession/death-year counting "
+        "convention differences (当年改元 vs 逾年改元); only deviations beyond this are flagged",
+    )
     ap.add_argument("--out", default="data/date_issues.yaml")
     args = ap.parse_args()
 
@@ -79,6 +86,17 @@ def main() -> int:
     # all dated events with their chapter
     # life-events that legitimately predate a person's reign — exempt from reign_window
     BIRTH_TYPES = {"出生", "生", "诞生"}
+    # acts that require holding sovereign power; doing one BEFORE accession is a real
+    # date error (e.g. 共叔段 封邑). Other pre-accession acts (谋叛, 出奔…) are plausibly
+    # done as a 公子 and are only flagged 'medium' for human judgement.
+    SOVEREIGN_TYPES = {
+        "封邑", "封赏", "赏功", "册封", "任命", "迁都", "大赦", "会盟", "盟会",
+        "朝聘", "巡狩", "纳贡", "锡命", "拜相", "拜将", "受职",
+    }
+    # posthumous apparitions / dreams — a dead ruler "acting" after reign-end is expected
+    # in the novel's register; do not treat as a date error.
+    POSTHUMOUS_TYPES = {"显灵", "托梦", "显圣", "报梦", "托优"}
+    GOV_ROLES = {"主行", "主问", "主将", "颁令", "即位"}
     ev_type: dict[str, str] = dict(db.execute("SELECT id, type FROM events;"))
 
     ev_year: dict[str, int] = {}
@@ -123,8 +141,8 @@ def main() -> int:
                 continue
             windows = reign[key]
             y = ev_year[eid]
-            # violation only if outside EVERY reign window for this ruler
-            if any(min(s, e) <= y <= max(s, e) for s, e, _ in windows):
+            # violation only if outside EVERY reign window (± grace for year-counting fuzz)
+            if any(min(s, e) - args.grace <= y <= max(s, e) + args.grace for s, e, _ in windows):
                 continue
             rid = windows[0][2]
             k = (eid, rid)
@@ -144,23 +162,40 @@ def main() -> int:
             NEAR = 30
             chera = ch_median.get(ch)
             near = chera is not None and any(lo - NEAR <= chera <= hi + NEAR for lo, hi in spans)
+            overall_start = max(hi for _, hi in spans)  # accession (earliest BCE = largest)
+            overall_end = min(lo for lo, _ in spans)  # reign end (latest BCE = smallest)
+            etype = ev_type.get(eid, "")
+            direction = "before_accession" if y > overall_start else "after_reign"
+            sovereign = etype in SOVEREIGN_TYPES and role in GOV_ROLES
+
+            posthumous = etype in POSTHUMOUS_TYPES or role in {"显灵", "显圣", "托梦", "报梦"}
+            if not near:
+                sev, interp = "low", "likely_wrong_ruler_match_collision"
+            elif posthumous and direction == "after_reign":
+                sev, interp = "low", "posthumous_apparition_or_dream"
+            elif direction == "after_reign":
+                sev, interp = "high", "acts_after_reign_end_or_table_gap"
+            elif sovereign:
+                sev, interp = "high", "sovereign_act_before_accession_likely_error"
+            else:
+                sev, interp = "medium", "pre_accession_as_公子_verify"
+
             issues.append(
                 {
                     "check": "reign_window",
                     "event_id": eid,
                     "chapter": ch,
                     "year_bce": y,
+                    "type": etype,
+                    "role": role,
+                    "direction": direction,
                     "inference_kind": ev_kind.get(eid, ""),
-                    "detail": f"{key[1]} ({sname}) reign {wtxt}; event year {y} outside all windows"
+                    "detail": f"{key[1]} ({sname}) reign {wtxt}; event year {y} {direction}"
                     + ("" if chera is None else f"; ch{ch} era ~{int(chera)}"),
                     "deviation": dev,
                     "suggested": f"within {wtxt} BCE",
-                    "interpretation": (
-                        "likely_event_date_error_or_reign_table_gap"
-                        if near
-                        else "likely_wrong_ruler_match_collision"
-                    ),
-                    "severity": "high" if near else "low",
+                    "interpretation": interp,
+                    "severity": sev,
                     "cluster": f"ch{ch}",
                 }
             )
@@ -203,6 +238,9 @@ def main() -> int:
             "undated": len(undated),
             "reign_window_high": sum(
                 1 for i in issues if i["check"] == "reign_window" and i["severity"] == "high"
+            ),
+            "reign_window_medium": sum(
+                1 for i in issues if i["check"] == "reign_window" and i["severity"] == "medium"
             ),
             "reign_window_low": sum(
                 1 for i in issues if i["check"] == "reign_window" and i["severity"] == "low"

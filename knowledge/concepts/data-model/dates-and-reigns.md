@@ -144,10 +144,13 @@ Drafted inline following the schema above; curator-trimmed during Phase 4 Task 5
 `scripts/scan-dates` (read-only) collects suspect deed dates into a ranked
 `data/date_issues.yaml` (gitignored). Checks: **reign_window** — an event's
 `year_bce` falls outside the reign span of a ruler-participant, matched by
-**state + 本名** (avoids same-谥号 collisions) and multi-reign aware; a hit is
-classified `high` only when the matched reign sits near the event's *chapter
-era* (else it is a wrong-ruler collision → `low`); birth-type events (`出生`)
-are exempt. Plus **chapter_outlier** (year far from chapter median) and an
+**state + 本名** (avoids same-谥号 collisions) and multi-reign aware; a hit is classified `high` only when (a) the matched reign sits near the event's
+*chapter era* (else wrong-ruler collision → `low`), AND (b) the deviation exceeds
+`--grace` (default 2y, to absorb 当年改元/逾年改元 boundary fuzz). Pre-accession
+violations stay `high` only for sovereign acts (封邑/会盟/任命… as 主行); other
+pre-accession acts (谋叛/出奔 by a 公子) → `medium`. Births (`出生`) and posthumous
+apparitions (显灵/托梦, by type or role) are exempt. Each issue carries a
+`direction` (before_accession / after_reign). Plus **chapter_outlier** (year far from chapter median) and an
 **undated** backlog grouped by chapter. This is the check that catches the
 共叔段 case (events dated 756 vs 郑庄公 reign 743–701).
 
