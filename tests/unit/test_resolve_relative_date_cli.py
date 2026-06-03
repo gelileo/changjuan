@@ -128,3 +128,29 @@ def test_resolve_dangling_anchor_errors(tmp_path: Path) -> None:
     assert result.exit_code != 0
     output = (result.stdout + result.stderr).lower()
     assert "not found" in output or "dangling" in output
+
+
+def test_backfill_narrative_dates_fills_and_audits(tmp_path: Path) -> None:
+    canonical = _seed(tmp_path)
+    # Give both events a narrative position in the same chapter; the dated anchor
+    # (771) sits at an earlier paragraph than the undated relative event.
+    canonical.executemany(
+        "INSERT INTO entity_citations (entity_kind, entity_id, citation_id) VALUES ('event',?,?)",
+        [("evt:anchor", "chk:dzl:7:3"), ("evt:rel", "chk:dzl:7:5")],
+    )
+    canonical.commit()
+
+    result = CliRunner().invoke(app, ["backfill-narrative-dates", "--repo-root", str(tmp_path)])
+    assert result.exit_code == 0, result.stdout + result.stderr
+
+    db = open_canonical_db(tmp_path / "data" / "books" / "dzl" / "canonical.sqlite")
+    rel = json.loads(db.execute("SELECT date_json FROM events WHERE id='evt:rel'").fetchone()[0])
+    assert rel["year_bce"] == 771  # inherits the nearest prior dated event
+    assert rel["relative_anchor_event_id"] == "evt:anchor"
+    assert rel["narrative_inferred"] is True
+    # Regression guard for the audit_log change_kind CHECK constraint: a valid
+    # 'set' row is written (an invalid kind raised IntegrityError before the fix).
+    n = db.execute(
+        "SELECT COUNT(*) FROM audit_log WHERE entity_id='evt:rel' AND change_kind='set'"
+    ).fetchone()[0]
+    assert n == 1

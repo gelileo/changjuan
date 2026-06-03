@@ -2340,3 +2340,15 @@ re-export to clear the live tail.
 Articles touched: concepts/data-model/dates-and-reigns.md (+backfill section;
 updated date), concepts/runtime/cli.md (+verb), concepts/verification/testing.md
 (+test note).
+
+## 2026-06-02 — fix: backfill-narrative-dates audit change_kind
+
+The `backfill-narrative-dates` verb used change_kind 'narrative_backfill', which
+isn't in the audit_log CHECK ('create','set','delete','merge','split',
+'curator_override','merge_collision_resolved','edit','merge_rejected') → IntegrityError
+at runtime. Use 'set' (the inferred year+anchor are in after_json); default actor
+→ 'system:narrative-backfill' (automated, not curator). Added a CLI test
+(test_resolve_relative_date_cli) that runs the verb against the real schema and
+asserts a valid 'set' audit row — the gap the pure-function test missed.
+
+Articles touched: concepts/runtime/cli.md (change_kind 'set'; actor).

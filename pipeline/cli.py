@@ -215,19 +215,20 @@ def resolve_relative_date_cmd(
 @app.command(name="backfill-narrative-dates")
 def backfill_narrative_dates_cmd(
     repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
-    actor: str = typer.Option("curator:default", "--actor", help="Recorded in audit_log"),
+    actor: str = typer.Option("system:narrative-backfill", "--actor", help="Recorded in audit_log"),
 ) -> None:
     """Bulk-fill year_bce for still-undated `relative_to_prior_event` events from
     their nearest prior dated event in narrative order (chapter+paragraph). Runs
     DB-wide (catches cross-chunk relatives that per-chunk resolution missed);
-    `era_only` flashbacks are left undated. Writes an audit_log row per change."""
+    `era_only` flashbacks are left undated. Writes an audit_log row per change
+    (change_kind 'set'; the after_json records the inferred year + anchor)."""
     canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
     changed = backfill_narrative_neighbor_dates(canonical)
     for eid, year_bce, anchor in changed:
         canonical.execute(
             "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
             "before_json, after_json, actor, at) "
-            "VALUES (?, 'event', ?, 'date_json', 'narrative_backfill', ?, ?, ?, datetime('now'))",
+            "VALUES (?, 'event', ?, 'date_json', 'set', ?, ?, ?, datetime('now'))",
             (
                 str(_uuid.uuid4()),
                 eid,
