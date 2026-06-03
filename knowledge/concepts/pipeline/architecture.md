@@ -19,7 +19,7 @@ affects:
 
 ## What this is
 
-The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v4 layout; `schema_version=4`).
+The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v5 layout; `schema_version=5`).
 
 ## Storage layout (multi-book, 2026-06)
 
@@ -56,6 +56,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 ## Stage 9 — citation enrichment pass
 
 `pipeline/export_enrich.py::build_citations_table` is called by `export_bundle` immediately after `_snapshot_canonical_only`, before the manifest is written. It reads every distinct `citation_id` from `entity_citations` in the snapshot, fetches the matching rows from `corpus.sqlite::chunks`, and writes a `citations(citation_id, document_id, paragraph_start, paragraph_end, text)` table into the export-only `graph.sqlite`. Fail-loud on any missing chunk id. The `export_bundle` signature requires `corpus_db: Path` and `book_meta: dict[str, object]`; the latter is sourced from `data/books/<book_id>/book-meta.json` and provides book identity and capability metadata written into `manifest.json`. `_source_editions` accepts `corpus_db` directly (and guards against a missing `documents` table for tests that supply a chunk-only corpus).
+
+## Stage 9 — narrative_seq enrichment pass
+
+`pipeline/export_enrich.py::add_narrative_seq` is called by `export_bundle` immediately after `build_citations_table` (it derives from the `citations` table). It adds an `events.narrative_seq` (INTEGER) column = `MIN` over the event's chunk citations (`citation_id LIKE 'chk:%'`) of `chapter * 100000 + paragraph_start`, with `chapter` parsed from the citation's `document_id` (`dzl:<chapter>`); `NULL` when the event has no chunk citation. Indexed. This is a sub-year chronological sort key: the novel narrates chronologically, so within a year an event's position is its earliest chapter+paragraph. Readers order year-grouped lists (deeds, timeline) by `year_bce DESC, COALESCE(narrative_seq, <big>) ASC` instead of importance/id. Full rationale + the reader contract live in `concepts/pipeline/export-contract.md`.
 
 ## Stage 9 — pinyin enrichment pass
 

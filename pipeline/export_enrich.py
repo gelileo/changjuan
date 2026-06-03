@@ -227,6 +227,32 @@ def add_event_prominence(graph_db: Path) -> None:
         )
 
 
+def add_narrative_seq(graph_db: Path) -> None:
+    """Add `events.narrative_seq` (INTEGER): a sub-year chronological sort key.
+
+    《东周列国志》 narrates chronologically, so an event's position WITHIN a year is
+    its earliest chunk citation's chapter, then paragraph. document_id is "dzl:<ch>";
+    seq = chapter * 100000 + paragraph_start (paragraphs stay well under 100000 per
+    chapter). NULL when an event has no chunk citation. Readers order year-grouped
+    lists with `ORDER BY year_bce DESC, COALESCE(narrative_seq, <big>) ASC` instead
+    of a per-query min-join over citations. MUST run after build_citations_table().
+    """
+    with sqlite3.connect(graph_db) as g:
+        cols = [r[1] for r in g.execute("PRAGMA table_info(events);")]
+        if "narrative_seq" not in cols:
+            g.execute("ALTER TABLE events ADD COLUMN narrative_seq INTEGER;")
+        g.execute(
+            "UPDATE events SET narrative_seq = ("
+            "  SELECT MIN("
+            "    CAST(substr(c.document_id, instr(c.document_id, ':') + 1) AS INTEGER) * 100000"
+            "    + COALESCE(c.paragraph_start, 0))"
+            "  FROM entity_citations ec JOIN citations c ON c.citation_id = ec.citation_id"
+            "  WHERE ec.entity_kind = 'event' AND ec.entity_id = events.id"
+            "    AND ec.citation_id LIKE 'chk:%');"
+        )
+        g.execute("CREATE INDEX IF NOT EXISTS idx_events_narrative_seq ON events(narrative_seq);")
+
+
 def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
     """Add `states.prominence` (REAL) + `states.prominence_tier` (TEXT:
     'major' | 'minor') to the snapshot.

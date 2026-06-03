@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 
 from pipeline.export_enrich import (
+    add_narrative_seq,
     add_pinyin_columns,
     build_citations_table,
     build_deed_importance,
@@ -41,6 +42,50 @@ def _mk_corpus(path: Path) -> None:
                 ("chk:dzl:9:9", "dzl:9", 9, 9, "uncited chunk", "h3"),
             ],
         )
+
+
+def test_add_narrative_seq_min_chapter_then_paragraph(tmp_path: Path) -> None:
+    graph = tmp_path / "graph.sqlite"
+    with sqlite3.connect(graph) as c:
+        c.execute("CREATE TABLE events (id TEXT PRIMARY KEY, type TEXT);")
+        c.executemany(
+            "INSERT INTO events VALUES (?,?);",
+            [("evt:mid", "x"), ("evt:later", "x"), ("evt:nocite", "x")],
+        )
+        c.execute(
+            "CREATE TABLE entity_citations (entity_kind TEXT, entity_id TEXT, citation_id TEXT);"
+        )
+        c.executemany(
+            "INSERT INTO entity_citations VALUES ('event',?,?);",
+            [
+                ("evt:mid", "chk:dzl:76:16"),  # later chapter
+                ("evt:mid", "chk:dzl:75:31"),  # earliest → wins the MIN
+                ("evt:later", "chk:dzl:77:17"),
+                ("evt:nocite", "run:extract-chX"),  # non-chk → ignored
+            ],
+        )
+        c.execute(
+            "CREATE TABLE citations (citation_id TEXT, document_id TEXT, "
+            "paragraph_start INTEGER, paragraph_end INTEGER, text TEXT);"
+        )
+        c.executemany(
+            "INSERT INTO citations VALUES (?,?,?,?,'');",
+            [
+                ("chk:dzl:76:16", "dzl:76", 16, 16),
+                ("chk:dzl:75:31", "dzl:75", 31, 31),
+                ("chk:dzl:77:17", "dzl:77", 17, 17),
+            ],
+        )
+
+    add_narrative_seq(graph)
+
+    with sqlite3.connect(graph) as c:
+        seq = dict(c.execute("SELECT id, narrative_seq FROM events;"))
+    assert seq["evt:mid"] == 75 * 100000 + 31  # MIN across citations → earliest chapter
+    assert seq["evt:later"] == 77 * 100000 + 17
+    assert seq["evt:nocite"] is None  # no chunk citation
+    # Ordering key behaves: earlier chapter sorts first, citation-less last.
+    assert seq["evt:mid"] < seq["evt:later"]
 
 
 def test_build_citations_table_denormalizes_cited_chunks(tmp_path: Path) -> None:

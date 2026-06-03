@@ -2303,3 +2303,21 @@ Also narrowed the `affects:` glob in both configuration.md and knowledge-graph.m
 from `pipeline/stage5_link/**` to `pipeline/stage5_link/scoring.py` — the over-broad
 glob false-flagged this merge.py edit against two unrelated articles; the note in each
 only concerns the scoring.py promotion-waiver.
+
+## 2026-06-02 — export: events.narrative_seq (schema_version 5)
+
+Added `add_narrative_seq` to export_enrich.py + wired into stage9_export.py after
+build_citations_table; bumped SCHEMA_VERSION 4 → 5. `events.narrative_seq` (INTEGER)
+= MIN over the event's chk: citations of chapter*100000 + paragraph_start (chapter
+parsed from document_id "dzl:N"); NULL when no chunk citation. Gives a sub-year
+chronological sort key so year-grouped reader lists (deeds, timeline) order by
+narration order instead of importance/id — fixes cases like 吴王阖闾's 506 BCE deeds
+where a high-score ch.77 act jumped ahead of ch.75/76 ones. Indexed. +1 unit test
+(test_export_enrich), updated the schema_version assertion in test_stage9_export.
+Not yet exported to a live bundle; the reader currently uses the equivalent
+per-query min-join (changjuan-reader queries.ts) until the next export is vendored.
+
+Articles touched: concepts/pipeline/export-contract.md (+narrative_seq section,
+v5 history; frontmatter status current→mature), concepts/pipeline/architecture.md
+(+Stage 9 narrative_seq pass; v5 layout), concepts/verification/testing.md
+(+narrative_seq test, schema_version bump note).

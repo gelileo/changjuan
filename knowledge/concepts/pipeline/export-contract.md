@@ -2,8 +2,8 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-05-30
-status: current
+updated: 2026-06-02
+status: mature
 load_bearing: true
 affects:
   - pipeline/stage9_export.py
@@ -100,6 +100,25 @@ and `add_state_prominence`, both running after `build_deed_importance`.
 Both mirror the persons contract: per-user favorites are NOT stored here; the
 reader unions its local bookmark ids with the prominent set at read time.
 
+## `events.narrative_seq`: sub-year chronological sort key
+
+Added in schema_version **5** by `pipeline/export_enrich.py::add_narrative_seq`,
+which runs **after** `build_citations_table` (it derives from the `citations` table).
+
+- `narrative_seq` (INTEGER) = `MIN` over the event's **chunk** citations
+  (`citation_id LIKE 'chk:%'`) of `chapter * 100000 + paragraph_start`, where
+  `chapter` is parsed from the citation's `document_id` (`dzl:<chapter>`).
+  `NULL` when the event has no chunk citation.
+- **Why:** 《东周列国志》 narrates chronologically, so an event's position *within a
+  year* is its earliest chapter+paragraph. Without this, year-grouped lists fall
+  back to importance/id and misorder (e.g. a high-score ch.77 deed jumping ahead
+  of ch.75/76 ones in the same year). An indexed column lets readers sort cheaply.
+- **Reader contract:** year-grouped lists order
+  `... year_bce DESC, COALESCE(narrative_seq, <big>) ASC, …` — citation-less
+  events sort last within their year. **Residual:** multiple events citing the
+  *same* chunk share a `narrative_seq` and can't be separated (reader falls back to
+  `score`); finer intra-chunk order is not modeled.
+
 ## SQLite snapshot: VACUUM INTO then drop
 
 The snapshot (`_snapshot_canonical_only`) is built by opening a connection to the canonical `src_db` and running `VACUUM INTO <snap_path>`, then dropping implementation tables from the snapshot. `VACUUM INTO` writes a complete, defragmented copy and preserves all indexes, views, and constraints without re-creating them.
@@ -118,7 +137,7 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 4,
+  "schema_version": 5,
   "generated_at": "<ISO 8601 UTC>",
   "book_id": "dzl",
   "title": "东周列国志",
@@ -137,7 +156,7 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 4` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 5` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
@@ -165,12 +184,16 @@ v2 renames the snapshot artifact to `graph.sqlite`. Backward-compatible addition
 
 v3 adds `persons.prominence` (REAL) + `persons.prominence_tier` (TEXT) — see the `persons.prominence` section above. The bump to 3 is deliberate even though the columns are additive: the reader's default-list contract gates on these columns being present, so a consumer must be able to detect their absence via `schema_version`. The live bundle is `changjuan-export-2026-06-v3`.
 
-### v4 (current)
+### v4
 
 v4 adds `events.prominence(_tier)` + `states.prominence(_tier)` — see the section above. Live bundle: `dongzhoulieguozhi-export-2026-06-v6`.
 
+### v5 (current)
+
+v5 adds `events.narrative_seq` (INTEGER) — see the section above. Additive, but the bump is deliberate so a reader adopting the column-based sub-year ordering can gate on its presence. Not yet exported to a live bundle (the reader still uses the equivalent per-query min-join until the next export is vendored).
+
 ## What would invalidate this article
 
-- Schema version bumped beyond v4 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v5 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.

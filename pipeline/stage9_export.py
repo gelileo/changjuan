@@ -18,6 +18,7 @@ from pathlib import Path
 
 from pipeline.export_enrich import (
     add_event_prominence,
+    add_narrative_seq,
     add_pinyin_columns,
     add_prominence,
     add_state_prominence,
@@ -25,7 +26,7 @@ from pipeline.export_enrich import (
     build_deed_importance,
 )
 
-SCHEMA_VERSION = 4  # v4: events.prominence(_tier) + states.prominence(_tier)
+SCHEMA_VERSION = 5  # v5: events.narrative_seq (sub-year chronological sort key)
 
 
 def export_bundle(
@@ -57,6 +58,7 @@ def export_bundle(
     snap_path = out_dir / "graph.sqlite"
     _snapshot_canonical_only(src_db, snap_path)
     build_citations_table(snap_path, corpus_db)
+    add_narrative_seq(snap_path)  # after citations (derives chapter/para from them)
     add_pinyin_columns(snap_path)
     build_deed_importance(snap_path)
     add_prominence(snap_path, prominence_overrides)  # after deed_importance (derives from it)
