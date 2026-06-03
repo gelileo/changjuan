@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Dump a chapter's chunks from data/corpus.sqlite as readable Markdown.
+"""Dump a chapter's chunks from a book's corpus.sqlite as readable Markdown.
 
 Usage:
-    scripts/read-chapter 1                       # writes data/readable/ch01.md
+    scripts/read-chapter 1                       # writes data/books/dzl/readable/ch01.md
     scripts/read-chapter 1 --print               # also prints to stdout
+    scripts/read-chapter 1 --book-id dzl         # pick the book (default: dzl)
     scripts/read-chapter 1 -o /tmp/foo.md        # custom output path
 
-The output is one chunk per section, with chunk_id + paragraph range as a
-heading. Useful when hand-annotating golden YAML — keep this file open in
-one editor pane and the YAML files in another.
+Paths default to the per-book layout `data/books/<book_id>/{corpus.sqlite,readable/}`
+(`--db` / `-o` override). The output is one chunk per section, with chunk_id +
+paragraph range as a heading. Useful when hand-annotating golden YAML — keep this
+file open in one editor pane and the YAML files in another.
 """
 
 from __future__ import annotations
@@ -17,8 +19,6 @@ import argparse
 import sqlite3
 import sys
 from pathlib import Path
-
-DEFAULT_DB = Path("data/corpus.sqlite")
 
 
 def render_chapter(db_path: Path, chapter: int) -> str:
@@ -61,17 +61,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Dump a chapter's chunks as Markdown.")
     parser.add_argument("chapter", type=int, help="chapter number (e.g., 1)")
     parser.add_argument(
+        "--book-id",
+        default="dzl",
+        help="book id under data/books/ (default: dzl); sets the default db + output dir",
+    )
+    parser.add_argument(
         "--db",
         type=Path,
-        default=DEFAULT_DB,
-        help=f"path to corpus.sqlite (default: {DEFAULT_DB})",
+        default=None,
+        help="path to corpus.sqlite (default: data/books/<book-id>/corpus.sqlite)",
     )
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
         default=None,
-        help="output markdown path (default: data/readable/ch<NN>.md)",
+        help="output markdown path (default: data/books/<book-id>/readable/ch<NN>.md)",
     )
     parser.add_argument(
         "--print",
@@ -81,8 +86,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    md = render_chapter(args.db, args.chapter)
-    out_path = args.output or Path(f"data/readable/ch{args.chapter:02d}.md")
+    book_root = Path("data/books") / args.book_id
+    db_path = args.db or book_root / "corpus.sqlite"
+    md = render_chapter(db_path, args.chapter)
+    out_path = args.output or book_root / "readable" / f"ch{args.chapter:02d}.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(md, encoding="utf-8")
     print(f"wrote {out_path} ({len(md):,} chars)", file=sys.stderr)

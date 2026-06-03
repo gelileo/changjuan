@@ -73,7 +73,7 @@ Convert to zero-padded two-digit form: `ch{N:02d}`.
 ./scripts/read-chapter $CHAPTER --print
 ```
 
-This writes `data/readable/ch{N:02d}.md` (Markdown with one section per chunk,
+This writes `data/books/dzl/readable/ch{N:02d}.md` (Markdown with one section per chunk,
 chunk id + paragraph range as the heading, raw paragraph text in a fenced block)
 and also prints to stdout. Read it once before starting extraction — it's the
 single source of truth for `chunk_id`, paragraph ranges, and the exact NFC bytes

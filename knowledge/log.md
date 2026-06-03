@@ -2352,3 +2352,18 @@ at runtime. Use 'set' (the inferred year+anchor are in after_json); default acto
 asserts a valid 'set' audit row — the gap the pure-function test missed.
 
 Articles touched: concepts/runtime/cli.md (change_kind 'set'; actor).
+
+## 2026-06-02 — scripts/read-chapter defaults → per-book layout
+
+read-chapter still defaulted to the pre-migration data/corpus.sqlite (absent) and
+data/readable/ — which is why ch02–06 readable prose was easy to miss and a
+no-flag run would fail or write to the wrong place. Added --book-id (default dzl);
+db defaults to data/books/<book-id>/corpus.sqlite and output to
+data/books/<book-id>/readable/ch<NN>.md (--db/-o still override). Synced the
+extract-v2 skill's documented output path + corrected stale `data/readable/`
+mentions across the readable-payload docs.
+
+Articles touched: concepts/pipeline/extraction.md (read-chapter path + bumped
+date), concepts/pipeline/incremental.md (skill step-3 read-chapter per-book
+defaults note), concepts/pipeline/architecture.md, concepts/pipeline/export-contract.md,
+concepts/runtime/cli.md (stale `data/readable/` → `data/books/<book-id>/readable/`).

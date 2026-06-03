@@ -2,7 +2,7 @@
 title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
-updated: 2026-05-23
+updated: 2026-06-02
 implemented: Task 38 (variants_json stored in candidate_persons)
 status: thin
 load_bearing: true
@@ -128,8 +128,11 @@ do not change between prompt iterations.
 Two scripts shave the iteration loop for any chapter beyond Ch.1:
 
 - **`scripts/read-chapter <N>`** dumps the chapter's chunks to
-  `data/readable/ch{NN}.md` (one section per chunk, paragraph-range heading,
-  raw text fenced) and prints to stdout with `--print`. Replaces ad-hoc
+  `data/books/<book-id>/readable/ch{NN}.md` (default book `dzl`; reads
+  `data/books/<book-id>/corpus.sqlite`; `--book-id`/`--db`/`-o` override) — one
+  section per chunk, paragraph-range heading, raw text fenced — and prints to
+  stdout with `--print`. (Defaults updated 2026-06-02 from the pre-migration
+  `data/corpus.sqlite` / `data/readable/` to the per-book layout.) Replaces ad-hoc
   `sqlite3` queries against `data/corpus.sqlite` as the source of truth for
   `chunk_id`, paragraph numbers, and the verbatim NFC bytes of each quote.
 - **`scripts/check-extraction <yaml>`** runs the JSON schema and all five
