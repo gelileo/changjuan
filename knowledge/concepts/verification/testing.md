@@ -207,6 +207,15 @@ Three additional tests (Task 29 v2 fix) cover the parenthesized-narrative-note c
 `test_empty_parens_stays_null` (`"()"` also leaves year_bce None — empty parens carry
 no semantic signal). These guard `_offset_from_original`'s parenthesized-shorthand branch.
 
+One more test (narrative-neighbor backfill) covers `backfill_narrative_neighbor_dates`:
+`test_backfill_narrative_neighbor_dates_inherits_prior_dated_event` builds an
+in-memory `events` + `entity_citations` DB (evt:forge=514 @ chk:dzl:74:9;
+evt:sword=null/`relative_to_prior_event` @ same chunk; evt:flashback=null/`era_only`;
+evt:nocite=null/relative with no citation). Asserts the relative event inherits 514
+with `relative_anchor_event_id=evt:forge` + `narrative_inferred=True`, the `era_only`
+flashback and the citation-less event stay null, the dated anchor is untouched, and
+the returned change list is exactly `[("evt:sword", 514, "evt:forge")]`.
+
 ## Stage 7 load_candidate_states tests
 
 `tests/unit/test_stage7_load_states.py` (Phase 2 Task 17) exercises `pipeline.stage7_load.load_candidate_states`. A `_seed_candidate_state` helper inserts a minimal `candidate_states` row (using `chunk_id`/`quote` columns matching the canonical schema). Three tests:

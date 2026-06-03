@@ -2321,3 +2321,22 @@ Articles touched: concepts/pipeline/export-contract.md (+narrative_seq section,
 v5 history; frontmatter status current→mature), concepts/pipeline/architecture.md
 (+Stage 9 narrative_seq pass; v5 layout), concepts/verification/testing.md
 (+narrative_seq test, schema_version bump note).
+
+## 2026-06-02 — dates: narrative-neighbor backfill for the undated relative tail
+
+Added `backfill_narrative_neighbor_dates(conn)` to dates.py + the
+`changjuan backfill-narrative-dates` CLI verb. Walks all canonical events in
+narrative order (chapter+paragraph parsed from chk:dzl:<ch>:<para> citations) and
+fills year_bce for still-undated `relative_to_prior_event` events from the nearest
+prior dated event — the deterministic DB-wide cleanup for cross-chunk relatives
+that per-chunk resolve_relative_dates can't reach. Filled dates keep the kind but
+record relative_anchor_event_id + a narrative_inferred:true flag; `era_only`
+flashbacks (秦文公之时) and citation-less events are left undated. Resolves the
+residual undated tail, e.g. the 干将莫邪 sword event ("其后…" → 514, anchored to
+the adjacent 铸剑). +1 unit test (test_dates_relative). Not yet run on the live DB
+(no canonical DB in this checkout) — run `changjuan backfill-narrative-dates` then
+re-export to clear the live tail.
+
+Articles touched: concepts/data-model/dates-and-reigns.md (+backfill section;
+updated date), concepts/runtime/cli.md (+verb), concepts/verification/testing.md
+(+test note).

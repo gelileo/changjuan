@@ -2,7 +2,7 @@
 title: Dates, reigns, and inference kinds
 type: concept
 area: data-model
-updated: 2026-05-22
+updated: 2026-06-02
 status: thin
 load_bearing: true
 references:
@@ -77,10 +77,29 @@ Empty parens `()` are NOT treated as offset=0 — they carry no signal. Non-pare
 unknown strings (e.g., "某神秘时间") also return None so the resolver leaves
 year_bce as null rather than silently inventing a date.
 
-**Out of scope (Phase 2).** Automatic cross-chunk dereferencing (the
-walkback only sees records in the current batch). Extending
-`_RELATIVE_OFFSETS` to cover numeric patterns ("其后N年"). Both surface
-in `concepts/pipeline/incremental.md` as Phase 3+ work.
+## Narrative-neighbor backfill (DB-wide)
+
+`pipeline.dates.backfill_narrative_neighbor_dates(conn)` is a whole-DB pass that
+fills the residual undated tail that per-chunk `resolve_relative_dates` cannot
+reach. It walks **all** canonical events in narrative order — chapter then
+paragraph, parsed directly from each event's `chk:dzl:<ch>:<para>` citations
+(`MIN` over them; no denormalized table needed) — keeping a rolling "last dated
+event". Any event still `year_bce=null` with `inference_kind ==
+'relative_to_prior_event'` inherits the rolling year; 东周列国志 narrates
+chronologically, so the nearest prior dated event IS what "relative to prior
+event" means. The filled date keeps that `inference_kind` but records the
+`relative_anchor_event_id` used and a **`narrative_inferred: true`** flag (honest,
+low-trust provenance). `era_only` (genuine flashbacks, e.g. 秦文公之时 recounted
+in a later chapter) and events without a `chk:` citation are **left undated** —
+a narrative-neighbor year would be wrong for them. The pass mutates
+`events.date_json` in place and is exposed as the `changjuan backfill-narrative-dates`
+CLI verb (writes an `audit_log` row per change). This is what resolves cases like
+the 干将莫邪 sword event ("其后吴王知干将匿剑" → 514, anchored to the adjacent 铸剑).
+
+**Still out of scope.** Extending `_RELATIVE_OFFSETS` to numeric patterns
+("其后N年"); dating `era_only` flashbacks to their referenced era. Per-chunk
+`resolve_relative_dates` remains the first-pass resolver; the backfill is the
+deterministic cleanup for what it leaves null. See `concepts/pipeline/incremental.md`.
 
 ## `explicit_reign_other` — per-state YAML resolver (Phase 4 Task 2)
 

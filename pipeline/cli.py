@@ -16,7 +16,11 @@ import structlog
 import typer
 
 from pipeline.config import Config
-from pipeline.dates import RelativeResolveError, resolve_relative_dates
+from pipeline.dates import (
+    RelativeResolveError,
+    backfill_narrative_neighbor_dates,
+    resolve_relative_dates,
+)
 from pipeline.db import apply_schema, connect, open_canonical_db, open_corpus_db
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
 from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
@@ -206,6 +210,36 @@ def resolve_relative_date_cmd(
     )
     canonical.commit()
     typer.echo(f"resolved {event_id}: year_bce = {after.get('year_bce')}")
+
+
+@app.command(name="backfill-narrative-dates")
+def backfill_narrative_dates_cmd(
+    repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
+    actor: str = typer.Option("curator:default", "--actor", help="Recorded in audit_log"),
+) -> None:
+    """Bulk-fill year_bce for still-undated `relative_to_prior_event` events from
+    their nearest prior dated event in narrative order (chapter+paragraph). Runs
+    DB-wide (catches cross-chunk relatives that per-chunk resolution missed);
+    `era_only` flashbacks are left undated. Writes an audit_log row per change."""
+    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
+    changed = backfill_narrative_neighbor_dates(canonical)
+    for eid, year_bce, anchor in changed:
+        canonical.execute(
+            "INSERT INTO audit_log (id, entity_kind, entity_id, field, change_kind, "
+            "before_json, after_json, actor, at) "
+            "VALUES (?, 'event', ?, 'date_json', 'narrative_backfill', ?, ?, ?, datetime('now'))",
+            (
+                str(_uuid.uuid4()),
+                eid,
+                _json.dumps({"year_bce": None}),
+                _json.dumps({"year_bce": year_bce, "relative_anchor_event_id": anchor}),
+                actor,
+            ),
+        )
+    canonical.commit()
+    typer.echo(f"backfilled {len(changed)} event(s) from narrative neighbors")
+    for eid, year_bce, anchor in changed:
+        typer.echo(f"  {eid}: year_bce={year_bce} (anchor {anchor})")
 
 
 @app.command(name="re-extract")

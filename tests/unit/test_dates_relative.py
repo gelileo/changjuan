@@ -3,9 +3,16 @@ explicit relative_anchor_event_id support."""
 
 from __future__ import annotations
 
+import json
+import sqlite3
+
 import pytest
 
-from pipeline.dates import RelativeResolveError, resolve_relative_dates
+from pipeline.dates import (
+    RelativeResolveError,
+    backfill_narrative_neighbor_dates,
+    resolve_relative_dates,
+)
 
 
 def _ev(
@@ -137,3 +144,50 @@ def test_empty_parens_stays_null() -> None:
     ]
     out = resolve_relative_dates(records, conn=None)
     assert out[1]["date"]["year_bce"] is None  # type: ignore[index]
+
+
+def test_backfill_narrative_neighbor_dates_inherits_prior_dated_event() -> None:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE events (id TEXT PRIMARY KEY, date_json TEXT);")
+    conn.execute(
+        "CREATE TABLE entity_citations (entity_kind TEXT, entity_id TEXT, citation_id TEXT);"
+    )
+    conn.executemany(
+        "INSERT INTO events VALUES (?,?);",
+        [
+            ("evt:forge", json.dumps({"year_bce": 514, "inference_kind": "explicit_reign_zhou"})),
+            (
+                "evt:sword",
+                json.dumps({"year_bce": None, "inference_kind": "relative_to_prior_event"}),
+            ),
+            ("evt:flashback", json.dumps({"year_bce": None, "inference_kind": "era_only"})),
+            (
+                "evt:nocite",
+                json.dumps({"year_bce": None, "inference_kind": "relative_to_prior_event"}),
+            ),
+        ],
+    )
+    conn.executemany(
+        "INSERT INTO entity_citations VALUES ('event',?,?);",
+        [
+            ("evt:forge", "chk:dzl:74:9"),
+            ("evt:sword", "chk:dzl:74:9"),  # same chunk, right after the forge
+            ("evt:flashback", "chk:dzl:74:11"),
+            # evt:nocite has no chk citation → unplaceable
+        ],
+    )
+
+    changed = backfill_narrative_neighbor_dates(conn)
+
+    rows = {eid: json.loads(dj) for eid, dj in conn.execute("SELECT id, date_json FROM events")}
+    # relative event inherits the prior dated event's year, flagged + anchored
+    assert rows["evt:sword"]["year_bce"] == 514
+    assert rows["evt:sword"]["relative_anchor_event_id"] == "evt:forge"
+    assert rows["evt:sword"]["narrative_inferred"] is True
+    # era_only flashback is left undated (real flashback, not a forward ref)
+    assert rows["evt:flashback"]["year_bce"] is None
+    # no narrative position → cannot place → left undated
+    assert rows["evt:nocite"]["year_bce"] is None
+    # the dated anchor is untouched
+    assert rows["evt:forge"]["year_bce"] == 514
+    assert changed == [("evt:sword", 514, "evt:forge")]

@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sqlite3
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NotRequired, TypedDict
@@ -515,3 +516,72 @@ def resolve_relative_dates(
             rolling_anchor = date
 
     return list(records)
+
+
+def backfill_narrative_neighbor_dates(
+    conn: sqlite3.Connection,
+) -> list[tuple[str, int, str]]:
+    """Fill `year_bce` for still-undated `relative_to_prior_event` events from the
+    nearest PRIOR dated event in narrative order (chapter, then paragraph).
+
+    `resolve_relative_dates` only walks within one extraction chunk, so a
+    cross-chunk relative ref whose token/anchor never resolved stays null. Since
+    东周列国志 narrates chronologically, such an event inherits the year of the
+    closest earlier event in the text. Narrative position is parsed straight from
+    the event's `chk:dzl:<ch>:<para>` citations — no denormalized table needed.
+
+    Only `relative_to_prior_event` events are touched; `era_only` (genuine
+    flashbacks like 秦文公之时) and `unknown`/unset are left undated and never used
+    as an anchor source unless they carry a real `year_bce`. A backfilled date
+    keeps `inference_kind='relative_to_prior_event'` but records the
+    `relative_anchor_event_id` used and a `narrative_inferred: true` flag for
+    honest, low-trust provenance.
+
+    Mutates `events.date_json` in place; does NOT commit. Returns
+    `[(event_id, year_bce, anchor_event_id), …]` for the events changed.
+    """
+    # Narrative key per event: MIN over chk citations of chapter*100000 + paragraph.
+    pos: dict[str, int] = {}
+    for eid, cid in conn.execute(
+        "SELECT entity_id, citation_id FROM entity_citations "
+        "WHERE entity_kind = 'event' AND citation_id LIKE 'chk:%'"
+    ):
+        m = re.search(r":(\d+):(\d+)$", cid)
+        if m is None:
+            continue
+        key = int(m.group(1)) * 100000 + int(m.group(2))
+        if eid not in pos or key < pos[eid]:
+            pos[eid] = key
+
+    rows: list[tuple[int | None, str, dict[str, object]]] = []
+    for eid, dj in conn.execute("SELECT id, date_json FROM events"):
+        date: dict[str, object] = json.loads(dj) if dj else {}
+        rows.append((pos.get(eid), eid, date))
+    # Walk in narrative order; events with no narrative key sort last and are
+    # neither anchored from nor backfilled.
+    rows.sort(key=lambda r: (r[0] is None, r[0] or 0, r[1]))
+
+    rolling_year: int | None = None
+    rolling_id: str | None = None
+    changed: list[tuple[str, int, str]] = []
+    for narr_key, eid, date in rows:
+        if narr_key is None:
+            continue
+        yb = date.get("year_bce")
+        if isinstance(yb, int):
+            rolling_year, rolling_id = yb, eid
+            continue
+        if (
+            date.get("inference_kind") == "relative_to_prior_event"
+            and rolling_year is not None
+            and rolling_id is not None
+        ):
+            date["year_bce"] = rolling_year
+            date["relative_anchor_event_id"] = rolling_id
+            date["narrative_inferred"] = True
+            conn.execute(
+                "UPDATE events SET date_json = ? WHERE id = ?",
+                (json.dumps(date, ensure_ascii=False), eid),
+            )
+            changed.append((eid, rolling_year, rolling_id))
+    return changed
