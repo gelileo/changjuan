@@ -719,6 +719,15 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 
 This test confirms the command resolves the export dir from `Config` correctly (book slug + version → path) and successfully calls through to `publish_book`.
 
+## `build_entry` prices passthrough tests (factory prices passthrough, Task 2)
+
+Two tests added to `tests/unit/test_publish_depot.py` via a shared `_full_manifest` helper:
+
+- `test_build_entry_carries_prices_when_present` — calls `build_entry(_full_manifest(prices={"CNY": 18, "USD": 2.99}), ...)` and asserts `entry["prices"] == {"CNY": 18, "USD": 2.99}`. Verifies the conditional passthrough fires when the manifest has a `prices` key.
+- `test_build_entry_omits_prices_when_absent` — calls `build_entry(_full_manifest(), ...)` (no `prices` key) and asserts `"prices" not in entry`. Verifies the free-book contract: absent `prices` in the manifest → absent in the catalog entry.
+
+The `_full_manifest(**extra)` helper builds a minimal manifest dict from a fixed `base` (`dict[str, object]`) and merges `extra` over it, enabling single-kwarg overrides in each test.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

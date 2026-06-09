@@ -47,6 +47,8 @@ def build_entry(
     """Catalog entry = manifest fields (+ language default) + bundle descriptor."""
     entry: dict[str, Any] = {k: manifest.get(k) for k in _MANIFEST_FIELDS}
     entry["language"] = manifest.get("language", "zh-CN")
+    if manifest.get("prices"):
+        entry["prices"] = manifest["prices"]
     entry["bundle"] = {"path": bundle_path, "bytes": bytes_, "sha256": sha256}
     return entry
 

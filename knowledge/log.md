@@ -1,5 +1,12 @@
 # Build Log
 
+## 2026-06-09 — factory prices passthrough (catalog)
+
+`publish_depot.build_entry` now copies `prices` from the manifest into the
+catalog entry when present (omitted for free books).
+
+Articles touched: concepts/pipeline/depot.md.
+
 ## 2026-06-09 — factory prices passthrough (manifest)
 
 Added optional `prices` to manifest.json via `validate_prices` in
