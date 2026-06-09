@@ -2,7 +2,7 @@
 title: Automation-first pipeline architecture
 type: concept
 area: pipeline
-updated: 2026-05-22
+updated: 2026-06-09
 status: thin
 load_bearing: true
 references:
@@ -84,6 +84,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 ## Stage 9 — chapter_texts enrichment pass
 
 `pipeline/export_enrich.py::build_chapter_texts` is called by `export_bundle` immediately after `add_state_prominence` and before `_count_rows`. It creates `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT)` in the snapshot and populates it from `readable_dir/ch[0-9]*.md` (chapter number parsed from the filename, e.g. `ch01.md` → 1). An absent or empty `readable_dir` produces an empty table without error. Idempotent. This is the v6 addition that makes a downloaded book a single self-contained `.sqlite` file. See `concepts/pipeline/export-contract.md` for the full contract.
+
+## Stage 9 — prices validation pass
+
+`pipeline/stage9_export.py::validate_prices` is called by `export_bundle` immediately after the manifest dict is constructed and before `manifest.json` is written. It reads `book_meta.get("prices")` and normalises it: returns `None` for absent or empty values (free books); raises `ValueError` for unknown currencies (only CNY/USD supported via `PRICE_CURRENCIES`), non-positive amounts, non-numeric types, or booleans (which subclass `int` but must be rejected). When the result is non-None, `manifest["prices"]` is set — otherwise the key is omitted entirely. This preserves the reader's "absent → free" contract: free books carry no `prices` key, not `prices: null`.
 
 ## Stage 9 — texts/ copy pass
 

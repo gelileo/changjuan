@@ -56,6 +56,7 @@ Key fields:
 - Each `books[]` entry is the book's `manifest.json` fields plus `language` (defaults to `"zh-CN"` if absent from the manifest) plus a `bundle` descriptor.
 - `bundle.path` — relative path within the depot repo: `books/<book_id>/<book_id>-<version>.sqlite`.
 - `bundle.bytes` / `bundle.sha256` — computed at publish time from the on-disk file; the reader can use these for integrity verification.
+- `prices` (optional) — an object mapping currency codes to amounts (e.g. `{"CNY": 18, "USD": 2.99}`), passed through from the manifest only when present. Free books omit this key entirely; the reader treats an absent `prices` as free.
 
 The catalog is written by `upsert_catalog` (pure function): inserts or replaces the entry for a given `book_id`, then sorts `books[]` by `book_id`. Re-publishing a version overwrites the entry (no duplicates).
 

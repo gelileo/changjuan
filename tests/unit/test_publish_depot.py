@@ -92,6 +92,43 @@ def test_publish_book_copies_bundle_and_writes_catalog(tmp_path: Path) -> None:
     assert len([b for b in catalog2["books"] if b["book_id"] == "dzl"]) == 1
 
 
+def _full_manifest(**extra: object) -> dict[str, object]:
+    base: dict[str, object] = {
+        "book_id": "x",
+        "slug": "x",
+        "title": "X",
+        "author": "—",
+        "edition": None,
+        "cover": None,
+        "capabilities": ["cast"],
+        "schema_version": 6,
+        "counts": {"persons": 1},
+        "version": "v1",
+    }
+    base.update(extra)
+    return base
+
+
+def test_build_entry_carries_prices_when_present() -> None:
+    entry = build_entry(
+        _full_manifest(prices={"CNY": 18, "USD": 2.99}),
+        bundle_path="books/x/x-v1.sqlite",
+        bytes_=10,
+        sha256="abc",
+    )
+    assert entry["prices"] == {"CNY": 18, "USD": 2.99}
+
+
+def test_build_entry_omits_prices_when_absent() -> None:
+    entry = build_entry(
+        _full_manifest(),
+        bundle_path="books/x/x-v1.sqlite",
+        bytes_=10,
+        sha256="abc",
+    )
+    assert "prices" not in entry
+
+
 def test_publish_depot_cli(tmp_path: Path) -> None:
     import json
 

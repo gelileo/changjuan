@@ -2,9 +2,11 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from pipeline.db import apply_schema, connect
 from pipeline.schemas import CANONICAL_SCHEMA
-from pipeline.stage9_export import export_bundle
+from pipeline.stage9_export import export_bundle, validate_prices
 
 _CHUNKS_DDL = (
     "CREATE TABLE chunks (id TEXT PRIMARY KEY, document_id TEXT, "
@@ -287,3 +289,96 @@ def test_export_folds_chapter_texts_and_bumps_schema(tmp_path: Path) -> None:
             r[0] for r in snap.execute("SELECT chapter FROM chapter_texts ORDER BY chapter;")
         ]
     assert chapters == [1, 2]
+
+
+def test_validate_prices_none_and_empty_are_free() -> None:
+    assert validate_prices(None) is None
+    assert validate_prices({}) is None
+
+
+def test_validate_prices_returns_normalized_map() -> None:
+    assert validate_prices({"CNY": 18, "USD": 2.99}) == {"CNY": 18, "USD": 2.99}
+
+
+def test_validate_prices_rejects_unknown_currency() -> None:
+    with pytest.raises(ValueError):
+        validate_prices({"EUR": 5})
+
+
+def test_validate_prices_rejects_nonpositive() -> None:
+    with pytest.raises(ValueError):
+        validate_prices({"CNY": 0})
+    with pytest.raises(ValueError):
+        validate_prices({"USD": -1})
+
+
+def test_validate_prices_rejects_nonnumber() -> None:
+    with pytest.raises(ValueError):
+        validate_prices({"USD": "18"})
+    with pytest.raises(ValueError):
+        validate_prices({"USD": True})  # bool is an int subclass — must be rejected
+
+
+def test_validate_prices_rejects_nondict_truthy() -> None:
+    # Truthy non-dict (and falsy non-dict like 0/[]) are malformed, not "free".
+    with pytest.raises(ValueError):
+        validate_prices(42)
+    with pytest.raises(ValueError):
+        validate_prices([{"CNY": 18}])
+    with pytest.raises(ValueError):
+        validate_prices(0)
+
+
+def test_export_includes_prices_when_present(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "p1"
+    corpus = _empty_corpus(tmp_path)
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    meta = {**_MINIMAL_BOOK_META, "prices": {"CNY": 18, "USD": 2.99}}
+    export_bundle(
+        src,
+        out,
+        version="v1",
+        corpus_db=corpus,
+        book_meta=meta,
+        readable_dir=tmp_path / "readable",
+    )
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["prices"] == {"CNY": 18, "USD": 2.99}
+
+
+def test_export_omits_prices_when_absent(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "p2"
+    corpus = _empty_corpus(tmp_path)
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    export_bundle(
+        src,
+        out,
+        version="v1",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert "prices" not in manifest
+
+
+def test_export_rejects_malformed_prices(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    out = tmp_path / "exports" / "p3"
+    corpus = _empty_corpus(tmp_path)
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    meta = {**_MINIMAL_BOOK_META, "prices": {"EUR": 5}}
+    with pytest.raises(ValueError):
+        export_bundle(
+            src,
+            out,
+            version="v1",
+            corpus_db=corpus,
+            book_meta=meta,
+            readable_dir=tmp_path / "readable",
+        )

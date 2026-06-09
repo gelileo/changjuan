@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-06-01
+updated: 2026-06-09
 status: mature
 load_bearing: false
 references:
@@ -112,6 +112,20 @@ Export-bundle-v1 Task 5 adds three deed_importance tests:
 - `test_build_deed_importance_writes_a_row_per_participation` — DB pass test: seeds minimal `events` + `event_participants` + `entity_citations` tables (one war event, one sickbed-visit event, one person); calls `build_deed_importance`; asserts both `(event_id, person_id)` rows appear in `deed_importance` with the war row scoring higher than the visit row.
 
 These tests use `sqlite3.connect` directly (no `apply_schema`), building the minimal table shape that each enrichment pass expects. No pipeline fixtures or LLM calls needed.
+
+## validate_prices + manifest prices tests (factory prices passthrough, Task 1)
+
+Nine tests added to `tests/unit/test_stage9_export.py` covering `validate_prices` and the manifest `prices` field:
+
+- `test_validate_prices_none_and_empty_are_free` — `validate_prices(None)` and `validate_prices({})` both return `None` (free book contract).
+- `test_validate_prices_returns_normalized_map` — `{"CNY": 18, "USD": 2.99}` passes through unchanged as `dict[str, float]`.
+- `test_validate_prices_rejects_unknown_currency` — `{"EUR": 5}` raises `ValueError` (EUR not in `PRICE_CURRENCIES`).
+- `test_validate_prices_rejects_nonpositive` — `{"CNY": 0}` and `{"USD": -1}` both raise `ValueError`.
+- `test_validate_prices_rejects_nonnumber` — `{"USD": "18"}` (string) and `{"USD": True}` (bool — `bool` subclasses `int`) both raise `ValueError`.
+- `test_validate_prices_rejects_nondict_truthy` — `42`, `[{"CNY": 18}]`, and `0` all raise `ValueError` (only `None`/`{}` is "free"; other malformed values fail loudly).
+- `test_export_includes_prices_when_present` — exports with `book_meta` containing `prices: {"CNY": 18, "USD": 2.99}`; asserts `manifest["prices"]` equals the input map.
+- `test_export_omits_prices_when_absent` — exports using `_MINIMAL_BOOK_META` (no `prices` key); asserts `"prices" not in manifest`.
+- `test_export_rejects_malformed_prices` — exports with `prices: {"EUR": 5}`; asserts `ValueError` is raised before any files are written.
 
 Task A1 (event prominence pass) adds one more test:
 
@@ -705,6 +719,15 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 - Asserts exit code 0, `depot/catalog.json` exists, and `depot/books/dzl/dzl-2026-06-v8.sqlite` contains the expected bytes.
 
 This test confirms the command resolves the export dir from `Config` correctly (book slug + version → path) and successfully calls through to `publish_book`.
+
+## `build_entry` prices passthrough tests (factory prices passthrough, Task 2)
+
+Two tests added to `tests/unit/test_publish_depot.py` via a shared `_full_manifest` helper:
+
+- `test_build_entry_carries_prices_when_present` — calls `build_entry(_full_manifest(prices={"CNY": 18, "USD": 2.99}), ...)` and asserts `entry["prices"] == {"CNY": 18, "USD": 2.99}`. Verifies the conditional passthrough fires when the manifest has a `prices` key.
+- `test_build_entry_omits_prices_when_absent` — calls `build_entry(_full_manifest(), ...)` (no `prices` key) and asserts `"prices" not in entry`. Verifies the free-book contract: absent `prices` in the manifest → absent in the catalog entry.
+
+The `_full_manifest(**extra)` helper builds a minimal manifest dict from a fixed `base` (`dict[str, object]`) and merges `extra` over it, enabling single-kwarg overrides in each test.
 
 ## What would invalidate this article
 
