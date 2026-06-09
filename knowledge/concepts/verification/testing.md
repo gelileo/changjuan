@@ -696,6 +696,16 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 - Calls `publish_book(export, depot, generated_at="T")` and asserts: the bundle is physically copied to `depot/books/dzl/dzl-2026-06-v8.sqlite` with identical bytes; the returned catalog entry has `book_id=="dzl"` and `language=="zh-CN"`; `bundle.path`, `bundle.bytes`, and `bundle.sha256` are all correct (sha256 verified against `hashlib`); and `catalog.json` was written to disk with the correct `version`.
 - Re-calls `publish_book` with `generated_at="T2"` and asserts the idempotent-replace contract: exactly one `book_id=="dzl"` entry remains (no duplicate).
 
+## publish-depot CLI test
+
+`tests/unit/test_publish_depot.py::test_publish_depot_cli` (Depot B1 Task 4) exercises the `publish-depot` Typer command via `CliRunner`:
+
+- Lays out a minimal `repo_root` under `tmp_path`: `data/books/dzl/book-meta.json` (with `slug: dongzhoulieguozhi`), and `data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v8/{graph.sqlite,manifest.json}`.
+- Invokes `["publish-depot", "--depot", str(depot), "--version", "2026-06-v8", "--repo-root", str(tmp_path)]`.
+- Asserts exit code 0, `depot/catalog.json` exists, and `depot/books/dzl/dzl-2026-06-v8.sqlite` contains the expected bytes.
+
+This test confirms the command resolves the export dir from `Config` correctly (book slug + version → path) and successfully calls through to `publish_book`.
+
 ## What would invalidate this article
 
 - Adding a second test runner.

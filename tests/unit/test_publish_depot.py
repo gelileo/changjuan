@@ -90,3 +90,53 @@ def test_publish_book_copies_bundle_and_writes_catalog(tmp_path: Path) -> None:
     # Re-publishing the same book replaces (no duplicate)
     catalog2 = publish_book(export, depot, generated_at="T2")
     assert len([b for b in catalog2["books"] if b["book_id"] == "dzl"]) == 1
+
+
+def test_publish_depot_cli(tmp_path: Path) -> None:
+    import json
+
+    from typer.testing import CliRunner
+
+    from pipeline.cli import app
+
+    # Lay out a repo_root the Config will resolve: data/books/dzl/{book-meta.json,exports/...}
+    book_dir = tmp_path / "data" / "books" / "dzl"
+    book_dir.mkdir(parents=True)
+    (book_dir / "book-meta.json").write_text(
+        json.dumps({"book_id": "dzl", "slug": "dongzhoulieguozhi", "capabilities": ["cast"]}),
+        encoding="utf-8",
+    )
+    export_dir = book_dir / "exports" / "dongzhoulieguozhi-export-2026-06-v8"
+    export_dir.mkdir(parents=True)
+    (export_dir / "graph.sqlite").write_bytes(b"DB")
+    (export_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "book_id": "dzl",
+                "slug": "dongzhoulieguozhi",
+                "version": "2026-06-v8",
+                "capabilities": ["cast"],
+                "schema_version": 6,
+                "counts": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    depot = tmp_path / "depot"
+    depot.mkdir()
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "publish-depot",
+            "--depot",
+            str(depot),
+            "--version",
+            "2026-06-v8",
+            "--repo-root",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (depot / "catalog.json").exists()
+    assert (depot / "books" / "dzl" / "dzl-2026-06-v8.sqlite").read_bytes() == b"DB"

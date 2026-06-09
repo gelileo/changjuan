@@ -1,5 +1,11 @@
 # Build Log
 
+## 2026-06-08 — feat(cli): publish-depot command + depot/cli knowledge articles
+
+Added `publish-depot` Typer command to `pipeline/cli.py` (wires `pipeline.publish_depot.publish_book`). Added CliRunner test `test_publish_depot_cli` to `tests/unit/test_publish_depot.py`. Created `knowledge/concepts/pipeline/depot.md` (new article documenting the catalog contract, bundle layout, `publish_book` orchestrator, and `publish-depot` CLI). Updated `knowledge/concepts/runtime/cli.md` (`publish-depot` entry under Pipeline stages; `test_publish_depot.py` added to `affects:` frontmatter). Added `pipeline/**/publish_depot*.py` → `concepts/pipeline/depot.md` mapping row to CLAUDE.md article-mapping table.
+
+Articles touched: `concepts/pipeline/depot.md` (new), `concepts/runtime/cli.md`.
+
 ## 2026-06-08 — feat(depot): publish_book orchestrator (copy bundle + write catalog)
 
 Added end-to-end test `test_publish_book_copies_bundle_and_writes_catalog` to `tests/unit/test_publish_depot.py`. The test verifies the `publish_book` orchestrator (already implemented): bundle is physically copied to `books/dzl/dzl-2026-06-v8.sqlite`, `bundle.path/bytes/sha256` match, `catalog.json` is written to disk, and re-publishing replaces rather than duplicates the catalog entry. Implementation was pulled forward in a prior commit and needed no changes.
