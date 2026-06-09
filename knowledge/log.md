@@ -1,5 +1,11 @@
 # Build Log
 
+## 2026-06-08 — feat(depot): publish_depot pure helpers (sha256/build_entry/upsert_catalog)
+
+Added `pipeline/publish_depot.py` with three pure helpers: `sha256_file(path)` (streamed 1 MiB-chunk SHA-256), `build_entry(manifest, *, bundle_path, bytes_, sha256)` (catalog entry = manifest `_MANIFEST_FIELDS` + `language` default "zh-CN" + `bundle` descriptor), and `upsert_catalog(catalog, entry, generated_at)` (replace entry for `book_id` or append, sorted by `book_id`; stamps `catalog_schema`/`generated_at`/`source`). Also includes `publish_book` orchestrator (copies `graph.sqlite` → depot, writes/merges `catalog.json`). These are the foundation for the `publish-depot` CLI (Task 4).
+
+Articles touched: `concepts/verification/testing.md` (added publish_depot pure-helpers tests section).
+
 ## 2026-06-08 — feat(export): fold chapter prose into `chapter_texts` (schema_version 6)
 
 Added `build_chapter_texts(graph_db, readable_dir)` to `pipeline/export_enrich.py` and
