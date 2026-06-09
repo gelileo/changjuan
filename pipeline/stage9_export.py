@@ -29,6 +29,29 @@ from pipeline.export_enrich import (
 
 SCHEMA_VERSION = 6  # v6: chapter_texts (full chapter prose folded into the bundle)
 
+PRICE_CURRENCIES = ("CNY", "USD")
+
+
+def validate_prices(raw: object) -> dict[str, float] | None:
+    """Normalize a book-meta `prices` value for the manifest.
+
+    Returns None when absent/empty (the book is free). Raises ValueError on a
+    malformed map: an unknown currency, or an amount that is not a positive
+    number. Currencies are limited to what the reader resolves (CNY/USD).
+    """
+    if raw is None or raw == {}:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"prices must be an object, got {type(raw).__name__}")
+    out: dict[str, float] = {}
+    for cur, amt in raw.items():
+        if cur not in PRICE_CURRENCIES:
+            raise ValueError(f"unsupported price currency {cur!r}; allowed: {PRICE_CURRENCIES}")
+        if isinstance(amt, bool) or not isinstance(amt, int | float) or amt <= 0:
+            raise ValueError(f"price for {cur} must be a positive number, got {amt!r}")
+        out[cur] = amt
+    return out
+
 
 def export_bundle(
     src_db: Path,
@@ -82,6 +105,9 @@ def export_bundle(
         "counts": counts,
         "source_corpus_editions": _source_editions(corpus_db),
     }
+    prices = validate_prices(book_meta.get("prices"))
+    if prices:
+        manifest["prices"] = prices
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )

@@ -2,7 +2,7 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-06-08
+updated: 2026-06-09
 status: mature
 load_bearing: true
 affects:
@@ -171,6 +171,8 @@ After the drops, `VACUUM` is called to reclaim space.
 `schema_version` is the integer constant `SCHEMA_VERSION = 6` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
+
+`manifest.json` carries an optional `prices` object (e.g. `{"CNY": 18, "USD": 2.99}`) sourced from `book-meta.json`, validated by `validate_prices` (currencies limited to CNY/USD; each amount must be a positive number; booleans are rejected even though `bool` subclasses `int` in Python; malformed input fails the export with `ValueError`). The key is **omitted entirely for free books** (no `prices: null`), matching the reader's "absent → free" contract. Only `None` or an empty `{}` is treated as "free"; any other malformed value — a non-dict, or `0`/`[]` — raises `ValueError` rather than silently passing as free.
 
 `source_corpus_editions` is pulled from `corpus.sqlite.documents.MAX(source_edition) GROUP BY corpus`. If `corpus.sqlite` is absent (e.g. in tests that only exercise the canonical side), this field is an empty object.
 

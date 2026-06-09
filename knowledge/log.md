@@ -1,5 +1,14 @@
 # Build Log
 
+## 2026-06-09 — factory prices passthrough (manifest)
+
+Added optional `prices` to manifest.json via `validate_prices` in
+`stage9_export.py` (CNY/USD, positive, omitted when free; non-dict/malformed
+input fails the export loudly).
+
+Articles touched: concepts/pipeline/export-contract.md, concepts/pipeline/architecture.md,
+concepts/verification/testing.md.
+
 ## 2026-06-08 — feat(cli): publish-depot command + depot/cli knowledge articles
 
 Added `publish-depot` Typer command to `pipeline/cli.py` (wires `pipeline.publish_depot.publish_book`). Added CliRunner test `test_publish_depot_cli` to `tests/unit/test_publish_depot.py`. Created `knowledge/concepts/pipeline/depot.md` (new article documenting the catalog contract, bundle layout, `publish_book` orchestrator, and `publish-depot` CLI). Updated `knowledge/concepts/runtime/cli.md` (`publish-depot` entry under Pipeline stages; `test_publish_depot.py` added to `affects:` frontmatter). Added `pipeline/**/publish_depot*.py` → `concepts/pipeline/depot.md` mapping row to CLAUDE.md article-mapping table.
