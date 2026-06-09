@@ -688,6 +688,14 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 - `test_build_entry_carries_manifest_fields_and_defaults_language` — constructs a manifest without a `language` key; calls `build_entry` and asserts: all ten `_MANIFEST_FIELDS` are copied verbatim, `language` defaults to `"zh-CN"`, and `bundle` contains the correct `path`/`bytes`/`sha256` descriptor.
 - `test_upsert_appends_then_replaces_and_sorts` — calls `upsert_catalog` three times to verify: first call appends and sets `catalog_schema==1` + `generated_at`; second call with the same `book_id` replaces (no duplicate); third call with a new `book_id` produces a list sorted by `book_id`. Guards the replace-not-duplicate contract and sort ordering.
 
+## publish_book orchestrator end-to-end test
+
+`tests/unit/test_publish_depot.py::test_publish_book_copies_bundle_and_writes_catalog` (Depot B1 Task 3) exercises the `publish_book` orchestrator in `pipeline.publish_depot` end-to-end:
+
+- Creates a fixture export dir (`graph.sqlite` with 10 bytes of content + `manifest.json` for dzl@2026-06-v8) and a depot dir in `tmp_path`.
+- Calls `publish_book(export, depot, generated_at="T")` and asserts: the bundle is physically copied to `depot/books/dzl/dzl-2026-06-v8.sqlite` with identical bytes; the returned catalog entry has `book_id=="dzl"` and `language=="zh-CN"`; `bundle.path`, `bundle.bytes`, and `bundle.sha256` are all correct (sha256 verified against `hashlib`); and `catalog.json` was written to disk with the correct `version`.
+- Re-calls `publish_book` with `generated_at="T2"` and asserts the idempotent-replace contract: exactly one `book_id=="dzl"` entry remains (no duplicate).
+
 ## What would invalidate this article
 
 - Adding a second test runner.

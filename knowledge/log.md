@@ -1,5 +1,11 @@
 # Build Log
 
+## 2026-06-08 — feat(depot): publish_book orchestrator (copy bundle + write catalog)
+
+Added end-to-end test `test_publish_book_copies_bundle_and_writes_catalog` to `tests/unit/test_publish_depot.py`. The test verifies the `publish_book` orchestrator (already implemented): bundle is physically copied to `books/dzl/dzl-2026-06-v8.sqlite`, `bundle.path/bytes/sha256` match, `catalog.json` is written to disk, and re-publishing replaces rather than duplicates the catalog entry. Implementation was pulled forward in a prior commit and needed no changes.
+
+Articles touched: `concepts/verification/testing.md` (added publish_book orchestrator end-to-end test section).
+
 ## 2026-06-08 — feat(depot): publish_depot pure helpers (sha256/build_entry/upsert_catalog)
 
 Added `pipeline/publish_depot.py` with three pure helpers: `sha256_file(path)` (streamed 1 MiB-chunk SHA-256), `build_entry(manifest, *, bundle_path, bytes_, sha256)` (catalog entry = manifest `_MANIFEST_FIELDS` + `language` default "zh-CN" + `bundle` descriptor), and `upsert_catalog(catalog, entry, generated_at)` (replace entry for `book_id` or append, sorted by `book_id`; stamps `catalog_schema`/`generated_at`/`source`). Also includes `publish_book` orchestrator (copies `graph.sqlite` → depot, writes/merges `catalog.json`). These are the foundation for the `publish-depot` CLI (Task 4).
