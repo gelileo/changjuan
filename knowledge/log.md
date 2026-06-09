@@ -1,5 +1,35 @@
 # Build Log
 
+## 2026-06-08 — feat(cli): publish-depot command + depot/cli knowledge articles
+
+Added `publish-depot` Typer command to `pipeline/cli.py` (wires `pipeline.publish_depot.publish_book`). Added CliRunner test `test_publish_depot_cli` to `tests/unit/test_publish_depot.py`. Created `knowledge/concepts/pipeline/depot.md` (new article documenting the catalog contract, bundle layout, `publish_book` orchestrator, and `publish-depot` CLI). Updated `knowledge/concepts/runtime/cli.md` (`publish-depot` entry under Pipeline stages; `test_publish_depot.py` added to `affects:` frontmatter). Added `pipeline/**/publish_depot*.py` → `concepts/pipeline/depot.md` mapping row to CLAUDE.md article-mapping table.
+
+Articles touched: `concepts/pipeline/depot.md` (new), `concepts/runtime/cli.md`.
+
+## 2026-06-08 — feat(depot): publish_book orchestrator (copy bundle + write catalog)
+
+Added end-to-end test `test_publish_book_copies_bundle_and_writes_catalog` to `tests/unit/test_publish_depot.py`. The test verifies the `publish_book` orchestrator (already implemented): bundle is physically copied to `books/dzl/dzl-2026-06-v8.sqlite`, `bundle.path/bytes/sha256` match, `catalog.json` is written to disk, and re-publishing replaces rather than duplicates the catalog entry. Implementation was pulled forward in a prior commit and needed no changes.
+
+Articles touched: `concepts/verification/testing.md` (added publish_book orchestrator end-to-end test section).
+
+## 2026-06-08 — feat(depot): publish_depot pure helpers (sha256/build_entry/upsert_catalog)
+
+Added `pipeline/publish_depot.py` with three pure helpers: `sha256_file(path)` (streamed 1 MiB-chunk SHA-256), `build_entry(manifest, *, bundle_path, bytes_, sha256)` (catalog entry = manifest `_MANIFEST_FIELDS` + `language` default "zh-CN" + `bundle` descriptor), and `upsert_catalog(catalog, entry, generated_at)` (replace entry for `book_id` or append, sorted by `book_id`; stamps `catalog_schema`/`generated_at`/`source`). Also includes `publish_book` orchestrator (copies `graph.sqlite` → depot, writes/merges `catalog.json`). These are the foundation for the `publish-depot` CLI (Task 4).
+
+Articles touched: `concepts/verification/testing.md` (added publish_depot pure-helpers tests section).
+
+## 2026-06-08 — feat(export): fold chapter prose into `chapter_texts` (schema_version 6)
+
+Added `build_chapter_texts(graph_db, readable_dir)` to `pipeline/export_enrich.py` and
+wired it into `pipeline/stage9_export.py::export_bundle` (after `add_state_prominence`,
+before `_count_rows`). `SCHEMA_VERSION` bumped 5→6. The new `chapter_texts(chapter INTEGER
+PRIMARY KEY, markdown TEXT)` table folds `readable/ch[0-9]*.md` prose into the bundle so
+a downloaded book is one self-contained `.sqlite` file; the bundled reader continues using
+the separate `texts/` payload. Tolerates absent/empty `readable_dir`; idempotent.
+
+Articles touched: `concepts/pipeline/export-contract.md` (added `chapter_texts` section,
+updated `affects:` frontmatter, updated schema version history and manifest example to v6).
+
 ## 2026-06-01 — feat(export): event + state prominence (schema_version 4)
 
 Added events.prominence(_tier) + states.prominence(_tier) for the reader's

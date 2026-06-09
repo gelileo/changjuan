@@ -22,6 +22,7 @@ from pipeline.dates import (
     resolve_relative_dates,
 )
 from pipeline.db import apply_schema, connect, open_canonical_db, open_corpus_db
+from pipeline.publish_depot import publish_book
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
 from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
 from pipeline.stage2_chunk import chunk_documents
@@ -121,6 +122,28 @@ def export(
         prominence_overrides=cfg.prominence_overrides,
     )
     typer.echo(f"export bundle written to {out_dir}")
+
+
+@app.command(name="publish-depot")
+def publish_depot(
+    depot: Path = typer.Option(..., help="Path to the changjuan-depot working tree."),
+    version: str = typer.Option(..., help="Export version label to publish (e.g., 2026-06-v8)."),
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
+    repo_root: Path | None = typer.Option(None),
+) -> None:
+    """Publish an export bundle into the depot repo: single-file .sqlite + catalog.json."""
+    cfg = _cfg(repo_root, book_id)
+    meta_path = cfg.books_dir / book_id / "book-meta.json"
+    meta = _json.loads(meta_path.read_text("utf-8")) if meta_path.exists() else {"book_id": book_id}
+    slug = meta.get("slug") or book_id
+    export_dir = cfg.exports_dir / f"{slug}-export-{version}"
+    if not (export_dir / "manifest.json").exists():
+        typer.echo(f"export bundle not found: {export_dir}", err=True)
+        raise typer.Exit(code=1)
+    catalog = publish_book(export_dir, depot)
+    typer.echo(
+        f"published {book_id}@{version} → {depot}; catalog has {len(catalog['books'])} book(s)"
+    )
 
 
 @app.command(name="list-unresolved-dates")

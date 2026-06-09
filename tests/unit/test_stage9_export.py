@@ -53,7 +53,7 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
     assert (out / "texts").is_dir()  # absent readable_dir → empty texts/ still created
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["version"] == "test-v1"
-    assert manifest["schema_version"] == 5
+    assert manifest["schema_version"] == 6
     assert manifest["counts"]["persons"] == 1
 
 
@@ -253,3 +253,37 @@ def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> Non
     assert manifest["edition"] == _MINIMAL_BOOK_META["edition"]
     assert manifest["capabilities"] == _MINIMAL_BOOK_META["capabilities"]
     assert manifest["cover"] == _MINIMAL_BOOK_META["cover"]  # None → JSON null branch
+
+
+def test_export_folds_chapter_texts_and_bumps_schema(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    corpus = _empty_corpus(tmp_path)
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+        conn.execute(
+            "INSERT INTO persons (id, canonical_name, confidence, provenance)"
+            " VALUES ('per:a', 'a', 0.9, 'auto');"
+        )
+
+    readable = tmp_path / "readable"
+    readable.mkdir()
+    (readable / "ch01.md").write_text("# Chapter 1\n\n词曰", encoding="utf-8")
+    (readable / "ch02.md").write_text("# Chapter 2\n\n话说", encoding="utf-8")
+
+    out = tmp_path / "exports" / "x-v6"
+    export_bundle(
+        src,
+        out,
+        version="2026-06-v8",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=readable,
+    )
+
+    manifest = json.loads((out / "manifest.json").read_text("utf-8"))
+    assert manifest["schema_version"] == 6
+    with sqlite3.connect(out / "graph.sqlite") as snap:
+        chapters = [
+            r[0] for r in snap.execute("SELECT chapter FROM chapter_texts ORDER BY chapter;")
+        ]
+    assert chapters == [1, 2]

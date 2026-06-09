@@ -8,6 +8,7 @@ unit-testable without building a full bundle.
 from __future__ import annotations
 
 import math
+import re
 import sqlite3
 from pathlib import Path
 
@@ -322,6 +323,32 @@ def add_pinyin_columns(graph_db: Path) -> None:
                 f"UPDATE {table} SET pinyin = ? WHERE rowid = ?;",
                 [(to_pinyin(n or ""), rid) for rid, n in rows],
             )
+
+
+def build_chapter_texts(graph_db: Path, readable_dir: Path) -> None:
+    """Fold full chapter prose into the export so a downloaded book is one file.
+
+    Creates `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT)` and
+    populates it from `readable_dir/ch[0-9]*.md` (chapter parsed from the
+    filename, e.g. ch01.md → 1). The bundled reader keeps using the separate
+    `texts/` payload; this table is consumed only by downloaded books (B2).
+    Tolerates an absent/empty readable_dir (table created, no rows). Idempotent.
+    """
+    with sqlite3.connect(graph_db) as g:
+        g.execute("DROP TABLE IF EXISTS chapter_texts;")
+        g.execute(
+            "CREATE TABLE chapter_texts (chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL);"
+        )
+        if not readable_dir.is_dir():
+            return
+        rows: list[tuple[int, str]] = []
+        for md in sorted(readable_dir.glob("ch[0-9]*.md")):
+            m = re.match(r"ch0*(\d+)\.md$", md.name)
+            if not m:
+                continue
+            rows.append((int(m.group(1)), md.read_text(encoding="utf-8")))
+        if rows:
+            g.executemany("INSERT INTO chapter_texts VALUES (?,?);", rows)
 
 
 def build_citations_table(graph_db: Path, corpus_db: Path) -> None:

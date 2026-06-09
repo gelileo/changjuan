@@ -126,6 +126,13 @@ schema_version 5 (narrative_seq) adds one more test and bumps one assertion:
 - `test_add_narrative_seq_min_chapter_then_paragraph` (test_export_enrich) — DB pass test for `add_narrative_seq`. Seeds three events + `entity_citations` (evt:mid cites `chk:dzl:76:16` and `chk:dzl:75:31`; evt:later cites `chk:dzl:77:17`; evt:nocite cites a non-`chk:` id) and a hand-built `citations` table. Asserts `narrative_seq`: evt:mid = `75*100000+31` (MIN across citations → earliest chapter), evt:later = `77*100000+17`, evt:nocite = `None` (no chunk citation), and evt:mid < evt:later (ordering key behaves).
 - `test_export_creates_manifest_and_sqlite` (test_stage9_export): the `schema_version` assertion bumps `4 → 5` — a required assertion change, not a weakening; the snapshot now carries `events.narrative_seq`.
 
+schema_version 6 (chapter_texts) adds two unit tests and one bundle-level test, and bumps one assertion:
+
+- `test_build_chapter_texts_one_row_per_chapter` (test_export_enrich) — creates two `ch*.md` files and a `changelog.md` (non-chapter, must be ignored), builds an empty `graph.sqlite`, calls `build_chapter_texts`, then asserts exactly the two chapter rows appear in `chapter_texts` with correct content. Verifies leading-zero stripping (`ch01.md` → 1, `ch10.md` → 10) and non-chapter-file exclusion.
+- `test_build_chapter_texts_idempotent_and_tolerates_missing_dir` (test_export_enrich) — calls `build_chapter_texts` with a non-existent dir first (asserts 0 rows), then populates a `readable/` dir with one file and calls twice; asserts exactly 1 row (idempotent drop+recreate). Covers the absent-dir branch and the idempotent-rerun contract.
+- `test_export_folds_chapter_texts_and_bumps_schema` (test_stage9_export) — end-to-end bundle test reusing the standard `apply_schema(conn, CANONICAL_SCHEMA)` + one-person setup; populates a `readable/` with two chapters, exports, and asserts `manifest["schema_version"] == 6` and `chapter_texts` in `graph.sqlite` contains exactly chapters 1 and 2 in order.
+- `test_export_creates_manifest_and_sqlite` (test_stage9_export): the `schema_version` assertion bumps `5 → 6` — required assertion change; the snapshot now carries `chapter_texts`.
+
 ## CLI tests
 
 `tests/unit/test_cli.py` exercises `pipeline.cli` via `typer.testing.CliRunner`. Five tests: `test_cli_has_ingest_chunk_load_export_commands` (invokes `app --help`, asserts exit 0, asserts all four subcommand names appear in stdout), `test_cli_ingest_dry_runs` (invokes `ingest --repo-root <empty-tmp-dir>`, asserts exit code in `{0, 1}` and no `Traceback` in stdout — the empty-dir case must exit cleanly with an error message, not crash), `test_cli_load_wires_all_five_entity_kinds` (Phase 2 Task 20 — integration test verifying the load command dispatches to all five loaders; seeds one candidate each of places, states, persons, events; invokes load; asserts all five canonical tables receive rows), `test_extract_load_cli_loads_yaml_via_cli` (Phase 2 Task 23 — end-to-end CLI test for the `extract-load` verb; creates minimal corpus and extraction YAML, invokes the verb with `--chapter`, `--extraction-file`, `--prompt-version`; asserts exit 0 and `"persons=1"` in stdout), and `test_export_missing_book_meta_exits_cleanly` (export bundle v1 code-review fix — invokes `export test-v1 --book-id dzl` against an empty `tmp_path` with no `data/books/dzl/book-meta.json`; asserts exit 1 and `"book-meta.json not found"` in output, no `Traceback`). These tests use `typer.testing.CliRunner` so no subprocess is spawned and `monkeypatch.chdir` can be used safely.
@@ -672,6 +679,32 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 ## Export enrichment tests
 
 `tests/unit/test_export_enrich.py::test_add_prominence_tiers_and_overrides` covers the schema_version-3 prominence pass: a 4-person fixture with hand-set `deed_importance` scores, temporarily shrunk `PROMINENCE_MAJOR_TOP`/`PROMINENCE_NOTABLE_TOP` cutoffs (1/2), and a `promote:` override file — asserting rank-based tiers (`major`/`notable`/`minor`), that a sparse figure is promoted out of `minor`, and that `prominence` equals the per-person deed-score sum. `tests/unit/test_stage9_export.py` asserts `manifest.schema_version == 3`.
+
+## publish_depot pure-helpers tests
+
+`tests/unit/test_publish_depot.py` (Depot B1 Task 2) exercises the three pure helpers in `pipeline.publish_depot`:
+
+- `test_sha256_file` — writes 10 bytes to a temp file, calls `sha256_file`, and asserts the hex digest matches `hashlib.sha256(b"SQLITEDATA").hexdigest()`. Validates the streamed 1 MiB-chunk read loop.
+- `test_build_entry_carries_manifest_fields_and_defaults_language` — constructs a manifest without a `language` key; calls `build_entry` and asserts: all ten `_MANIFEST_FIELDS` are copied verbatim, `language` defaults to `"zh-CN"`, and `bundle` contains the correct `path`/`bytes`/`sha256` descriptor.
+- `test_upsert_appends_then_replaces_and_sorts` — calls `upsert_catalog` three times to verify: first call appends and sets `catalog_schema==1` + `generated_at`; second call with the same `book_id` replaces (no duplicate); third call with a new `book_id` produces a list sorted by `book_id`. Guards the replace-not-duplicate contract and sort ordering.
+
+## publish_book orchestrator end-to-end test
+
+`tests/unit/test_publish_depot.py::test_publish_book_copies_bundle_and_writes_catalog` (Depot B1 Task 3) exercises the `publish_book` orchestrator in `pipeline.publish_depot` end-to-end:
+
+- Creates a fixture export dir (`graph.sqlite` with 10 bytes of content + `manifest.json` for dzl@2026-06-v8) and a depot dir in `tmp_path`.
+- Calls `publish_book(export, depot, generated_at="T")` and asserts: the bundle is physically copied to `depot/books/dzl/dzl-2026-06-v8.sqlite` with identical bytes; the returned catalog entry has `book_id=="dzl"` and `language=="zh-CN"`; `bundle.path`, `bundle.bytes`, and `bundle.sha256` are all correct (sha256 verified against `hashlib`); and `catalog.json` was written to disk with the correct `version`.
+- Re-calls `publish_book` with `generated_at="T2"` and asserts the idempotent-replace contract: exactly one `book_id=="dzl"` entry remains (no duplicate).
+
+## publish-depot CLI test
+
+`tests/unit/test_publish_depot.py::test_publish_depot_cli` (Depot B1 Task 4) exercises the `publish-depot` Typer command via `CliRunner`:
+
+- Lays out a minimal `repo_root` under `tmp_path`: `data/books/dzl/book-meta.json` (with `slug: dongzhoulieguozhi`), and `data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v8/{graph.sqlite,manifest.json}`.
+- Invokes `["publish-depot", "--depot", str(depot), "--version", "2026-06-v8", "--repo-root", str(tmp_path)]`.
+- Asserts exit code 0, `depot/catalog.json` exists, and `depot/books/dzl/dzl-2026-06-v8.sqlite` contains the expected bytes.
+
+This test confirms the command resolves the export dir from `Config` correctly (book slug + version → path) and successfully calls through to `publish_book`.
 
 ## What would invalidate this article
 

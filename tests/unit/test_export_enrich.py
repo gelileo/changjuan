@@ -4,6 +4,7 @@ from pathlib import Path
 from pipeline.export_enrich import (
     add_narrative_seq,
     add_pinyin_columns,
+    build_chapter_texts,
     build_citations_table,
     build_deed_importance,
     deed_importance,
@@ -310,3 +311,36 @@ def test_add_state_prominence_curated_allowlist(tmp_path: Path) -> None:
     assert tiers["sta:滑"] == "minor"  # not on the allow-list
     assert scores["sta:晋"] == 400.0  # 300 + 100
     assert scores["sta:滑"] == 5.0
+
+
+def test_build_chapter_texts_one_row_per_chapter(tmp_path: Path) -> None:
+    readable = tmp_path / "readable"
+    readable.mkdir()
+    (readable / "ch01.md").write_text("# Chapter 1\n\n周宣王", encoding="utf-8")
+    (readable / "ch10.md").write_text("# Chapter 10\n\n楚熊通", encoding="utf-8")
+    (readable / "changelog.md").write_text("notes", encoding="utf-8")  # non-chapter → ignored
+    graph = tmp_path / "graph.sqlite"
+    sqlite3.connect(graph).close()
+    build_chapter_texts(graph, readable)
+    with sqlite3.connect(graph) as c:
+        rows = dict(
+            c.execute("SELECT chapter, markdown FROM chapter_texts ORDER BY chapter;").fetchall()
+        )
+    assert set(rows) == {1, 10}
+    assert rows[1] == "# Chapter 1\n\n周宣王"
+    assert rows[10].startswith("# Chapter 10")
+
+
+def test_build_chapter_texts_idempotent_and_tolerates_missing_dir(tmp_path: Path) -> None:
+    graph = tmp_path / "graph.sqlite"
+    sqlite3.connect(graph).close()
+    build_chapter_texts(graph, tmp_path / "nope")  # absent dir → table created, no rows
+    with sqlite3.connect(graph) as c:
+        assert c.execute("SELECT COUNT(*) FROM chapter_texts;").fetchone()[0] == 0
+    readable = tmp_path / "readable"
+    readable.mkdir()
+    (readable / "ch01.md").write_text("x", encoding="utf-8")
+    build_chapter_texts(graph, readable)
+    build_chapter_texts(graph, readable)  # re-run is idempotent (drop + recreate)
+    with sqlite3.connect(graph) as c:
+        assert c.execute("SELECT COUNT(*) FROM chapter_texts;").fetchone()[0] == 1
