@@ -19,7 +19,7 @@ affects:
 
 ## What this is
 
-The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v5 layout; `schema_version=5`).
+The pipeline that produces the knowledge graph is a 9-stage sequential ETL: **Ingest → Chunk → Extract (LLM) → Normalize → Link & dedup (LLM) → Cross-canon check (LLM, gated) → Load → Curate (human, optional) → Freeze & export**. Each stage has typed inputs/outputs, is idempotent over its input, and is resumable from the last successful chunk. Three stages are LLM-driven (3, 5, 6) and share a content-hash cache; the rest are deterministic Python. The load-bearing rule is that **every stage produces a complete, usable best-guess result without any human in the loop**. Curation is purely retrospective: a curator can revisit and correct any record at any time, but no stage waits for human input. The output `data/changjuan.sqlite` is queryable end-to-end after any stage-7 load, with or without curation. The frozen export bundle (stage 9) writes `graph.sqlite` (v6 layout; `schema_version=6`).
 
 ## Storage layout (multi-book, 2026-06)
 
@@ -80,6 +80,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 ## Stage 9 — state prominence enrichment pass
 
 `pipeline/export_enrich.py::add_state_prominence` is called by `export_bundle` immediately after `add_event_prominence`, before the manifest is written. It adds `states.prominence` (REAL = `SUM(deed_importance.score)` over the state's persons via JOIN) and `states.prominence_tier` (`'major'` iff the state's name appears in the `states:` key of `prominence_overrides.yaml`, else `'minor'`). The tier is a curated allow-list (14 states), not rank-based — this is the key distinction from the persons and events passes. Full contract in `concepts/pipeline/export-contract.md`.
+
+## Stage 9 — chapter_texts enrichment pass
+
+`pipeline/export_enrich.py::build_chapter_texts` is called by `export_bundle` immediately after `add_state_prominence` and before `_count_rows`. It creates `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT)` in the snapshot and populates it from `readable_dir/ch[0-9]*.md` (chapter number parsed from the filename, e.g. `ch01.md` → 1). An absent or empty `readable_dir` produces an empty table without error. Idempotent. This is the v6 addition that makes a downloaded book a single self-contained `.sqlite` file. See `concepts/pipeline/export-contract.md` for the full contract.
 
 ## Stage 9 — texts/ copy pass
 

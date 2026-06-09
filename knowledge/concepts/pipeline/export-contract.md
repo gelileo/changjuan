@@ -2,11 +2,12 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-06-02
+updated: 2026-06-08
 status: mature
 load_bearing: true
 affects:
   - pipeline/stage9_export.py
+  - pipeline/export_enrich.py
 ---
 
 ## What this is
@@ -119,6 +120,17 @@ which runs **after** `build_citations_table` (it derives from the `citations` ta
   *same* chunk share a `narrative_seq` and can't be separated (reader falls back to
   `score`); finer intra-chunk order is not modeled.
 
+## `chapter_texts` table: full chapter prose
+
+Added in schema_version **6** by `pipeline/export_enrich.py::build_chapter_texts`, which runs **after** `add_state_prominence` and **before** `_count_rows` in `export_bundle` (so the table is included in manifest counts).
+
+- `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` — one row per chapter, where `chapter` is parsed from the filename (e.g. `ch01.md` → 1, leading zeros stripped). Populated from `readable_dir/ch[0-9]*.md`. Non-chapter files (e.g. `changelog.md`) are excluded by the glob and the `re.match(r"ch0*(\d+)\.md$", …)` guard.
+- **Purpose:** makes a downloaded book a single self-contained `.sqlite` file. The bundled reader continues to use the separate `texts/` payload; `chapter_texts` is consumed only by downloaded books (B2, future).
+- **Tolerates** an absent or empty `readable_dir` — the table is created with no rows; no error.
+- **Idempotent** — the function drops and recreates `chapter_texts` each run.
+
+`SCHEMA_VERSION` is now **6**.
+
 ## SQLite snapshot: VACUUM INTO then drop
 
 The snapshot (`_snapshot_canonical_only`) is built by opening a connection to the canonical `src_db` and running `VACUUM INTO <snap_path>`, then dropping implementation tables from the snapshot. `VACUUM INTO` writes a complete, defragmented copy and preserves all indexes, views, and constraints without re-creating them.
@@ -137,7 +149,7 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 5,
+  "schema_version": 6,
   "generated_at": "<ISO 8601 UTC>",
   "book_id": "dzl",
   "title": "东周列国志",
@@ -156,7 +168,7 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 5` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 6` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
@@ -188,12 +200,16 @@ v3 adds `persons.prominence` (REAL) + `persons.prominence_tier` (TEXT) — see t
 
 v4 adds `events.prominence(_tier)` + `states.prominence(_tier)` — see the section above. Live bundle: `dongzhoulieguozhi-export-2026-06-v6`.
 
-### v5 (current)
+### v5
 
-v5 adds `events.narrative_seq` (INTEGER) — see the section above. Additive, but the bump is deliberate so a reader adopting the column-based sub-year ordering can gate on its presence. Not yet exported to a live bundle (the reader still uses the equivalent per-query min-join until the next export is vendored).
+v5 adds `events.narrative_seq` (INTEGER) — see the section above. Additive, but the bump is deliberate so a reader adopting the column-based sub-year ordering can gate on its presence.
+
+### v6 (current)
+
+v6 adds `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` — full chapter prose folded into the bundle so a downloaded book is one self-contained `.sqlite` file. Populated by `export_enrich.build_chapter_texts` from `readable/ch[0-9]*.md`. Additive: the bundled reader still uses the separate `texts/` payload; only downloaded books (B2) read this table.
 
 ## What would invalidate this article
 
-- Schema version bumped beyond v5 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v6 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.

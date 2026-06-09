@@ -1,5 +1,17 @@
 # Build Log
 
+## 2026-06-08 — feat(export): fold chapter prose into `chapter_texts` (schema_version 6)
+
+Added `build_chapter_texts(graph_db, readable_dir)` to `pipeline/export_enrich.py` and
+wired it into `pipeline/stage9_export.py::export_bundle` (after `add_state_prominence`,
+before `_count_rows`). `SCHEMA_VERSION` bumped 5→6. The new `chapter_texts(chapter INTEGER
+PRIMARY KEY, markdown TEXT)` table folds `readable/ch[0-9]*.md` prose into the bundle so
+a downloaded book is one self-contained `.sqlite` file; the bundled reader continues using
+the separate `texts/` payload. Tolerates absent/empty `readable_dir`; idempotent.
+
+Articles touched: `concepts/pipeline/export-contract.md` (added `chapter_texts` section,
+updated `affects:` frontmatter, updated schema version history and manifest example to v6).
+
 ## 2026-06-01 — feat(export): event + state prominence (schema_version 4)
 
 Added events.prominence(_tier) + states.prominence(_tier) for the reader's

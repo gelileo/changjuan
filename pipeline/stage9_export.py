@@ -22,11 +22,12 @@ from pipeline.export_enrich import (
     add_pinyin_columns,
     add_prominence,
     add_state_prominence,
+    build_chapter_texts,
     build_citations_table,
     build_deed_importance,
 )
 
-SCHEMA_VERSION = 5  # v5: events.narrative_seq (sub-year chronological sort key)
+SCHEMA_VERSION = 6  # v6: chapter_texts (full chapter prose folded into the bundle)
 
 
 def export_bundle(
@@ -64,6 +65,7 @@ def export_bundle(
     add_prominence(snap_path, prominence_overrides)  # after deed_importance (derives from it)
     add_event_prominence(snap_path)  # after deed_importance (derives from it)
     add_state_prominence(snap_path, prominence_overrides)  # curated states: allow-list
+    build_chapter_texts(snap_path, readable_dir)  # fold chapter prose in (single-file distribution)
 
     counts = _count_rows(snap_path)
     manifest: dict[str, object] = {
