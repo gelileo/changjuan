@@ -115,13 +115,14 @@ These tests use `sqlite3.connect` directly (no `apply_schema`), building the min
 
 ## validate_prices + manifest prices tests (factory prices passthrough, Task 1)
 
-Eight tests added to `tests/unit/test_stage9_export.py` covering `validate_prices` and the manifest `prices` field:
+Nine tests added to `tests/unit/test_stage9_export.py` covering `validate_prices` and the manifest `prices` field:
 
 - `test_validate_prices_none_and_empty_are_free` — `validate_prices(None)` and `validate_prices({})` both return `None` (free book contract).
 - `test_validate_prices_returns_normalized_map` — `{"CNY": 18, "USD": 2.99}` passes through unchanged as `dict[str, float]`.
 - `test_validate_prices_rejects_unknown_currency` — `{"EUR": 5}` raises `ValueError` (EUR not in `PRICE_CURRENCIES`).
 - `test_validate_prices_rejects_nonpositive` — `{"CNY": 0}` and `{"USD": -1}` both raise `ValueError`.
 - `test_validate_prices_rejects_nonnumber` — `{"USD": "18"}` (string) and `{"USD": True}` (bool — `bool` subclasses `int`) both raise `ValueError`.
+- `test_validate_prices_rejects_nondict_truthy` — `42`, `[{"CNY": 18}]`, and `0` all raise `ValueError` (only `None`/`{}` is "free"; other malformed values fail loudly).
 - `test_export_includes_prices_when_present` — exports with `book_meta` containing `prices: {"CNY": 18, "USD": 2.99}`; asserts `manifest["prices"]` equals the input map.
 - `test_export_omits_prices_when_absent` — exports using `_MINIMAL_BOOK_META` (no `prices` key); asserts `"prices" not in manifest`.
 - `test_export_rejects_malformed_prices` — exports with `prices: {"EUR": 5}`; asserts `ValueError` is raised before any files are written.
