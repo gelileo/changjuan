@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
-note: 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:)
+note: "2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended for candidate_persons/candidate_states/candidate_person_states; test_dzl_export_parity skips when already migrated"
 status: mature
 load_bearing: false
 references:

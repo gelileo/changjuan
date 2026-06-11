@@ -1,5 +1,22 @@
 # Build Log
 
+## 2026-06-11 — fix(migrate): also migrate candidate_* tables; parity test skips when already migrated
+
+The `migrate_0001_state_to_group` migration only covered canonical tables; staging tables were left with the old `state_id`/`candidate_state_id` column names, causing `stage5_link/merge.py` to throw `no such column: group_id` on a migrated DB.
+
+Changes:
+1. `pipeline/migrations/migrate_0001_state_to_group.py`: After the canonical steps, added a guarded block that renames `candidate_persons.state_id → group_id`; renames `candidate_states → candidate_groups`; renames `candidate_person_states → candidate_person_groups` and `candidate_group_id` column. All steps idempotent (guarded by column/table existence checks).
+2. `tests/test_dzl_export_parity.py`: `test_dzl_migration_preserves_counts` now detects an already-migrated DB (no `states` table) and calls `pytest.skip(...)` rather than erroring.
+3. `tests/test_state_to_group_migration.py`: `OLD_SCHEMA` extended with `candidate_persons`, `candidate_states`, `candidate_person_states`; test inserts fixture rows and asserts all three candidate renames occurred after `migrate.run`.
+
+Process: restored backup, re-ran `changjuan migrate --book-id dzl` (full migration including candidate steps), re-exported `2026-06-v9-groups`.
+
+Verification: `candidate_persons` has `group_id`; `candidate_groups` + `candidate_person_groups` present; `candidate_states` + `candidate_person_states` absent.
+
+Suite: **352 passed, 2 skipped**. Integration: **4 passed, 1 skipped**.
+
+no knowledge impact beyond this log entry: migration file is already covered by `concepts/pipeline/architecture.md` and the table mapping in `CLAUDE.md`; the fix is a gap-fill with no new architecture.
+
 ## 2026-06-11 — fix(schema): groups keeps extracted 'type' + loader-set 'group_type' (was conflated)
 
 The `State→Group` rename had conflated two distinct axes into a single `group_type` column:

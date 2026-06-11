@@ -44,7 +44,24 @@ def run(conn: sqlite3.Connection) -> None:
         cur.execute("ALTER TABLE state_capitals RENAME TO group_seats;")
         cur.execute("ALTER TABLE group_seats RENAME COLUMN state_id TO group_id;")
 
-    # 5. entity_citations value rename
+    # 5. candidate tables (staging schema)
+    names = {r[0] for r in cur.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    if "candidate_persons" in names:
+        cols = {r[1] for r in cur.execute("PRAGMA table_info(candidate_persons)")}
+        if "state_id" in cols and "group_id" not in cols:
+            cur.execute("ALTER TABLE candidate_persons RENAME COLUMN state_id TO group_id;")
+    if "candidate_states" in names:
+        cur.execute("ALTER TABLE candidate_states RENAME TO candidate_groups;")
+    if "candidate_person_states" in names:
+        cur.execute("ALTER TABLE candidate_person_states RENAME TO candidate_person_groups;")
+        cgcols = {r[1] for r in cur.execute("PRAGMA table_info(candidate_person_groups)")}
+        if "candidate_state_id" in cgcols and "candidate_group_id" not in cgcols:
+            cur.execute(
+                "ALTER TABLE candidate_person_groups "
+                "RENAME COLUMN candidate_state_id TO candidate_group_id;"
+            )
+
+    # 6. entity_citations value rename
     # The table carries a CHECK constraint with old kind names. We must recreate
     # the table with the updated constraint before rewriting the values.
     cur.execute(
