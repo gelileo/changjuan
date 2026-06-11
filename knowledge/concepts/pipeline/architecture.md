@@ -77,13 +77,13 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/export_enrich.py::add_event_prominence` is called by `export_bundle` immediately after `add_prominence` (persons pass), before the manifest is written. It adds `events.prominence` (REAL = `SUM(deed_importance.score)` over participations) and `events.prominence_tier` (`'major'`/`'notable'`/`'minor'` by rank cutoffs `EVENT_MAJOR_TOP`=80 / `EVENT_NOTABLE_TOP`=280), then applies a boundary-type promotion: any `minor` event whose `type` ∈ `EVENT_BOUNDARY_TYPES` (即位/继位/嗣位/立君/弑君/薨/灭国) is raised to `notable` so reign and state boundaries always survive the default timeline filter. This bumped `SCHEMA_VERSION` from 3 to 4. Full contract in `concepts/pipeline/export-contract.md`.
 
-## Stage 9 — state prominence enrichment pass
+## Stage 9 — group prominence enrichment pass
 
-`pipeline/export_enrich.py::add_state_prominence` is called by `export_bundle` immediately after `add_event_prominence`, before the manifest is written. It adds `states.prominence` (REAL = `SUM(deed_importance.score)` over the state's persons via JOIN) and `states.prominence_tier` (`'major'` iff the state's name appears in the `states:` key of `prominence_overrides.yaml`, else `'minor'`). The tier is a curated allow-list (14 states), not rank-based — this is the key distinction from the persons and events passes. Full contract in `concepts/pipeline/export-contract.md`.
+`pipeline/export_enrich.py::add_group_prominence` is called by `export_bundle` immediately after `add_event_prominence`, before the manifest is written. It adds `groups.prominence` (REAL = `SUM(deed_importance.score)` over the group's persons via JOIN on `persons.group_id`) and `groups.prominence_tier` (`'major'` iff the group's name appears in the `states:` key of `prominence_overrides.yaml` — that key is curated DATA and left as-is after the rename — else `'minor'`). The tier is a curated allow-list (14 groups), not rank-based — this is the key distinction from the persons and events passes. Full contract in `concepts/pipeline/export-contract.md`.
 
 ## Stage 9 — chapter_texts enrichment pass
 
-`pipeline/export_enrich.py::build_chapter_texts` is called by `export_bundle` immediately after `add_state_prominence` and before `_count_rows`. It creates `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT)` in the snapshot and populates it from `readable_dir/ch[0-9]*.md` (chapter number parsed from the filename, e.g. `ch01.md` → 1). An absent or empty `readable_dir` produces an empty table without error. Idempotent. This is the v6 addition that makes a downloaded book a single self-contained `.sqlite` file. See `concepts/pipeline/export-contract.md` for the full contract.
+`pipeline/export_enrich.py::build_chapter_texts` is called by `export_bundle` immediately after `add_group_prominence` and before `_count_rows`. It creates `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT)` in the snapshot and populates it from `readable_dir/ch[0-9]*.md` (chapter number parsed from the filename, e.g. `ch01.md` → 1). An absent or empty `readable_dir` produces an empty table without error. Idempotent. This is the v6 addition that makes a downloaded book a single self-contained `.sqlite` file. See `concepts/pipeline/export-contract.md` for the full contract.
 
 ## Stage 9 — prices validation pass
 

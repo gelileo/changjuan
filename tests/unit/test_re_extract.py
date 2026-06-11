@@ -54,7 +54,7 @@ def test_reload_when_file_exists(tmp_path: Path) -> None:
     extract_dir = tmp_path / "data" / "books" / "dzl" / "extractions" / "ch01"
     extract_dir.mkdir(parents=True)
     (extract_dir / "extract-v1.yaml").write_text(
-        yaml.safe_dump({"persons": [], "events": [], "places": [], "states": [], "relations": []}),
+        yaml.safe_dump({"persons": [], "events": [], "places": [], "groups": [], "relations": []}),
         encoding="utf-8",
     )
     runner = CliRunner()

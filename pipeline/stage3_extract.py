@@ -56,7 +56,7 @@ def validate_record(
       3. Chunk-id matches: citation.chunk_id == chunk.id.
       4. Date inference_kind allowlist: only Phase 2 kinds accepted (rejects
          explicit_reign_other and any unknown enum value).
-      5. Chunk-local id resolution: cross-record FKs like primary_place_id / state_id
+      5. Chunk-local id resolution: cross-record FKs like primary_place_id / group_id
          that look like chunk-local ids (no ':' colon) must be in declared_local_ids.
     """
     citation = record.get("citation") or {}
@@ -96,7 +96,7 @@ def validate_record(
                 )
 
     # Chunk-local id integrity (e.g., primary_place_id='pl3' must be declared somewhere)
-    for ref_field in ("primary_place_id", "state_id"):
+    for ref_field in ("primary_place_id", "group_id"):
         ref = record.get(ref_field)
         if ref is None:
             continue
@@ -144,14 +144,14 @@ def load_extraction(
         {p["id"] for p in payload["persons"]}
         | {e["id"] for e in payload["events"]}
         | {pl["id"] for pl in payload["places"]}
-        | {st["id"] for st in payload["states"]}
+        | {st["id"] for st in payload["groups"]}
     )
 
     stats: dict[str, Any] = {
         "persons_written": 0,
         "events_written": 0,
         "places_written": 0,
-        "states_written": 0,
+        "groups_written": 0,
         "relations_written": 0,
         "invariant_violations": [],
     }
@@ -176,7 +176,7 @@ def load_extraction(
     persons = _validate("person", payload["persons"])
     events = _validate("event", payload["events"])
     places = _validate("place", payload["places"])
-    states = _validate("state", payload["states"])
+    groups = _validate("group", payload["groups"])
 
     # Relations: validate citation chunk_id only (no per-field justifications)
     relations: list[dict[str, Any]] = []
@@ -192,7 +192,7 @@ def load_extraction(
     # ===== persons =====
     for p in persons:
         cand_id = f"cand:per:{pipeline_run_id}:{p['id']}"
-        scoring = dict(p, _scalar_fields=["canonical_name", "gender", "state_id", "clan_name"])
+        scoring = dict(p, _scalar_fields=["canonical_name", "gender", "group_id", "clan_name"])
         conf = score_extraction_record(scoring)
         birth_json = json.dumps(p["birth_date"]) if p.get("birth_date") else None
         death_json = json.dumps(p["death_date"]) if p.get("death_date") else None
@@ -210,7 +210,7 @@ def load_extraction(
                 birth_json,
                 death_json,
                 p.get("notes"),
-                p.get("state_id"),  # YAML key stays 'state_id'; maps to DB column group_id
+                p.get("group_id"),
                 p.get("clan_name"),
                 p.get("social_category"),
                 variants_json,
@@ -277,10 +277,10 @@ def load_extraction(
         local_to_cand[pl["id"]] = cand_id
         stats["places_written"] += 1
 
-    # ===== states (now groups) =====
-    for st in states:
+    # ===== groups =====
+    for st in groups:
         cand_id = f"cand:sta:{pipeline_run_id}:{st['id']}"
-        scoring = dict(st, _scalar_fields=["name", "type", "ruling_clan"])
+        scoring = dict(st, _scalar_fields=["name", "group_type", "ruling_clan"])
         conf = score_extraction_record(scoring)
         founded_json = json.dumps(st["founded_date"]) if st.get("founded_date") else None
         ended_json = json.dumps(st["ended_date"]) if st.get("ended_date") else None
@@ -295,7 +295,7 @@ def load_extraction(
                 founded_json,
                 ended_json,
                 st.get("ruling_clan"),
-                st.get("type"),  # YAML key stays 'type'; maps to DB column group_type
+                st.get("group_type"),
                 conf,
                 pipeline_run_id,
                 st["citation"]["chunk_id"],
@@ -303,7 +303,7 @@ def load_extraction(
             ),
         )
         local_to_cand[st["id"]] = cand_id
-        stats["states_written"] += 1
+        stats["groups_written"] += 1
 
     # ===== relations =====
     # Map chunk-local id → candidate db id; fall back to the raw value for
@@ -380,9 +380,9 @@ def load_extraction(
                 ),
             )
 
-        elif kind == "person_state":
+        elif kind == "person_group":
             per_cand = _resolve_id(r["person_id"])
-            st_cand = _resolve_id(r["state_id"])
+            grp_cand = _resolve_id(r["group_id"])
             from_date_json = json.dumps(r["from_date"]) if r.get("from_date") else None
             to_date_json = json.dumps(r["to_date"]) if r.get("to_date") else None
             canonical_conn.execute(
@@ -392,7 +392,7 @@ def load_extraction(
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 (
                     per_cand,
-                    st_cand,
+                    grp_cand,
                     r.get("role", ""),
                     from_date_json,
                     to_date_json,
@@ -400,9 +400,9 @@ def load_extraction(
                 ),
             )
 
-        elif kind == "state_capital":
+        elif kind == "group_seat":
             # No candidate_group_seats staging table in current schema.
-            # Record the count but skip the DB write (matches load_candidate_state_capitals stub).
+            # Record the count but skip the DB write (matches load_candidate_group_seats stub).
             pass
 
         stats["relations_written"] += 1

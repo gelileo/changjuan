@@ -3,7 +3,7 @@ title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention); Phase 6 A4 (linker filters rejected pairs; ignore_rejections kwarg); Phase 6 A6 (linker skips already-open duplicate pairs)
+implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool group-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention); Phase 6 A4 (linker filters rejected pairs; ignore_rejections kwarg); Phase 6 A6 (linker skips already-open duplicate pairs); 2026-06-11 State→Group full rename (bridges/aliases removed)
 status: thin
 load_bearing: true
 references:
@@ -34,9 +34,9 @@ The spec proposes an LLM judge as a second pass that resolves ambiguous pairs th
 
 `pipeline/stage5_link/candidate_pool.py::candidate_pool` avoids an O(N²) exhaustive comparison by pre-filtering via SQL name-overlap. A target enters the pool only if it shares at least one name string (canonical_name or any variant) with the query candidate. Names that share no characters are never scored. The pool includes both canonical `persons` rows (cross-run targets) and same-run `candidate_persons` siblings.
 
-### Phase 4 state_id resolution
+### Phase 4 group_id resolution
 
-Candidate `state_id` is a local extraction id (e.g. `s1`) only meaningful within one run; canonical persons store canonical state ids (e.g. `sta:zhou`). Without resolution, a Ch.N candidate referencing the same state as a Ch.M canonical Person would score `state_agreement: different` and the match would land below the queue threshold even when the names point at the same state. `_resolve_state_local_to_canonical` (called from `_load_candidate` and applied to same-run candidates in the pool) joins `candidate_states` → `states` on `name` to convert `s1` → `sta:zhou` before scoring. Already-canonical values (containing `:`) pass through unchanged; values with no matching canonical state resolve to None (`one_null` rather than `different`).
+Candidate `group_id` is a local extraction id (e.g. `s1`) only meaningful within one run; canonical persons store canonical group ids (e.g. `sta:zhou`). Without resolution, a Ch.N candidate referencing the same group as a Ch.M canonical Person would score `group_agreement: different` and the match would land below the queue threshold even when the names point at the same group. `_resolve_group_local_to_canonical` (called from `_load_candidate` and applied to same-run candidates in the pool) joins `candidate_groups` → `groups` on `name` to convert `s1` → `sta:zhou` before scoring. Already-canonical values (containing `:`) pass through unchanged; values with no matching canonical group resolve to None (`one_null` rather than `different`).
 
 ## Feature dimensions and scoring formula
 
@@ -47,7 +47,7 @@ Candidate `state_id` is a local extraction id (e.g. `s1`) only meaningful within
 | `variant_overlap` | strong (canonical appears in other's variants, or canonicals identical) | +0.50 |
 | | partial (any other name-set intersection) | +0.20 |
 | | none | **HARD VETO → 0.0** |
-| `state_agreement` | same | +0.20 |
+| `group_agreement` | same | +0.20 |
 | | different | −0.40 |
 | | one_null | 0 |
 | `clan_agreement` | same | +0.10 |
@@ -64,9 +64,9 @@ The raw sum is clamped to `[0, 1]` (floated, then `max(0.0, min(1.0, ...))` appl
 
 ### `social_category` "promotion waiver" (Ch.6-10 follow-on)
 
-When `variant_overlap == "strong"` AND `state_agreement == "same"`, the −0.10 penalty for `social_category_agreement: different` is *not* applied. In 春秋-era Chinese naming a strong name match plus same state is essentially identity-confirming; a `social_category` change in that regime tracks role evolution (公子 → 君, 大夫 → 正卿, 公子→royalty after 篡立) rather than identity mismatch. The Ch.6-10 walks queued 4 of 5 candidates fitting exactly this shape — 公孙阏 (noble→military), 公子佗 (noble→royalty), 公子翚 (noble→official), 宋庄公 (noble→royalty), all the same person with an evolved title.
+When `variant_overlap == "strong"` AND `group_agreement == "same"`, the −0.10 penalty for `social_category_agreement: different` is *not* applied. In 春秋-era Chinese naming a strong name match plus same group is essentially identity-confirming; a `social_category` change in that regime tracks role evolution (公子 → 君, 大夫 → 正卿, 公子→royalty after 篡立) rather than identity mismatch. The Ch.6-10 walks queued 4 of 5 candidates fitting exactly this shape — 公孙阏 (noble→military), 公子佗 (noble→royalty), 公子翚 (noble→official), 宋庄公 (noble→royalty), all the same person with an evolved title.
 
-The waiver is narrow: it requires *both* `strong` variant overlap and `same` state. `partial` matches and cross-state name collisions remain penalized, so the original false-positive guard (two homonymous figures in different states) is intact. Tests: `test_strong_variant_same_state_diff_social_no_penalty` (positive case) and `test_diff_social_still_penalized_when_state_differs` / `test_diff_social_still_penalized_with_partial_variant` (regression guards) in `tests/unit/test_scoring.py`; `test_promotion_pattern_auto_merges` in `tests/unit/test_linker.py`.
+The waiver is narrow: it requires *both* `strong` variant overlap and `same` group. `partial` matches and cross-group name collisions remain penalized, so the original false-positive guard (two homonymous figures in different groups) is intact. Tests: `test_strong_variant_same_state_diff_social_no_penalty` (positive case) and `test_diff_social_still_penalized_when_state_differs` / `test_diff_social_still_penalized_with_partial_variant` (regression guards) in `tests/unit/test_scoring.py`; `test_promotion_pattern_auto_merges` in `tests/unit/test_linker.py`.
 
 ## Threshold dispatch
 
@@ -148,7 +148,7 @@ Spec §3 has the full step-by-step.
 `accept_merge` resolves PK collisions before retargeting:
 - `event_participants` `(event_id, person_id, role)` — higher-confidence wins; on a tie the canonical survives (candidate is the loser).
 - `person_relations` self-loops (relation from/to merged pair) — deleted; audit_log captures full row.
-- `person_states` `(person_id, state_id, role, COALESCE(from_date_json,''))` — higher-confidence wins; on a tie the canonical survives.
+- `person_groups` `(person_id, group_id, role, COALESCE(from_date_json,''))` — higher-confidence wins; on a tie the canonical survives.
 - `entity_citations` `(entity_kind, entity_id, citation_id)` — candidate row dropped; audit_log entry carries `entity_id` + `citation_id` (not just `{"duplicate":true}`).
 
 Each resolution writes an `audit_log` row with `change_kind='merge_collision_resolved'`.
@@ -164,7 +164,7 @@ field-level `audit_log` row with the §5 shape `{value, confidence,
 source_excerpt}` for both `before_json` and `after_json`.
 
 Editable fields: `gender`, `birth_date_json`, `death_date_json`, `notes`,
-`state_id`, `clan_name`, `canonical_name`. Other field names raise
+`group_id`, `clan_name`, `canonical_name`. Other field names raise
 `MergeError`.
 
 ### `reject_merge` and `defer_merge`
@@ -215,7 +215,7 @@ In the live DB, `merge_candidates.candidate_a_id` points at `candidate_persons.i
 
 **Behavior when A is in `candidate_persons`:**
 
-- **Snapshot**: `_candidate_persons_snapshot` reads the `candidate_persons` row and returns a persons-compatible dict. It drops candidate-only columns (`social_category`, `pipeline_run_id`, `chunk_id`, `quote`, `variants_json`, `match_target_id`). `state_id` values matching the local-extraction pattern (`s\d+`, e.g. `s1`) or absent from the `states` table are replaced with `NULL` so they are never folded into the canonical row.
+- **Snapshot**: `_candidate_persons_snapshot` reads the `candidate_persons` row and returns a persons-compatible dict. It drops candidate-only columns (`social_category`, `pipeline_run_id`, `chunk_id`, `quote`, `variants_json`, `match_target_id`). `group_id` values matching the local-extraction pattern (`s\d+`, e.g. `s1`) or absent from the `groups` table are replaced with `NULL` so they are never folded into the canonical row.
 - **NULL-fold**: same as the persons path.
 - **Variant fold**: variants come from `candidate_persons.variants_json` (a JSON array of `{variant, kind}` objects). Each variant is inserted into `person_variants` via `INSERT OR IGNORE`, deduped against the `UNIQUE(person_id, variant, kind)` constraint.
 - **FK retarget**: skipped. No `persons`-FK columns point at `candidate_persons` ids. `relations_retargeted = 0`.
@@ -248,16 +248,26 @@ The filter is applied **after** the rejected-check, inside the same queue-band b
 
 Stats dict gains `already_open_skipped` (always present, default 0).
 
-## State→Group rename (2026-06-11)
+## State→Group rename — full completion (2026-06-11)
 
-`candidate_pool.py` now reads `group_id` from both `candidate_persons` and
-`persons`, aliasing it as `state_id` in the SELECT (`group_id AS state_id`)
-so the scoring layer's internal dict key (`person["state_id"]`) is unchanged.
-`_resolve_state_local_to_canonical` joins `candidate_groups` → `groups`
-(was `candidate_states` → `states`). `merge.py` updates:
-`_SNAPSHOTTABLE_TABLES` has `"groups"` (was `"states"`); `_ALLOWED_EDIT_FIELDS`
-and `nullable_fields` use `"group_id"`; `_resolve_collisions_person_states`
-queries `person_groups`.
+The rename is complete end-to-end. No bridges or aliases remain.
+
+`candidate_pool.py`: reads `group_id` directly (no `AS state_id` alias);
+`_resolve_group_local_to_canonical` (was `_resolve_state_local_to_canonical`)
+joins `candidate_groups` → `groups` (was `candidate_states` → `states`);
+`_row_to_dict_with_resolved_group` sets `d["group_id"]` (was `d["state_id"]`).
+
+`scoring.py`: feature key `group_agreement` (was `state_agreement`); scorer
+reads `person["group_id"]` (was `person["state_id"]`).
+
+`merge.py`: `_LOCAL_GROUP_ID_RE` (was `_LOCAL_STATE_ID_RE`); snapshot drops
+`group_id` values matching the local-extraction pattern or absent from `groups`;
+`_resolve_collisions_person_groups` (was `_resolve_collisions_person_states`)
+queries `person_groups`; `_SNAPSHOTTABLE_TABLES` has `"groups"`;
+`_ALLOWED_EDIT_FIELDS` and `nullable_fields` use `"group_id"`.
+
+`tests/golden/merge_regression.yaml`: all `state_id:` fields renamed to
+`group_id:` (the person records fed to `person_match_score`).
 
 ## What would invalidate this article
 

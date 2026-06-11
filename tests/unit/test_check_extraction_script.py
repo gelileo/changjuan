@@ -71,7 +71,7 @@ def test_clean_yaml_exits_zero(tiny_corpus: Path, tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -102,7 +102,7 @@ def test_justification_not_in_quote_reports_error(tiny_corpus: Path, tmp_path: P
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -134,7 +134,7 @@ def test_quote_not_in_chunk_reports_error(tiny_corpus: Path, tmp_path: Path) -> 
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )

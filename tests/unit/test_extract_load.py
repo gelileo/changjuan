@@ -61,7 +61,7 @@ def test_valid_extraction_loads_to_candidates(
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -104,7 +104,7 @@ def test_invalid_record_skipped(
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -155,7 +155,7 @@ def test_loads_event_place_state_relation(
                     "justifications": {"name": "狄"},
                 },
             ],
-            "states": [
+            "groups": [
                 {
                     "id": "s1",
                     "name": "狄",
@@ -209,5 +209,5 @@ def test_loads_event_place_state_relation(
     assert stats["persons_written"] == 1
     assert stats["events_written"] == 1
     assert stats["places_written"] == 1
-    assert stats["states_written"] == 1
+    assert stats["groups_written"] == 1
     assert stats["relations_written"] >= 1

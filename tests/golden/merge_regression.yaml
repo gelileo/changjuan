@@ -8,13 +8,13 @@
 # Each pair carries:
 #   rationale  — one-sentence explanation (why this pair is same / different)
 #   source     — citation (chapter or external text, e.g., "《史记·晋世家》")
-#   person_a   — full Person record (canonical_name, variants[], state_id, ...)
+#   person_a   — full Person record (canonical_name, variants[], group_id, ...)
 #   person_b   — full Person record (same shape)
 #
 # Person record shape mirrors the canonical schema. Fields:
 #   canonical_name  (required)
 #   variants        (optional list of {variant, kind})
-#   state_id        (optional, e.g., "sta:jin")
+#   group_id        (optional, e.g., "sta:jin")
 #   social_category (optional, enum: royalty / noble / official / military /
 #                    religious / clergy / commoner / servant / foreign / mythic / unknown)
 #   clan_name       (optional)
@@ -29,7 +29,7 @@ same_person_pairs:
       canonical_name: 重耳
       variants:
         - {variant: 公子重耳, kind: 别名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: noble
       clan_name: 姬
       death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
@@ -38,7 +38,7 @@ same_person_pairs:
       variants:
         - {variant: 重耳, kind: 本名}
         - {variant: 文公, kind: 谥号}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: royalty
       clan_name: 姬
       death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
@@ -49,14 +49,14 @@ same_person_pairs:
       canonical_name: 管仲
       variants:
         - {variant: 管夷吾, kind: 本名}
-      state_id: sta:qi
+      group_id: sta:qi
       social_category: official
       death_date: {year_bce: 645, uncertainty: point, inference_kind: explicit_reign_lu}
     person_b:
       canonical_name: 管夷吾
       variants:
         - {variant: 管仲, kind: 字}
-      state_id: sta:qi
+      group_id: sta:qi
       social_category: official
       death_date: {year_bce: 645, uncertainty: point, inference_kind: explicit_reign_lu}
 
@@ -66,7 +66,7 @@ same_person_pairs:
       canonical_name: 重耳
       variants:
         - {variant: 公子重耳, kind: 别名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: noble
       clan_name: 姬
       death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
@@ -74,7 +74,7 @@ same_person_pairs:
       canonical_name: 公子重耳
       variants:
         - {variant: 重耳, kind: 本名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: noble
       clan_name: 姬
       death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
@@ -85,7 +85,7 @@ same_person_pairs:
       canonical_name: 太子宜臼
       variants:
         - {variant: 周平王, kind: 谥号}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: royalty
       clan_name: 姬
       death_date: {year_bce: 720, uncertainty: point, inference_kind: explicit_reign_zhou}
@@ -94,7 +94,7 @@ same_person_pairs:
       variants:
         - {variant: 太子宜臼, kind: 别名}
         - {variant: 宜臼, kind: 本名}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: royalty
       clan_name: 姬
       death_date: {year_bce: 720, uncertainty: point, inference_kind: explicit_reign_zhou}
@@ -106,7 +106,7 @@ same_person_pairs:
       variants:
         - {variant: 公子小白, kind: 别名}
         - {variant: 齐桓公, kind: 谥号}
-      state_id: sta:qi
+      group_id: sta:qi
       social_category: royalty
       clan_name: 姜
       death_date: {year_bce: 643, uncertainty: point, inference_kind: explicit_reign_lu}
@@ -114,27 +114,27 @@ same_person_pairs:
       canonical_name: 齐桓公
       variants:
         - {variant: 小白, kind: 本名}
-      state_id: sta:qi
+      group_id: sta:qi
       social_category: royalty
       clan_name: 姜
       death_date: {year_bce: 643, uncertainty: point, inference_kind: explicit_reign_lu}
 
 different_person_pairs:
 
-  - rationale: "Same name 公子重耳, but one is the famous 晋 prince, the other is a hypothetical 卫 noble — state_id distinguishes them"
+  - rationale: "Same name 公子重耳, but one is the famous 晋 prince, the other is a hypothetical 卫 noble — group_id distinguishes them"
     source: "Spec §6 — \"different 公子重耳 across states\" disambiguation case"
     person_a:
       canonical_name: 重耳
       variants:
         - {variant: 公子重耳, kind: 别名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: noble
       clan_name: 姬
     person_b:
       canonical_name: 重耳
       variants:
         - {variant: 公子重耳, kind: 别名}
-      state_id: sta:wei
+      group_id: sta:wei
       social_category: noble
       clan_name: 姬
 
@@ -144,14 +144,14 @@ different_person_pairs:
       canonical_name: 召公奭
       variants:
         - {variant: 召公, kind: 别名}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: official
       death_date: {year_bce: 950, uncertainty: era, inference_kind: era_only}
     person_b:
       canonical_name: 召虎
       variants:
         - {variant: 召公, kind: 别名}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: official
       birth_date: {year_bce: 790, uncertainty: era, inference_kind: era_only}
 
@@ -159,12 +159,12 @@ different_person_pairs:
     source: "《史记·秦本纪》/《左传》"
     person_a:
       canonical_name: 申侯
-      state_id: sta:shen
+      group_id: sta:shen
       social_category: royalty
       death_date: {year_bce: 770, uncertainty: era, inference_kind: era_only}
     person_b:
       canonical_name: 申侯
-      state_id: sta:shen
+      group_id: sta:shen
       social_category: royalty
       birth_date: {year_bce: 600, uncertainty: era, inference_kind: era_only}
 
@@ -174,14 +174,14 @@ different_person_pairs:
       canonical_name: 太子宜臼
       variants:
         - {variant: 宜臼, kind: 本名}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: royalty
       clan_name: 姬
     person_b:
       canonical_name: 太子伯服
       variants:
         - {variant: 伯服, kind: 本名}
-      state_id: sta:zhou
+      group_id: sta:zhou
       social_category: royalty
       clan_name: 姬
 
@@ -191,7 +191,7 @@ different_person_pairs:
       canonical_name: 晋文公
       variants:
         - {variant: 重耳, kind: 本名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: royalty
       clan_name: 姬
       death_date: {year_bce: 628, uncertainty: point, inference_kind: explicit_reign_other}
@@ -199,7 +199,7 @@ different_person_pairs:
       canonical_name: 晋灵公
       variants:
         - {variant: 夷皋, kind: 本名}
-      state_id: sta:jin
+      group_id: sta:jin
       social_category: royalty
       clan_name: 姬
       death_date: {year_bce: 607, uncertainty: point, inference_kind: explicit_reign_other}

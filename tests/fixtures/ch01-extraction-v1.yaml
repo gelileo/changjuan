@@ -6,7 +6,7 @@ persons:
       - { variant: 靖, kind: 本名 }
     gender: male
     social_category: royalty
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 2
@@ -21,7 +21,7 @@ persons:
     canonical_name: 仲山甫
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 5
@@ -36,7 +36,7 @@ persons:
     canonical_name: 召虎
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 9
@@ -51,7 +51,7 @@ persons:
     canonical_name: 伯阳父
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 9
@@ -68,7 +68,7 @@ persons:
       - { variant: 姜后, kind: 封号 }
     gender: female
     social_category: royalty
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 9
@@ -83,7 +83,7 @@ persons:
     canonical_name: 尹吉甫
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 2
@@ -98,7 +98,7 @@ persons:
     canonical_name: 老宫人 (ch01)
     gender: female
     social_category: servant
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:9"
       paragraph: 10
@@ -126,7 +126,7 @@ persons:
     canonical_name: 杜伯
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     death_date:
       year_bce: 785
       uncertainty: point
@@ -146,7 +146,7 @@ persons:
     canonical_name: 左儒
     gender: male
     social_category: official
-    state_id: s1
+    group_id: s1
     death_date:
       year_bce: 785
       uncertainty: point
@@ -167,7 +167,7 @@ persons:
     canonical_name: 妇人之卖箕袋 (ch01)
     gender: female
     social_category: commoner
-    state_id: s1
+    group_id: s1
     death_date:
       year_bce: 789
       uncertainty: point
@@ -188,7 +188,7 @@ persons:
     canonical_name: 男子之卖桑弓 (ch01)
     gender: male
     social_category: commoner
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:10"
       paragraph: 11
@@ -203,7 +203,7 @@ persons:
     canonical_name: 隰叔
     gender: male
     social_category: noble
-    state_id: s1
+    group_id: s1
     citation:
       chunk_id: "chk:dzl:1:14"
       paragraph: 19
@@ -630,10 +630,10 @@ places:
       name: "东郊"
       type: "一齐往东郊进发"
 
-states:
+groups:
   - id: s1
     name: 周
-    type: 王朝
+    group_type: 王朝
     ruling_clan: 姬
     founded_date:
       year_bce: 1046
@@ -651,7 +651,7 @@ states:
 
   - id: s2
     name: 姜戎
-    type: 戎
+    group_type: 戎
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 5
@@ -663,7 +663,7 @@ states:
 
   - id: s3
     name: 犬戎
-    type: 戎
+    group_type: 戎
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 9
@@ -675,7 +675,7 @@ states:
 
   - id: s4
     name: 晋
-    type: 诸侯国
+    group_type: 诸侯国
     citation:
       chunk_id: "chk:dzl:1:14"
       paragraph: 19
@@ -689,8 +689,8 @@ relations:
   # =========================================================================
   # state_capital — 周's capital is 镐京 (era_only inference for 西周开国)
   # =========================================================================
-  - kind: state_capital
-    state_id: s1
+  - kind: group_seat
+    group_id: s1
     place_id: pl3
     from_date:
       uncertainty: circa
@@ -705,9 +705,9 @@ relations:
   # =========================================================================
   # person_state — rulers, ministers, defectors
   # =========================================================================
-  - kind: person_state
+  - kind: person_group
     person_id: p1
-    state_id: s1
+    group_id: s1
     role: ruler
     from_date:
       uncertainty: circa
@@ -724,9 +724,9 @@ relations:
       quote: "立太子靖为王，是为宣王"
       span: [188, 199]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p2
-    state_id: s1
+    group_id: s1
     role: minister
     citation:
       chunk_id: "chk:dzl:1:0"
@@ -734,9 +734,9 @@ relations:
       quote: "太宰仲山甫进谏不听"
       span: [455, 464]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p3
-    state_id: s1
+    group_id: s1
     role: minister
     citation:
       chunk_id: "chk:dzl:1:0"
@@ -744,9 +744,9 @@ relations:
       quote: "大宗伯召虎对曰"
       span: [847, 854]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p4
-    state_id: s1
+    group_id: s1
     role: minister
     citation:
       chunk_id: "chk:dzl:1:0"
@@ -754,9 +754,9 @@ relations:
       quote: "太史伯阳父奏曰"
       span: [993, 1000]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p6
-    state_id: s1
+    group_id: s1
     role: minister
     citation:
       chunk_id: "chk:dzl:1:0"
@@ -764,9 +764,9 @@ relations:
       quote: "任用贤臣方叔、召虎、尹吉甫"
       span: [213, 226]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p9
-    state_id: s1
+    group_id: s1
     role: minister
     to_date:
       year_bce: 785
@@ -779,9 +779,9 @@ relations:
       quote: "命上大夫杜伯专督其事"
       span: [931, 941]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p10
-    state_id: s1
+    group_id: s1
     role: minister
     to_date:
       original: "(杜伯死同日)"
@@ -793,9 +793,9 @@ relations:
       quote: "再命下大夫左儒"
       span: [956, 963]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p13
-    state_id: s1
+    group_id: s1
     role: defector
     to_date:
       uncertainty: circa
@@ -808,9 +808,9 @@ relations:
       quote: "杜伯之子隰叔，奔晋"
       span: [1247, 1256]
 
-  - kind: person_state
+  - kind: person_group
     person_id: p13
-    state_id: s4
+    group_id: s4
     role: minister
     from_date:
       uncertainty: circa

@@ -71,7 +71,7 @@ def test_re_extract_accumulates_variants(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -106,7 +106,7 @@ def test_re_extract_accumulates_variants(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -158,7 +158,7 @@ def test_re_extract_emits_conflict_on_scalar_disagreement(tmp_path: Path) -> Non
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -193,7 +193,7 @@ def test_re_extract_emits_conflict_on_scalar_disagreement(tmp_path: Path) -> Non
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -251,7 +251,7 @@ def test_re_extract_accumulates_citations(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -285,7 +285,7 @@ def test_re_extract_accumulates_citations(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -336,7 +336,7 @@ def test_curated_field_not_silently_overwritten(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )
@@ -375,7 +375,7 @@ def test_curated_field_not_silently_overwritten(tmp_path: Path) -> None:
             ],
             "events": [],
             "places": [],
-            "states": [],
+            "groups": [],
             "relations": [],
         },
     )

@@ -3,7 +3,7 @@ title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 38 (variants_json stored in candidate_persons)
+implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed)
 status: thin
 load_bearing: true
 references:
@@ -25,7 +25,7 @@ affects:
 
 ## What stage 3 does
 
-Stage 3 (Extract) reads chunked corpus text and produces five kinds of structured candidates: persons, events, places, states, and relations. Every record is tagged with a `pipeline_run_id` and a `prompt_version` so the same corpus text can be extracted multiple times at different prompt versions, with results accumulating safely in the `candidate_*` tables. Stage 7 (`load`) later promotes candidates into canonical entities with field-level merge semantics.
+Stage 3 (Extract) reads chunked corpus text and produces five kinds of structured candidates: persons, events, places, groups, and relations. Every record is tagged with a `pipeline_run_id` and a `prompt_version` so the same corpus text can be extracted multiple times at different prompt versions, with results accumulating safely in the `candidate_*` tables. Stage 7 (`load`) later promotes candidates into canonical entities with field-level merge semantics.
 
 ## Why the skill-driven architecture
 
@@ -62,11 +62,11 @@ The trade-off: batch processing many chapters is manual — one skill invocation
 2. **Verbatim-quote (NFC substring)** — `citation.quote` must be an NFC-normalized substring of `chunk.text`. Catches fabricated quotes or quotes from the wrong chunk.
 3. **Per-field justification non-empty and substring of quote** — every value in `record.justifications` must be non-empty and an NFC-normalized substring of `citation.quote`. The static check catches the empty-justification case; the [sampling QA harness](../verification/confidence-and-invariants.md) catches subtler misattributions.
 4. **Date `inference_kind` in Phase 4 allowlist** — accepts `explicit_reign_lu`, `explicit_reign_zhou`, `explicit_reign_other`, `relative_to_prior_event`, `era_only`, `unknown`. `explicit_reign_other` resolves against per-state YAMLs in `data/reigns/` (Phase 4 Task 2 implemented the resolver; Phase 4 Task 7 fix wired it into `parse_date`). The extract-v2 skill's system prompt accordingly allows the LLM to emit `explicit_reign_other` for non-鲁/周 reign-anchored dates like "晋文公七年" or "齐桓公九年".
-5. **Chunk-local id resolution** — `primary_place_id` and `state_id` values that contain no `:` (chunk-local refs like `pl3`) must be present in the set of ids declared by other records in the same YAML payload.
+5. **Chunk-local id resolution** — `primary_place_id` and `group_id` values that contain no `:` (chunk-local refs like `pl3`) must be present in the set of ids declared by other records in the same YAML payload.
 
 ## The chunk-local id scheme
 
-Within a single extraction YAML, entity ids are simple local references: `p1`, `p2`, … for persons; `e1`, `e2`, … for events; `pl1`, `pl2`, … for places; `s1`, `s2`, … for states. Relations reference entities by these same local ids. The validator rejects dangling references at load time (invariant 5 above).
+Within a single extraction YAML, entity ids are simple local references: `p1`, `p2`, … for persons; `e1`, `e2`, … for events; `pl1`, `pl2`, … for places; `s1`, `s2`, … for groups. Relations reference entities by these same local ids. The validator rejects dangling references at load time (invariant 5 above).
 
 Global canonical ids (`per:zhou-xuan-wang`, `pla:haojing`, etc.) are minted by stage 5 (the linker, Phase 3). Stage 3 produces candidates only — all ids in the output YAML are scoped to that YAML's chunk set.
 
@@ -166,18 +166,41 @@ The skill's `system-prompt.md` evolves between versions; each prompt revision is
 
 The extractor emits `person_relation` entries with two `kind`-ish fields: a top-level `kind: person_relation` (the type discriminator that routes the record in `load_extraction`) and a per-record `kind_detail: parent | child | spouse | sibling | mentor | ruler | minister | ally | rival | killed_by | clan_member`. The `kind_detail` value is what becomes `candidate_person_relations.kind` and eventually `person_relations.kind`. Before Phase 6, `load_extraction` mistakenly read `r["relation_kind"]` (a field that does not exist in the schema), defaulting to `""`. Empty kinds pass the candidate-side INSERT but stage 7 (`load_candidate_person_relations`) silently skips them via the `_VALID_PERSON_RELATION_KINDS` filter — so `person_relations` stayed at 0 rows. The fix at `pipeline/stage3_extract.py:377` reads `r["kind_detail"]` instead. The canonical CHECK constraint vocabulary (in `pipeline/schemas/canonical_schema.sql`) is the source of truth for which `kind_detail` values are accepted downstream.
 
-## State→Group rename (2026-06-11)
+## State→Group rename — full completion (2026-06-11)
 
-`stage3_extract.py` maps YAML vocabulary to DB column names at write time.
-The LLM-facing YAML schema (`extract_output.py`) retains `states`, `state_id`,
-`type`, `person_state`, and `state_capital` so prompts are unchanged. The bridge
-in `load_extraction` translates on INSERT:
+The State→Group rename is complete. Both YAML schema and Python code now use
+Group vocabulary end-to-end — no bridges or aliases remain.
 
-- `candidate_persons.group_id` ← YAML `p["state_id"]`
-- `candidate_groups` (was `candidate_states`), `group_type` ← YAML `st["type"]`
-- `candidate_person_groups` (was `candidate_person_states`), `candidate_group_id`
+YAML extraction schema (`extract_output.py`) changes:
+- Top-level key `states` → `groups`; persons field `state_id` → `group_id`;
+  group entity field `type` → `group_type`; relation kinds `person_state` →
+  `person_group`, `state_capital` → `group_seat`.
 
-`sta:` id prefix on data values is preserved (data, not schema).
+`stage3_extract.py` invariant (5): chunk-local id resolution checks
+`primary_place_id` and `group_id` (not `state_id`).
+
+`stats_json` key: `groups_written` (was `states_written`).
+
+`cli.py` echo: `groups=…` (was `states=…`).
+
+`stage5_link/scoring.py` feature key: `group_agreement` (was `state_agreement`).
+`stage5_link/candidate_pool.py`: `group_id` dict key (was `state_id`).
+`stage5_link/merge.py`: `_LOCAL_GROUP_ID_RE` constant (was `_LOCAL_STATE_ID_RE`).
+
+`stage7_load/`: `load_candidate_groups` (was `load_candidate_states`);
+`build_group_id_map` (was `build_state_id_map`); `resolved_group_id` in persons loader.
+
+`stage7_load/id_maps.py::build_group_id_map` supports both `cand:grp:` (new) and
+`cand:sta:` (historical) candidate id prefixes, so runs extracted before the rename
+still load correctly.
+
+`export_enrich.py::add_group_prominence` (was `add_state_prominence`).
+
+`prominence_overrides.yaml` key `states:` is curated DATA (the allow-list of major
+group names); left unchanged — renaming it would require curator re-work for no gain.
+
+`sta:` id prefix on data values (e.g. `sta:jin`) is preserved (data, not schema).
+Local extraction ids like `s1` are also preserved (data, not schema).
 
 ## What would invalidate this article
 

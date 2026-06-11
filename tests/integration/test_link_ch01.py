@@ -13,9 +13,9 @@ from pipeline.db import open_canonical_db, open_corpus_db
 from pipeline.stage3_extract import load_extraction
 from pipeline.stage5_link import link_run
 from pipeline.stage7_load import (
+    load_candidate_groups,
     load_candidate_persons,
     load_candidate_places,
-    load_candidate_states,
 )
 
 pytestmark = pytest.mark.golden
@@ -61,9 +61,9 @@ def test_link_then_load_ch01_yields_thirteen_canonical_persons(tmp_path: Path) -
         f"Either the scorer is too aggressive or the candidate pool is wrong."
     )
 
-    # 3) load: places → states → persons (FK order required by the schema)
+    # 3) load: places → groups → persons (FK order required by the schema)
     load_candidate_places(canonical, "run:link-ch01-test")
-    load_candidate_states(canonical, "run:link-ch01-test")
+    load_candidate_groups(canonical, "run:link-ch01-test")
     load_candidate_persons(canonical, "run:link-ch01-test")
 
     n_persons = canonical.execute("SELECT COUNT(*) FROM persons").fetchone()[0]

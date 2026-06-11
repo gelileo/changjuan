@@ -2,7 +2,7 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-06-09
+updated: 2026-06-11
 status: mature
 load_bearing: true
 affects:
@@ -84,7 +84,7 @@ Added in schema_version **3** by `pipeline/export_enrich.py::add_prominence`, wh
 ## `events.prominence` + `states.prominence`: Timeline & States default filters
 
 Added in schema_version **4** by `pipeline/export_enrich.py::add_event_prominence`
-and `add_state_prominence`, both running after `build_deed_importance`.
+and `add_group_prominence`, both running after `build_deed_importance`.
 
 - **events**: `prominence` (REAL) = `SUM(deed_importance.score)` over the event's
   participations; `prominence_tier` = rank-based `major` (top `EVENT_MAJOR_TOP`) /
@@ -93,10 +93,12 @@ and `add_state_prominence`, both running after `build_deed_importance`.
   `notable` so reign/state boundaries always survive the default filter. Reader
   Timeline defaults to `tier IN ('major','notable')` (~410 of 2137 dated events;
   the reader shows a live `显示 N / <dated total>` count, so this figure tracks data).
-- **states**: `prominence` (REAL) = `SUM(deed_importance.score)` over the state's
-  persons (sort only, big states first); `prominence_tier` = `major` iff the
-  state's name is in the `states:` allow-list of `prominence_overrides.yaml`, else
-  `minor`. Reader 列国 defaults to `tier = 'major'` (the curated 14).
+- **groups**: `prominence` (REAL) = `SUM(deed_importance.score)` over the group's
+  persons (sort only, big groups first); `prominence_tier` = `major` iff the
+  group's name is in the `states:` allow-list of `prominence_overrides.yaml`, else
+  `minor`. (`states:` key is curated data — the historical allow-list name — left
+  as-is even after the State→Group schema rename.) Reader 列国 defaults to
+  `tier = 'major'` (the curated 14).
 
 Both mirror the persons contract: per-user favorites are NOT stored here; the
 reader unions its local bookmark ids with the prominent set at read time.
@@ -122,14 +124,14 @@ which runs **after** `build_citations_table` (it derives from the `citations` ta
 
 ## `chapter_texts` table: full chapter prose
 
-Added in schema_version **6** by `pipeline/export_enrich.py::build_chapter_texts`, which runs **after** `add_state_prominence` and **before** `_count_rows` in `export_bundle` (so the table is included in manifest counts).
+Added in schema_version **6** by `pipeline/export_enrich.py::build_chapter_texts`, which runs **after** `add_group_prominence` and **before** `_count_rows` in `export_bundle` (so the table is included in manifest counts).
 
 - `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` — one row per chapter, where `chapter` is parsed from the filename (e.g. `ch01.md` → 1, leading zeros stripped). Populated from `readable_dir/ch[0-9]*.md`. Non-chapter files (e.g. `changelog.md`) are excluded by the glob and the `re.match(r"ch0*(\d+)\.md$", …)` guard.
 - **Purpose:** makes a downloaded book a single self-contained `.sqlite` file. The bundled reader continues to use the separate `texts/` payload; `chapter_texts` is consumed only by downloaded books (B2, future).
 - **Tolerates** an absent or empty `readable_dir` — the table is created with no rows; no error.
 - **Idempotent** — the function drops and recreates `chapter_texts` each run.
 
-`SCHEMA_VERSION` is now **6**.
+`SCHEMA_VERSION` is now **7** (bumped by the State→Group rename + `manifest_reader_capabilities` addition; see below).
 
 ## SQLite snapshot: VACUUM INTO then drop
 
@@ -149,14 +151,14 @@ After the drops, `VACUUM` is called to reclaim space.
 ```json
 {
   "version": "<caller-supplied label>",
-  "schema_version": 6,
+  "schema_version": 7,
   "generated_at": "<ISO 8601 UTC>",
   "book_id": "dzl",
   "title": "东周列国志",
   "author": "冯梦龙 / 蔡元放",
   "edition": "明刊本",
   "cover": null,
-  "capabilities": ["cast", "timeline", "states"],
+  "capabilities": ["cast", "timeline", "groups"],
   "counts": {
     "persons": N,
     "person_variants": N,
@@ -168,7 +170,18 @@ After the drops, `VACUUM` is called to reclaim space.
 }
 ```
 
-`schema_version` is the integer constant `SCHEMA_VERSION = 6` exported by this module. Consumers should gate on this value if the schema ever changes incompatibly.
+`schema_version` is the integer constant `SCHEMA_VERSION = 7` exported by this module.
+
+`capabilities` in the manifest are **reader-tab capabilities** (coarse), derived from the book's
+fine-grained ETL capabilities via `manifest_reader_capabilities(book_meta)`. This calls
+`pipeline.profile.derive_reader_capabilities(etl_caps)` which maps ETL caps to reader tabs:
+- ETL `"persons"` → reader tab `"cast"`
+- ETL `"chronology"` → reader tab `"timeline"`
+- ETL `"groups"` → reader tab `"groups"`
+- ETL `"themes"` → reader tab `"themes"`
+
+Tabs whose required ETL capability is absent are omitted. This means the manifest carries only
+tabs the reader can actually populate, not raw ETL cap names. Consumers should gate on this value if the schema ever changes incompatibly.
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 
@@ -206,19 +219,16 @@ v4 adds `events.prominence(_tier)` + `states.prominence(_tier)` — see the sect
 
 v5 adds `events.narrative_seq` (INTEGER) — see the section above. Additive, but the bump is deliberate so a reader adopting the column-based sub-year ordering can gate on its presence.
 
-### v6 (current)
+### v6
 
 v6 adds `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` — full chapter prose folded into the bundle so a downloaded book is one self-contained `.sqlite` file. Populated by `export_enrich.build_chapter_texts` from `readable/ch[0-9]*.md`. Additive: the bundled reader still uses the separate `texts/` payload; only downloaded books (B2) read this table.
 
-## State→Group rename (2026-06-11)
+### v7 (current)
 
-`export_enrich.py::add_state_prominence` now targets the `groups` table
-(was `states`) and joins via `persons.group_id` (was `persons.state_id`).
-The exported `graph.sqlite` will reflect the renamed tables/columns starting
-with the next bundle produced after this migration.
+v7 completes the State→Group rename across the canonical schema (tables `states→groups`, `person_states→person_groups`, `state_capitals→group_seats`, columns `persons.state_id→persons.group_id` etc.) and introduces `manifest_reader_capabilities` — the manifest's `capabilities` field now carries coarse reader-tab capabilities derived from ETL caps via `pipeline.profile.derive_reader_capabilities`, not the raw ETL cap list. Both changes are non-backward-compatible for readers that gate on `"states"` tab name or `state_id` column.
 
 ## What would invalidate this article
 
-- Schema version bumped beyond v6 (incompatible structural change to the canonical tables).
+- Schema version bumped beyond v7 (incompatible structural change to the canonical tables).
 - A new category of "internal-only" tables that are neither `candidate_*` nor `llm_cache` but should still be excluded from exports.
 - Addition of per-entity JSON export files.

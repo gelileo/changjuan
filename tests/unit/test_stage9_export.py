@@ -19,7 +19,7 @@ _MINIMAL_BOOK_META = {
     "author": "冯梦龙 / 蔡元放",
     "edition": "明刊本",
     "cover": None,
-    "capabilities": ["cast", "timeline", "states"],
+    "capabilities": ["persons", "events", "chronology", "geography", "groups"],
 }
 
 
@@ -55,7 +55,7 @@ def test_export_creates_manifest_and_sqlite(tmp_path: Path) -> None:
     assert (out / "texts").is_dir()  # absent readable_dir → empty texts/ still created
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["version"] == "test-v1"
-    assert manifest["schema_version"] == 6
+    assert manifest["schema_version"] == 7
     assert manifest["counts"]["persons"] == 1
 
 
@@ -253,7 +253,7 @@ def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> Non
     assert manifest["title"] == _MINIMAL_BOOK_META["title"]
     assert manifest["author"] == _MINIMAL_BOOK_META["author"]
     assert manifest["edition"] == _MINIMAL_BOOK_META["edition"]
-    assert manifest["capabilities"] == _MINIMAL_BOOK_META["capabilities"]
+    assert manifest["capabilities"] == ["cast", "timeline", "groups"]
     assert manifest["cover"] == _MINIMAL_BOOK_META["cover"]  # None → JSON null branch
 
 
@@ -283,7 +283,7 @@ def test_export_folds_chapter_texts_and_bumps_schema(tmp_path: Path) -> None:
     )
 
     manifest = json.loads((out / "manifest.json").read_text("utf-8"))
-    assert manifest["schema_version"] == 6
+    assert manifest["schema_version"] == 7
     with sqlite3.connect(out / "graph.sqlite") as snap:
         chapters = [
             r[0] for r in snap.execute("SELECT chapter FROM chapter_texts ORDER BY chapter;")

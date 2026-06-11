@@ -2,7 +2,7 @@
 title: Incremental extraction — re-extract semantics and prompt-version accumulation
 type: concept
 area: pipeline
-updated: 2026-05-22
+updated: 2026-06-11
 status: thin
 load_bearing: true
 references:
@@ -106,6 +106,18 @@ Each v{N} skill directory under `.claude/skills/changjuan-extract*/` represents 
 - **read-chapter per-book defaults (2026-06-02)** — the skill's step-3 `scripts/read-chapter $CHAPTER` (also used when re-extracting a chapter) now defaults to the per-book layout: it reads `data/books/<book-id>/corpus.sqlite` and writes `data/books/<book-id>/readable/ch{N:02d}.md` (new `--book-id`, default `dzl`; `--db`/`-o` override), replacing the stale pre-migration `data/corpus.sqlite` / `data/readable/` defaults. SKILL.md's documented output path updated to match.
 
 The pre-flight `changjuan extract --chapter N` always points at the *latest* version (alphabetical sort over the `changjuan-extract*` glob) — so as new vN directories land, the user's slash-command updates automatically. Older versions remain available for `re-extract --prompt-version v1` to reload prior YAMLs from `data/extractions/`.
+
+## State→Group rename — extraction-schema.yaml updated (2026-06-11)
+
+`extraction-schema.yaml` in `.claude/skills/changjuan-extract/` was regenerated to match
+the updated `EXTRACT_OUTPUT_SCHEMA` Python dict. The skill schema now uses:
+- Top-level `groups:` array (was `states:`), item field `group_type:` (was `type:`)
+- Person field `group_id:` (was `state_id:`)
+- Relation kinds `person_group` / `group_seat` (were `person_state` / `state_capital`)
+
+YAML files produced by older skill versions (with `states:`, `state_id:`, `person_state`,
+`state_capital`) will fail schema validation at `extract-load` time. Re-extract with the
+current skill if needed, or update the YAML by hand.
 
 ## What would invalidate this article
 

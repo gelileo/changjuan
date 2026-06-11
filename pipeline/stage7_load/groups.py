@@ -1,4 +1,4 @@
-"""Stage 7 — load_candidate_states. Mirrors places.py for groups.
+"""Stage 7 — load_candidate_groups. Mirrors places.py for groups.
 
 Scalar merge fields: name, group_type, ruling_clan, founded_date_json, ended_date_json.
 Match key: name.
@@ -16,7 +16,7 @@ from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.helpers import _SIMILAR_CONFIDENCE_DELTA, _slugify
 
-_STATE_SCALAR_FIELDS = ("group_type", "ruling_clan", "founded_date_json", "ended_date_json")
+_GROUP_SCALAR_FIELDS = ("group_type", "ruling_clan", "founded_date_json", "ended_date_json")
 
 
 def _last_field_confidence(
@@ -34,10 +34,10 @@ def _last_field_confidence(
     return float(row[0])
 
 
-def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
-    """Promote candidate_states rows tagged with pipeline_run_id into canonical states.
+def load_candidate_groups(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
+    """Promote candidate_groups rows tagged with pipeline_run_id into canonical groups.
 
-    Matches candidates against existing States by name. Creates a new State if no
+    Matches candidates against existing Groups by name. Creates a new Group if no
     match found. Merges scalar fields with higher-confidence-wins semantics.
     Returns the number of candidates processed.
     """
@@ -65,13 +65,13 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
 
         if existing is None:
             # Build slug-based id; guard against slug collisions.
-            state_id = f"sta:{_slugify(name)}"
+            group_id = f"sta:{_slugify(name)}"
             if (
-                conn.execute("SELECT 1 FROM groups WHERE id = ?", (state_id,)).fetchone()
+                conn.execute("SELECT 1 FROM groups WHERE id = ?", (group_id,)).fetchone()
                 is not None
             ):
                 h = hashlib.sha256(name.encode("utf-8")).hexdigest()[:6]
-                state_id = f"{state_id}-{h}"
+                group_id = f"{group_id}-{h}"
 
             conn.execute(
                 "INSERT INTO groups "
@@ -79,7 +79,7 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                 "provenance, confidence, pipeline_run_id) "
                 "VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)",
                 (
-                    state_id,
+                    group_id,
                     name,
                     stype,
                     ruling_clan,
@@ -92,7 +92,7 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
             _audit(
                 conn,
                 "group",
-                state_id,
+                group_id,
                 "create",
                 after_json=_json.dumps(
                     {"value": name, "confidence": confidence}, ensure_ascii=False
@@ -100,18 +100,18 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                 actor="load@v1",
                 pipeline_run_id=pipeline_run_id,
             )
-            record_citation(conn, "group", state_id, chunk_id)
+            record_citation(conn, "group", group_id, chunk_id)
         else:
-            state_id = existing[0]
+            group_id = existing[0]
             current = conn.execute(
                 "SELECT group_type, ruling_clan, founded_date_json, ended_date_json, confidence "
                 "FROM groups WHERE id = ?",
-                (state_id,),
+                (group_id,),
             ).fetchone()
             cur_conf = float(current[4] or 0.0)
             cand_values = (stype, ruling_clan, founded_date_json, ended_date_json)
 
-            for idx, field in enumerate(_STATE_SCALAR_FIELDS):
+            for idx, field in enumerate(_GROUP_SCALAR_FIELDS):
                 cand_val = cand_values[idx]
                 if cand_val is None:
                     continue
@@ -121,12 +121,12 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                 if cur_val is None:
                     conn.execute(
                         f"UPDATE groups SET {field} = ?, updated_at = datetime('now') WHERE id = ?",
-                        (cand_val, state_id),
+                        (cand_val, group_id),
                     )
                     _audit(
                         conn,
                         "group",
-                        state_id,
+                        group_id,
                         "set",
                         after_json=_json.dumps(
                             {"value": cand_val, "confidence": confidence},
@@ -138,17 +138,17 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                     )
                     continue
                 # Both non-null: use per-field confidence from audit_log, fall back to row-level.
-                prior_conf = _last_field_confidence(conn, "group", state_id, field) or cur_conf
+                prior_conf = _last_field_confidence(conn, "group", group_id, field) or cur_conf
                 if confidence > prior_conf + _SIMILAR_CONFIDENCE_DELTA:
                     conn.execute(
                         f"UPDATE groups SET {field} = ?, confidence = ?, "
                         "updated_at = datetime('now') WHERE id = ?",
-                        (cand_val, confidence, state_id),
+                        (cand_val, confidence, group_id),
                     )
                     _audit(
                         conn,
                         "group",
-                        state_id,
+                        group_id,
                         "set",
                         after_json=_json.dumps(
                             {"value": cand_val, "confidence": confidence},
@@ -162,7 +162,7 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                         pipeline_run_id=pipeline_run_id,
                         field=field,
                     )
-            record_citation(conn, "group", state_id, chunk_id)
+            record_citation(conn, "group", group_id, chunk_id)
         n += 1
     conn.commit()
     return n

@@ -115,12 +115,12 @@ def _classify_temporal_proximity(a: dict[str, Any], b: dict[str, Any]) -> str:
 def person_match_score(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     """Score the likelihood that Person records a and b refer to the same person.
 
-    Returns {"score": float [0,1], "features": {variant_overlap, state_agreement,
+    Returns {"score": float [0,1], "features": {variant_overlap, group_agreement,
     clan_agreement, social_category_agreement, temporal_proximity}}.
     """
     features: dict[str, str] = {
         "variant_overlap": _classify_variant_overlap(a, b),
-        "state_agreement": _classify_field_agreement(a, b, "state_id"),
+        "group_agreement": _classify_field_agreement(a, b, "group_id"),
         "clan_agreement": _classify_field_agreement(a, b, "clan_name"),
         "social_category_agreement": _classify_field_agreement(a, b, "social_category"),
         "temporal_proximity": _classify_temporal_proximity(a, b),
@@ -136,7 +136,7 @@ def person_match_score(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         score += 0.50
     elif features["variant_overlap"] == "partial":
         score += 0.20
-    if features["state_agreement"] == "same":
+    if features["group_agreement"] == "same":
         score += 0.20
     if features["clan_agreement"] == "same":
         score += 0.10
@@ -146,21 +146,21 @@ def person_match_score(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
         score += 0.10
 
     # Negative contributions
-    if features["state_agreement"] == "different":
+    if features["group_agreement"] == "different":
         score -= 0.40
     if features["temporal_proximity"] == "conflict":
         score -= 0.30
     if features["clan_agreement"] == "different":
         score -= 0.20
     if features["social_category_agreement"] == "different":
-        # Waiver: when name match is strong AND state agrees, a different
+        # Waiver: when name match is strong AND group agrees, a different
         # social_category usually tracks role evolution (公子 → 君,
         # 大夫 → 正卿, etc.) rather than identity mismatch. Skip the penalty
         # in that regime. Surfaced by Ch.6-10 walks (4 of 5 queued candidates
         # fit this pattern). The penalty still fires whenever the waiver
-        # condition is not met — partial variants and cross-state name
+        # condition is not met — partial variants and cross-group name
         # collisions remain penalized.
-        if not (features["variant_overlap"] == "strong" and features["state_agreement"] == "same"):
+        if not (features["variant_overlap"] == "strong" and features["group_agreement"] == "same"):
             score -= 0.10
 
     # Round to avoid float accumulation errors, then clamp to [0, 1]

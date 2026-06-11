@@ -8,7 +8,7 @@ properties:
     items:
       additionalProperties: false
       properties:
-        citation: &id002
+        citation: &id001
           additionalProperties: false
           properties:
             chunk_id:
@@ -31,7 +31,7 @@ properties:
           - span
           - quote
           type: object
-        date: &id001
+        date: &id002
           additionalProperties: false
           properties:
             era:
@@ -94,25 +94,60 @@ properties:
       - justifications
       type: object
     type: array
+  groups:
+    items:
+      additionalProperties: false
+      properties:
+        citation: *id001
+        ended_date: *id002
+        founded_date: *id002
+        group_type:
+          type: string
+        id:
+          pattern: ^s\d+$
+          type: string
+        justifications:
+          additionalProperties:
+            type: string
+          type: object
+        name:
+          minLength: 1
+          type: string
+        ruling_clan:
+          type:
+          - string
+          - 'null'
+      required:
+      - id
+      - name
+      - citation
+      - justifications
+      type: object
+    type: array
   persons:
     items:
       additionalProperties: false
       properties:
-        birth_date: *id001
+        birth_date: *id002
         canonical_name:
           minLength: 1
           type: string
-        citation: *id002
+        citation: *id001
         clan_name:
           type:
           - string
           - 'null'
-        death_date: *id001
+        death_date: *id002
         gender:
           enum:
           - male
           - female
           - unknown
+        group_id:
+          pattern: ^(s\d+|sta:[\w\-]+)$
+          type:
+          - string
+          - 'null'
         id:
           pattern: ^p\d+$
           type: string
@@ -133,11 +168,6 @@ properties:
           - foreign
           - mythic
           - unknown
-        state_id:
-          pattern: ^(s\d+|sta:[\w\-]+)$
-          type:
-          - string
-          - 'null'
         variants:
           items:
             additionalProperties: false
@@ -162,7 +192,7 @@ properties:
     items:
       additionalProperties: false
       properties:
-        citation: *id002
+        citation: *id001
         coord_confidence:
           maximum: 1
           minimum: 0
@@ -204,54 +234,24 @@ properties:
     items:
       additionalProperties: true
       properties:
-        citation: *id002
+        citation: *id001
         kind:
           enum:
           - event_participant
           - event_place
           - event_relation
           - person_relation
-          - person_state
-          - state_capital
+          - person_group
+          - group_seat
       required:
       - kind
       - citation
-      type: object
-    type: array
-  states:
-    items:
-      additionalProperties: false
-      properties:
-        citation: *id002
-        ended_date: *id001
-        founded_date: *id001
-        id:
-          pattern: ^s\d+$
-          type: string
-        justifications:
-          additionalProperties:
-            type: string
-          type: object
-        name:
-          minLength: 1
-          type: string
-        ruling_clan:
-          type:
-          - string
-          - 'null'
-        type:
-          type: string
-      required:
-      - id
-      - name
-      - citation
-      - justifications
       type: object
     type: array
 required:
 - persons
 - events
 - places
-- states
+- groups
 - relations
 type: object

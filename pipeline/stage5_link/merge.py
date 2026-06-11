@@ -38,7 +38,7 @@ _ALLOWED_EDIT_FIELDS: frozenset[str] = frozenset(
 # Local-extraction group_id pattern: 's' followed by one or more digits.
 # IDs in this format (e.g. 's1', 's12') reference per-chunk extraction slots,
 # not canonical groups rows. They must not be folded into canonical persons.
-_LOCAL_STATE_ID_RE: re.Pattern[str] = re.compile(r"^s\d+$")
+_LOCAL_GROUP_ID_RE: re.Pattern[str] = re.compile(r"^s\d+$")
 
 
 class MergeError(Exception):
@@ -172,7 +172,7 @@ def _resolve_self_loops_person_relations(
     return len(rows)
 
 
-def _resolve_collisions_person_states(
+def _resolve_collisions_person_groups(
     conn: sqlite3.Connection, candidate_id: str, canonical_id: str
 ) -> int:
     """PK is (person_id, group_id, role, from_date_json). Higher-confidence wins."""
@@ -423,7 +423,7 @@ def accept_merge(
         collisions_resolved += _resolve_self_loops_person_relations(
             conn, candidate_id, canonical_id
         )
-        collisions_resolved += _resolve_collisions_person_states(conn, candidate_id, canonical_id)
+        collisions_resolved += _resolve_collisions_person_groups(conn, candidate_id, canonical_id)
         collisions_resolved += _resolve_collisions_entity_citations(
             conn, candidate_id, canonical_id
         )
@@ -736,14 +736,14 @@ def _candidate_persons_snapshot(
 
     # Filter out local-extraction group_id values so they are never folded
     # into the canonical row.  If detection is ambiguous, treat as NULL.
-    raw_state = snapshot.get("group_id")
-    if raw_state is not None:
-        is_local = bool(_LOCAL_STATE_ID_RE.match(str(raw_state)))
+    raw_group = snapshot.get("group_id")
+    if raw_group is not None:
+        is_local = bool(_LOCAL_GROUP_ID_RE.match(str(raw_group)))
         if is_local:
             snapshot["group_id"] = None
         else:
             # Also verify the group_id exists in the groups table; if not, treat as NULL.
-            exists = conn.execute("SELECT 1 FROM groups WHERE id = ?", (raw_state,)).fetchone()
+            exists = conn.execute("SELECT 1 FROM groups WHERE id = ?", (raw_group,)).fetchone()
             if exists is None:
                 snapshot["group_id"] = None
 

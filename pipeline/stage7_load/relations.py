@@ -15,7 +15,7 @@ confidence column in the candidate table).
 
 Note: candidate_group_seats does not exist in the current schema — group
 seats are expressed via the canonical group_seats table and seeded only
-by load_candidate_states or by curator override. load_candidate_state_capitals
+by load_candidate_groups or by curator override. load_candidate_group_seats
 is therefore a no-op stub that returns 0.
 """
 
@@ -29,9 +29,9 @@ from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.id_maps import (
     build_event_id_map,
+    build_group_id_map,
     build_person_id_map,
     build_place_id_map,
-    build_state_id_map,
 )
 
 # ---------------------------------------------------------------------------
@@ -415,11 +415,11 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
 
 
 # ---------------------------------------------------------------------------
-# person_states
+# person_groups
 # ---------------------------------------------------------------------------
 
 
-def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
+def load_candidate_person_groups(conn: sqlite3.Connection, run_id: str) -> int:
     """Promote candidate_person_groups rows for run_id.
 
     Unique key: (person_id, group_id, role, from_date_json) — matching the
@@ -430,7 +430,7 @@ def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
     (e.g. 'p1', 's1') to canonical ids. Rows that cannot be resolved are skipped.
     """
     person_map = build_person_id_map(conn, run_id)
-    state_map = build_state_id_map(conn, run_id)
+    group_map = build_group_id_map(conn, run_id)
 
     rows = conn.execute(
         "SELECT candidate_person_id, candidate_group_id, role, from_date_json,"
@@ -447,7 +447,7 @@ def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
         to_date_json: str | None = row[4]
 
         person_id = _resolve_fk(raw_person_id, person_map)
-        group_id = _resolve_fk(raw_group_id, state_map)
+        group_id = _resolve_fk(raw_group_id, group_map)
 
         # Both FKs are NOT NULL and role must satisfy the CHECK constraint; skip if invalid.
         if person_id is None or group_id is None or role not in _VALID_PERSON_GROUP_ROLES:
@@ -501,10 +501,10 @@ def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-def load_candidate_state_capitals(conn: sqlite3.Connection, run_id: str) -> int:
+def load_candidate_group_seats(conn: sqlite3.Connection, run_id: str) -> int:
     """No-op stub: candidate_group_seats does not exist in the current schema.
 
-    Group seat relations are seeded by load_candidate_states or by curator
+    Group seat relations are seeded by load_candidate_groups or by curator
     override directly into the canonical group_seats table. Returns 0.
     """
     return 0
@@ -525,6 +525,6 @@ def load_candidate_relations(conn: sqlite3.Connection, pipeline_run_id: str) -> 
     total += load_candidate_event_places(conn, pipeline_run_id)
     total += load_candidate_event_relations(conn, pipeline_run_id)
     total += load_candidate_person_relations(conn, pipeline_run_id)
-    total += load_candidate_person_states(conn, pipeline_run_id)
-    total += load_candidate_state_capitals(conn, pipeline_run_id)
+    total += load_candidate_person_groups(conn, pipeline_run_id)
+    total += load_candidate_group_seats(conn, pipeline_run_id)
     return total

@@ -18,18 +18,28 @@ from pathlib import Path
 
 from pipeline.export_enrich import (
     add_event_prominence,
+    add_group_prominence,
     add_narrative_seq,
     add_pinyin_columns,
     add_prominence,
-    add_state_prominence,
     build_chapter_texts,
     build_citations_table,
     build_deed_importance,
 )
+from pipeline.profile import derive_reader_capabilities
 
-SCHEMA_VERSION = 6  # v6: chapter_texts (full chapter prose folded into the bundle)
+SCHEMA_VERSION = 7  # v7: State→Group full rename (groups, group_id, person_groups, group_seats)
 
 PRICE_CURRENCIES = ("CNY", "USD")
+
+
+def manifest_reader_capabilities(book_meta: Mapping[str, object]) -> list[str]:
+    """Coarse reader-tab capabilities for the manifest, derived from the book's
+    fine-grained ETL capabilities (spec §3.4)."""
+    etl_caps = book_meta["capabilities"]
+    return derive_reader_capabilities(
+        [str(c) for c in (etl_caps if isinstance(etl_caps, list) else [])]
+    )
 
 
 def validate_prices(raw: object) -> dict[str, float] | None:
@@ -87,7 +97,7 @@ def export_bundle(
     build_deed_importance(snap_path)
     add_prominence(snap_path, prominence_overrides)  # after deed_importance (derives from it)
     add_event_prominence(snap_path)  # after deed_importance (derives from it)
-    add_state_prominence(snap_path, prominence_overrides)  # curated states: allow-list
+    add_group_prominence(snap_path, prominence_overrides)  # curated groups: allow-list
     build_chapter_texts(snap_path, readable_dir)  # fold chapter prose in (single-file distribution)
 
     counts = _count_rows(snap_path)
@@ -101,7 +111,7 @@ def export_bundle(
         "author": book_meta.get("author"),
         "edition": book_meta.get("edition"),
         "cover": book_meta.get("cover"),
-        "capabilities": book_meta["capabilities"],
+        "capabilities": manifest_reader_capabilities(book_meta),
         "counts": counts,
         "source_corpus_editions": _source_editions(corpus_db),
     }

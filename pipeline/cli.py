@@ -29,10 +29,10 @@ from pipeline.stage2_chunk import chunk_documents
 from pipeline.stage3_extract import load_extraction
 from pipeline.stage7_load import (
     load_candidate_events,
+    load_candidate_groups,
     load_candidate_persons,
     load_candidate_places,
     load_candidate_relations,
-    load_candidate_states,
 )
 from pipeline.stage9_export import export_bundle
 
@@ -83,14 +83,14 @@ def load(
     cfg = _cfg(repo_root)
     with connect(cfg.canonical_db) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
-        # Order matters: places + states first (events + relations reference them via FK).
+        # Order matters: places + groups first (events + relations reference them via FK).
         n_places = load_candidate_places(conn, pipeline_run_id=pipeline_run_id)
-        n_states = load_candidate_states(conn, pipeline_run_id=pipeline_run_id)
+        n_groups = load_candidate_groups(conn, pipeline_run_id=pipeline_run_id)
         n_persons = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
         n_events = load_candidate_events(conn, pipeline_run_id=pipeline_run_id)
         n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id)
     typer.echo(
-        f"loaded: places={n_places} states={n_states} persons={n_persons} "
+        f"loaded: places={n_places} groups={n_groups} persons={n_persons} "
         f"events={n_events} relations={n_rels} (run={pipeline_run_id})"
     )
 
@@ -307,7 +307,7 @@ def re_extract_cmd(
     typer.echo(
         f"re-extracted as {run_id}: persons={stats['persons_written']} "
         f"events={stats['events_written']} places={stats['places_written']} "
-        f"states={stats['states_written']} relations={stats['relations_written']}"
+        f"groups={stats['groups_written']} relations={stats['relations_written']}"
     )
     if stats["invariant_violations"]:
         typer.echo(f"invariant violations: {len(stats['invariant_violations'])}")
@@ -420,7 +420,7 @@ def golden_eval_cmd(
     # ===== persons =====
     # id column carries the full candidate id (e.g. 'cand:per:run:xxx:p1').
     # Extract the chunk-local suffix so name-lookup keys align with the
-    # cross-entity id values stored in state_id / relation fields ('p1', 's1', etc.).
+    # cross-entity id values stored in group_id / relation fields ('p1', 's1', etc.).
     persons = []
     for row in canonical.execute(
         "SELECT id, canonical_name, group_id, social_category FROM candidate_persons "
@@ -432,7 +432,7 @@ def golden_eval_cmd(
             {
                 "id": chunk_local_id,
                 "canonical_name": row[1],
-                "state_id": row[2],  # internal scoring key stays 'state_id'
+                "group_id": row[2],
                 "social_category": row[3],
                 "variants": [],  # candidate_person_variants is a Phase-3 expansion
             }
@@ -534,9 +534,9 @@ def golden_eval_cmd(
     ):
         relations.append(
             {
-                "kind": "person_state",
+                "kind": "person_group",
                 "person_id": _cl(row[0]),
-                "state_id": _cl(row[1]),
+                "group_id": _cl(row[1]),
                 "role": row[2],
             }
         )
@@ -835,7 +835,7 @@ def extract_load_cmd(
     typer.echo(f"pipeline_run_id: {pipeline_run_id}")
     typer.echo(
         f"written: persons={stats['persons_written']} events={stats['events_written']} "
-        f"places={stats['places_written']} states={stats['states_written']} "
+        f"places={stats['places_written']} groups={stats['groups_written']} "
         f"relations={stats['relations_written']}"
     )
     if stats["invariant_violations"]:

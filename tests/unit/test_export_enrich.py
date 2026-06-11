@@ -283,7 +283,7 @@ def test_add_event_prominence_tiers_with_boundary_promotion(tmp_path: Path) -> N
 
 def test_add_state_prominence_curated_allowlist(tmp_path: Path) -> None:
     """group score = deed-sum over its persons; tier = curated allow-list (major) else minor."""
-    from pipeline.export_enrich import add_state_prominence
+    from pipeline.export_enrich import add_group_prominence as add_state_prominence
 
     graph = tmp_path / "graph.sqlite"
     with sqlite3.connect(graph) as c:

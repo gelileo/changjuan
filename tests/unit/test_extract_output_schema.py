@@ -25,7 +25,7 @@ def _valid_minimal():
         ],
         "events": [],
         "places": [],
-        "states": [],
+        "groups": [],
         "relations": [],
     }
 

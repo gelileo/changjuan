@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (state_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases)
 status: thin
 load_bearing: true
 references:
@@ -20,9 +20,9 @@ Stage 7 (`pipeline/stage7_load.py`) is the boundary between the candidate stagin
 
 ## Load ordering contract (FK safety)
 
-`load_candidate_persons` has a hard dependency on `load_candidate_states` (and `load_candidate_places`) having already run for the same `pipeline_run_id`. The `persons.state_id` column is a `REFERENCES states(id)` FK. The staging table stores the raw local extraction id (e.g. `'s1'`) in `candidate_persons.state_id`, not the canonical `'sta:周'`. `load_candidate_persons` now calls `_build_candidate_state_id_map` before iterating candidates; this function joins `candidate_states` against `states` by name to build a `{local_id → canonical_id}` map, which is applied when creating or merging each person's `state_id`. If a local id cannot be resolved (e.g. because `load_candidate_states` was skipped), a `structlog` warning is emitted and `persons.state_id` is set to `NULL` rather than crashing.
+`load_candidate_persons` has a hard dependency on `load_candidate_groups` (and `load_candidate_places`) having already run for the same `pipeline_run_id`. The `persons.group_id` column is a `REFERENCES groups(id)` FK. The staging table stores the raw local extraction id (e.g. `'s1'`) in `candidate_persons.group_id`, not the canonical `'sta:周'`. `load_candidate_persons` now calls `build_group_id_map` (`pipeline/stage7_load/id_maps.py`) before iterating candidates; this function joins `candidate_groups` against `groups` by name to build a `{local_id → canonical_id}` map, which is applied when creating or merging each person's `group_id`. The map supports both `cand:grp:` (new) and `cand:sta:` (historical) candidate id prefixes so runs extracted before the rename still load correctly. If a local id cannot be resolved (e.g. because `load_candidate_groups` was skipped), a `structlog` warning is emitted and `persons.group_id` is set to `NULL` rather than crashing.
 
-The canonical CLI `load` command already runs in the correct order (places → states → persons → events → relations). Integration tests that call `load_candidate_persons` directly must call `load_candidate_states` first.
+The canonical CLI `load` command already runs in the correct order (places → groups → persons → events → relations). Integration tests that call `load_candidate_persons` directly must call `load_candidate_groups` first.
 
 ## Matching rules (Phase 3: match_target_id-first)
 
@@ -51,7 +51,7 @@ Every canonical record carries `provenance ∈ {auto, curated}`. The load stage 
 
 ## Scalar merge rules
 
-When a candidate matches an existing Person, each scalar field (`gender`, `birth_date_json`, `death_date_json`, `notes`, `state_id`, `clan_name`, `social_category`) is merged independently:
+When a candidate matches an existing Person, each scalar field (`gender`, `birth_date_json`, `death_date_json`, `notes`, `group_id`, `clan_name`, `social_category`) is merged independently:
 
 - **Skip if candidate value is None** — no change.
 - **Skip if old == new** — already in sync. For `*_json` fields, equality is checked semantically (deserialize both JSON strings and compare as Python dicts/lists via `_scalars_equal`), so different key orderings of the same object do not produce a spurious Conflict.

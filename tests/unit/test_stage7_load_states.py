@@ -1,4 +1,4 @@
-"""load_candidate_states — field-level merge, citation accumulation."""
+"""load_candidate_groups — field-level merge, citation accumulation."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from pipeline.db import open_canonical_db
-from pipeline.stage7_load import load_candidate_states
+from pipeline.stage7_load import load_candidate_groups
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def _seed_candidate_state(
 
 def test_creates_canonical_state_on_first_load(canonical: sqlite3.Connection) -> None:
     _seed_candidate_state(canonical, run_id="run:1")
-    load_candidate_states(canonical, "run:1")
+    load_candidate_groups(canonical, "run:1")
     rows = canonical.execute("SELECT id, name FROM groups").fetchall()
     assert len(rows) == 1
     assert rows[0][1] == "周"
@@ -55,9 +55,9 @@ def test_creates_canonical_state_on_first_load(canonical: sqlite3.Connection) ->
 
 def test_second_load_with_same_name_merges_not_creates(canonical: sqlite3.Connection) -> None:
     _seed_candidate_state(canonical, run_id="run:1", chunk_id="chk:t1")
-    load_candidate_states(canonical, "run:1")
+    load_candidate_groups(canonical, "run:1")
     _seed_candidate_state(canonical, run_id="run:2", chunk_id="chk:t2", ruling_clan="姬")
-    load_candidate_states(canonical, "run:2")
+    load_candidate_groups(canonical, "run:2")
 
     rows = canonical.execute("SELECT id, name, ruling_clan FROM groups").fetchall()
     assert len(rows) == 1
@@ -73,11 +73,11 @@ def test_higher_confidence_field_overrides_lower(canonical: sqlite3.Connection) 
     _seed_candidate_state(
         canonical, run_id="run:1", chunk_id="chk:t1", ruling_clan="姒", confidence=0.7
     )
-    load_candidate_states(canonical, "run:1")
+    load_candidate_groups(canonical, "run:1")
     _seed_candidate_state(
         canonical, run_id="run:2", chunk_id="chk:t2", ruling_clan="姬", confidence=0.9
     )
-    load_candidate_states(canonical, "run:2")
+    load_candidate_groups(canonical, "run:2")
 
     row = canonical.execute("SELECT ruling_clan FROM groups").fetchone()
     assert row[0] == "姬"

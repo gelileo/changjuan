@@ -82,7 +82,7 @@ _PERSON_SCHEMA: dict[str, object] = {
         "social_category": {"enum": _SOCIAL_CATEGORIES},
         "birth_date": _DATE_SCHEMA,
         "death_date": _DATE_SCHEMA,
-        "state_id": {"type": ["string", "null"], "pattern": r"^(s\d+|sta:[\w\-]+)$"},
+        "group_id": {"type": ["string", "null"], "pattern": r"^(s\d+|sta:[\w\-]+)$"},
         "clan_name": {"type": ["string", "null"]},
         "citation": _CITATION_SCHEMA,
         "justifications": {"type": "object", "additionalProperties": {"type": "string"}},
@@ -122,14 +122,14 @@ _PLACE_SCHEMA: dict[str, object] = {
     },
 }
 
-_STATE_SCHEMA: dict[str, object] = {
+_GROUP_SCHEMA: dict[str, object] = {
     "type": "object",
     "required": ["id", "name", "citation", "justifications"],
     "additionalProperties": False,
     "properties": {
         "id": {"type": "string", "pattern": r"^s\d+$"},
         "name": {"type": "string", "minLength": 1},
-        "type": {"type": "string"},
+        "group_type": {"type": "string"},
         "ruling_clan": {"type": ["string", "null"]},
         "founded_date": _DATE_SCHEMA,
         "ended_date": _DATE_SCHEMA,
@@ -149,8 +149,8 @@ _RELATION_SCHEMA: dict[str, object] = {
                 "event_place",
                 "event_relation",
                 "person_relation",
-                "person_state",
-                "state_capital",
+                "person_group",
+                "group_seat",
             ]
         },
         "citation": _CITATION_SCHEMA,
@@ -159,13 +159,13 @@ _RELATION_SCHEMA: dict[str, object] = {
 
 EXTRACT_OUTPUT_SCHEMA: dict[str, object] = {
     "type": "object",
-    "required": ["persons", "events", "places", "states", "relations"],
+    "required": ["persons", "events", "places", "groups", "relations"],
     "additionalProperties": False,
     "properties": {
         "persons": {"type": "array", "items": _PERSON_SCHEMA},
         "events": {"type": "array", "items": _EVENT_SCHEMA},
         "places": {"type": "array", "items": _PLACE_SCHEMA},
-        "states": {"type": "array", "items": _STATE_SCHEMA},
+        "groups": {"type": "array", "items": _GROUP_SCHEMA},
         "relations": {"type": "array", "items": _RELATION_SCHEMA},
     },
 }

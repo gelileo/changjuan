@@ -14,7 +14,7 @@ from pipeline.stage7_load.helpers import (
     _SIMILAR_CONFIDENCE_DELTA,
     _slugify,
 )
-from pipeline.stage7_load.id_maps import build_state_id_map
+from pipeline.stage7_load.id_maps import build_group_id_map
 
 log = structlog.get_logger(__name__)
 
@@ -25,7 +25,7 @@ def _create_person(
     c: sqlite3.Row,
     pipeline_run_id: str,
     *,
-    resolved_state_id: str | None = None,
+    resolved_group_id: str | None = None,
 ) -> None:
     conn.execute(
         """
@@ -41,7 +41,7 @@ def _create_person(
             c["birth_date_json"],
             c["death_date_json"],
             c["notes"],
-            resolved_state_id if resolved_state_id is not None else c["group_id"],
+            resolved_group_id if resolved_group_id is not None else c["group_id"],
             c["clan_name"],
             c["social_category"],
             c["confidence"],
@@ -165,7 +165,7 @@ def _merge_scalar_fields(
     c: sqlite3.Row,
     pipeline_run_id: str,
     *,
-    resolved_state_id: str | None = None,
+    resolved_group_id: str | None = None,
 ) -> None:
     fields_sql = ", ".join(_PERSON_SCALAR_FIELDS)
     existing = conn.execute(
@@ -174,8 +174,8 @@ def _merge_scalar_fields(
     ).fetchone()
     for field in _PERSON_SCALAR_FIELDS:
         new_val = (
-            resolved_state_id
-            if (field == "group_id" and resolved_state_id is not None)
+            resolved_group_id
+            if (field == "group_id" and resolved_group_id is not None)
             else c[field]
         )
         if new_val is None:
@@ -300,13 +300,13 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
     Variants from the extraction (variants_json) are written to person_variants
     idempotently so that successive runs accumulate without duplicating.
 
-    Requires load_candidate_states (and load_candidate_places) to have already run
+    Requires load_candidate_groups (and load_candidate_places) to have already run
     so that persons.group_id FK constraints are satisfiable.  The local extraction
     group id (e.g. 's1') stored in candidate_persons.group_id is resolved to the
     canonical group id (e.g. 'sta:周') via the candidate_groups→groups join.
     """
     # Build local-id → canonical-id map for groups referenced by this run's candidates.
-    state_id_map = build_state_id_map(conn, pipeline_run_id)
+    group_id_map = build_group_id_map(conn, pipeline_run_id)
 
     cur = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, notes, "
@@ -331,18 +331,18 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
         # Resolve candidate group_id (a local extraction id like 's1') to the canonical
         # group id (e.g. 'sta:周').  If the group_id already contains ':' it is already
         # canonical and is passed through unchanged.  None stays None.
-        raw_state_id: str | None = c["group_id"]
-        if raw_state_id is not None and ":" not in raw_state_id:
-            resolved_state_id: str | None = state_id_map.get(raw_state_id)
-            if resolved_state_id is None:
+        raw_group_id: str | None = c["group_id"]
+        if raw_group_id is not None and ":" not in raw_group_id:
+            resolved_group_id: str | None = group_id_map.get(raw_group_id)
+            if resolved_group_id is None:
                 log.warning(
                     "candidate group_id not resolved to a canonical group; "
                     "persons.group_id will be set to NULL for this candidate",
                     candidate_id=c["id"],
-                    raw_group_id=raw_state_id,
+                    raw_group_id=raw_group_id,
                 )
         else:
-            resolved_state_id = raw_state_id
+            resolved_group_id = raw_group_id
 
         # Phase 3: honor match_target_id if Stage 5 set it.
         target_id_raw = c["match_target_id"]
@@ -373,11 +373,11 @@ def load_candidate_persons(conn: sqlite3.Connection, pipeline_run_id: str) -> in
             if existing_id_row is not None:
                 h = hashlib.sha256(c["canonical_name"].encode("utf-8")).hexdigest()[:6]
                 person_id = f"{person_id}-{h}"
-            _create_person(conn, person_id, c, pipeline_run_id, resolved_state_id=resolved_state_id)
+            _create_person(conn, person_id, c, pipeline_run_id, resolved_group_id=resolved_group_id)
         else:
             person_id = existing_id
             _merge_scalar_fields(
-                conn, person_id, c, pipeline_run_id, resolved_state_id=resolved_state_id
+                conn, person_id, c, pipeline_run_id, resolved_group_id=resolved_group_id
             )
 
         # Record in map for cross-run chain resolution by later siblings in this pass.

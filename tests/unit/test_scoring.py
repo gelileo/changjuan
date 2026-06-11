@@ -15,8 +15,8 @@ def _p(name: str, **fields: Any) -> dict[str, Any]:
 
 
 def test_hard_veto_when_no_variant_overlap() -> None:
-    a = _p("重耳", state_id="sta:jin", clan_name="姬", social_category="noble")
-    b = _p("管仲", state_id="sta:jin", clan_name="姬", social_category="noble")
+    a = _p("重耳", group_id="sta:jin", clan_name="姬", social_category="noble")
+    b = _p("管仲", group_id="sta:jin", clan_name="姬", social_category="noble")
     result = person_match_score(a, b)
     assert result["score"] == 0.0
     assert result["features"]["variant_overlap"] == "none"
@@ -45,7 +45,7 @@ def test_full_perfect_match() -> None:
     a = _p(
         "重耳",
         variants=[{"variant": "公子重耳", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         clan_name="姬",
         social_category="noble",
         death_date={
@@ -57,7 +57,7 @@ def test_full_perfect_match() -> None:
     b = _p(
         "公子重耳",
         variants=[{"variant": "重耳", "kind": "本名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         clan_name="姬",
         social_category="noble",
         death_date={
@@ -68,27 +68,27 @@ def test_full_perfect_match() -> None:
     )
     result = person_match_score(a, b)
     assert result["score"] == 1.00  # clamped
-    assert result["features"]["state_agreement"] == "same"
+    assert result["features"]["group_agreement"] == "same"
     assert result["features"]["clan_agreement"] == "same"
     assert result["features"]["social_category_agreement"] == "same"
     assert result["features"]["temporal_proximity"] == "compatible"
 
 
 def test_state_disagreement_subtracts() -> None:
-    a = _p("重耳", variants=[{"variant": "公子重耳", "kind": "别名"}], state_id="sta:jin")
-    b = _p("公子重耳", state_id="sta:wei")  # different state
+    a = _p("重耳", variants=[{"variant": "公子重耳", "kind": "别名"}], group_id="sta:jin")
+    b = _p("公子重耳", group_id="sta:wei")  # different state
     result = person_match_score(a, b)
-    assert result["features"]["state_agreement"] == "different"
+    assert result["features"]["group_agreement"] == "different"
     # +0.50 (strong variant) - 0.40 (state diff) = 0.10
     assert abs(result["score"] - 0.10) < 1e-9
 
 
 def test_clan_disagreement_subtracts() -> None:
     a = _p(
-        "X", variants=[{"variant": "shared", "kind": "别名"}], state_id="sta:jin", clan_name="姬"
+        "X", variants=[{"variant": "shared", "kind": "别名"}], group_id="sta:jin", clan_name="姬"
     )
     b = _p(
-        "Y", variants=[{"variant": "shared", "kind": "别名"}], state_id="sta:jin", clan_name="姚"
+        "Y", variants=[{"variant": "shared", "kind": "别名"}], group_id="sta:jin", clan_name="姚"
     )  # different clan
     result = person_match_score(a, b)
     assert result["features"]["clan_agreement"] == "different"
@@ -118,11 +118,11 @@ def test_temporal_conflict_subtracts() -> None:
 
 
 def test_one_null_does_not_penalize() -> None:
-    """When state_id missing on one side, no penalty (insufficient evidence)."""
-    a = _p("X", variants=[{"variant": "shared", "kind": "别名"}], state_id="sta:jin")
-    b = _p("Y", variants=[{"variant": "shared", "kind": "别名"}])  # no state_id
+    """When group_id missing on one side, no penalty (insufficient evidence)."""
+    a = _p("X", variants=[{"variant": "shared", "kind": "别名"}], group_id="sta:jin")
+    b = _p("Y", variants=[{"variant": "shared", "kind": "别名"}])  # no group_id
     result = person_match_score(a, b)
-    assert result["features"]["state_agreement"] == "one_null"
+    assert result["features"]["group_agreement"] == "one_null"
     assert abs(result["score"] - 0.20) < 1e-9  # just the partial variant
 
 
@@ -131,7 +131,7 @@ def test_score_clamps_to_zero() -> None:
     a = _p(
         "X",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         clan_name="姬",
         social_category="noble",
         death_date={"year_bce": 950, "uncertainty": "point", "inference_kind": "era_only"},
@@ -139,7 +139,7 @@ def test_score_clamps_to_zero() -> None:
     b = _p(
         "Y",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:wei",
+        group_id="sta:wei",
         clan_name="姚",
         social_category="royalty",
         birth_date={"year_bce": 700, "uncertainty": "point", "inference_kind": "era_only"},
@@ -159,18 +159,18 @@ def test_temporal_compatible_with_partial_overlap_adds_independently() -> None:
     a = _p(
         "X",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         death_date={"year_bce": 650, "uncertainty": "point", "inference_kind": "era_only"},
     )
     b = _p(
         "Y",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         death_date={"year_bce": 640, "uncertainty": "point", "inference_kind": "era_only"},
     )
     result = person_match_score(a, b)
     assert result["features"]["variant_overlap"] == "partial"
-    assert result["features"]["state_agreement"] == "same"
+    assert result["features"]["group_agreement"] == "same"
     assert result["features"]["temporal_proximity"] == "compatible"
     # +0.20 (partial) + 0.20 (state same) + 0.10 (temporal compatible) = 0.50
     assert abs(result["score"] - 0.50) < 1e-9
@@ -181,7 +181,7 @@ def test_score_clamps_to_one() -> None:
     a = _p(
         "重耳",
         variants=[{"variant": "公子重耳", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         clan_name="姬",
         social_category="noble",
         death_date={
@@ -193,7 +193,7 @@ def test_score_clamps_to_one() -> None:
     b = _p(
         "公子重耳",
         variants=[{"variant": "重耳", "kind": "本名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         clan_name="姬",
         social_category="noble",
         death_date={
@@ -220,17 +220,17 @@ def test_strong_variant_same_state_diff_social_no_penalty() -> None:
     """
     a = _p(
         "公子佗",
-        state_id="sta:chen",
+        group_id="sta:chen",
         social_category="noble",  # earlier chapter — as 公子
     )
     b = _p(
         "公子佗",
-        state_id="sta:chen",
+        group_id="sta:chen",
         social_category="royalty",  # later chapter — after 篡立
     )
     result = person_match_score(a, b)
     assert result["features"]["variant_overlap"] == "strong"
-    assert result["features"]["state_agreement"] == "same"
+    assert result["features"]["group_agreement"] == "same"
     assert result["features"]["social_category_agreement"] == "different"
     # 0.50 + 0.20 + 0 (clan one_null) + 0 (social diff waived) + 0 = 0.70
     assert abs(result["score"] - 0.70) < 1e-9
@@ -243,16 +243,16 @@ def test_diff_social_still_penalized_when_state_differs() -> None:
     """
     a = _p(
         "公子元",
-        state_id="sta:zheng",  # the 郑 公子元 from Ch.7
+        group_id="sta:zheng",  # the 郑 公子元 from Ch.7
         social_category="noble",
     )
     b = _p(
         "公子元",
-        state_id="sta:qi",  # a 齐 公子元 from Ch.8
+        group_id="sta:qi",  # a 齐 公子元 from Ch.8
         social_category="military",
     )
     result = person_match_score(a, b)
-    assert result["features"]["state_agreement"] == "different"
+    assert result["features"]["group_agreement"] == "different"
     # 0.50 (strong) + 0 - 0.40 (state diff) + 0 (clan one_null) - 0.10 (social diff)
     # = 0.00 (clamped). Penalty fires; combined with state_diff = no merge.
     assert result["score"] == 0.0
@@ -265,13 +265,13 @@ def test_diff_social_still_penalized_with_partial_variant() -> None:
     a = _p(
         "A",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         social_category="noble",
     )
     b = _p(
         "B",
         variants=[{"variant": "shared", "kind": "别名"}],
-        state_id="sta:jin",
+        group_id="sta:jin",
         social_category="royalty",
     )
     result = person_match_score(a, b)

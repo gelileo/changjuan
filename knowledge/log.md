@@ -1,5 +1,27 @@
 # Build Log
 
+## 2026-06-11 — refactor(python): complete State→Group rename in Python layer (remove bridges/aliases)
+
+Removed all bridges and aliases that preserved old `state` names in the Python ETL layer after the SQL schema rename (prior commit `7ab4d7d`). Every bridge is gone; the rename is clean end-to-end.
+
+Key changes:
+- `pipeline/schemas/extract_output.py`: `groups:` (was `states:`), `group_id` (was `state_id`), `group_type` (was `type`), kinds `person_group`/`group_seat` (were `person_state`/`state_capital`).
+- `pipeline/stage3_extract.py`: all `states_written` → `groups_written`; invariant 5 checks `group_id`; loops use `groups`/`group_type`.
+- `pipeline/stage5_link/scoring.py`: feature key `group_agreement` (was `state_agreement`).
+- `pipeline/stage5_link/candidate_pool.py`: dict key `group_id`; `_resolve_group_local_to_canonical`; `_row_to_dict_with_resolved_group`.
+- `pipeline/stage5_link/merge.py`: `_LOCAL_GROUP_ID_RE`; `_resolve_collisions_person_groups`.
+- `pipeline/stage7_load/`: `load_candidate_groups`; `build_group_id_map` (supports `cand:sta:` historical prefix for backward compat); `resolved_group_id`.
+- `pipeline/export_enrich.py`: `add_group_prominence` (was `add_state_prominence`); `states:` key in `prominence_overrides.yaml` preserved as curated data with comment.
+- `pipeline/stage9_export.py`: `SCHEMA_VERSION = 7`; `manifest_reader_capabilities(book_meta)` added; manifest `capabilities` now carries reader-tab caps via `derive_reader_capabilities`.
+- `pipeline/cli.py`: `load_candidate_groups`; `groups=…` echo; `group_id` dict keys in golden-eval.
+- `tests/fixtures/ch01-extraction-v1.yaml`: `groups:`, `group_id:`, `group_type:`, `person_group`, `group_seat`.
+- `tests/golden/merge_regression.yaml`: `group_id:` (was `state_id:`).
+- All test files updated to match new vocabulary.
+
+`SCHEMA_VERSION` bumped 6 → 7. Definition-of-done grep gate passes (only `pipeline/dates.py` and `pipeline/discovery.py` match old state names). Suite: 343 passed, 1 skipped.
+
+Articles touched: `concepts/pipeline/extraction.md`, `concepts/pipeline/linking.md`, `concepts/pipeline/load-and-merge.md`, `concepts/pipeline/export-contract.md`.
+
 ## 2026-06-11 — refactor(schema): rename State→Group across canonical + candidate tables
 
 Renamed the `State` entity to `Group` in `pipeline/schemas/canonical_schema.sql`:

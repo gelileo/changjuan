@@ -254,7 +254,7 @@ def add_narrative_seq(graph_db: Path) -> None:
         g.execute("CREATE INDEX IF NOT EXISTS idx_events_narrative_seq ON events(narrative_seq);")
 
 
-def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
+def add_group_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
     """Add `groups.prominence` (REAL) + `groups.prominence_tier` (TEXT:
     'major' | 'minor') to the snapshot.
 
@@ -263,12 +263,17 @@ def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> 
     `prominence_tier` is 'major' iff the group's name is in the curated allow-list
     under the `states:` key of prominence_overrides.yaml, else 'minor'. Only ~80
     groups, so the default reader list is a curated editorial set, not a rank.
+
+    Note: the `states:` key in prominence_overrides.yaml is a historical name for
+    the curated group allow-list; it is intentionally kept as-is (curated data, not
+    a schema name).
     """
     major_names: set[str] = set()
     if overrides_path and overrides_path.exists():
         import yaml
 
         data = yaml.safe_load(overrides_path.read_text("utf-8")) or {}
+        # `states:` key is historical (curated data, not a schema name — left as-is)
         major_names = set(data.get("states") or [])
 
     with sqlite3.connect(graph_db) as g:

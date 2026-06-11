@@ -155,7 +155,7 @@ def test_extract_load_cli_loads_yaml_via_cli(tmp_path: Path) -> None:
                 ],
                 "events": [],
                 "places": [],
-                "states": [],
+                "groups": [],
                 "relations": [],
             },
             allow_unicode=True,
