@@ -26,9 +26,10 @@ def _seed_candidate_state(
     ruling_clan: str | None = None,
     confidence: float = 0.9,
 ) -> None:
+    # candidate_groups.type is the corpus-derived sub-classification (e.g. '诸侯国')
     conn.execute(
         "INSERT OR IGNORE INTO candidate_groups "
-        "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
+        "(id, name, type, ruling_clan, founded_date_json, ended_date_json, "
         "confidence, pipeline_run_id, chunk_id, quote) "
         "VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)",
         (
@@ -51,6 +52,15 @@ def test_creates_canonical_state_on_first_load(canonical: sqlite3.Connection) ->
     rows = canonical.execute("SELECT id, name FROM groups").fetchall()
     assert len(rows) == 1
     assert rows[0][1] == "周"
+
+
+def test_load_sets_extracted_type_and_profile_group_type(canonical: sqlite3.Connection) -> None:
+    """groups.type = extracted sub-classification; groups.group_type = profile default."""
+    _seed_candidate_state(canonical, run_id="run:1", state_type="诸侯国")
+    load_candidate_groups(canonical, "run:1", profile="history")
+    row = canonical.execute("SELECT type, group_type FROM groups").fetchone()
+    assert row[0] == "诸侯国"
+    assert row[1] == "state"
 
 
 def test_second_load_with_same_name_merges_not_creates(canonical: sqlite3.Connection) -> None:

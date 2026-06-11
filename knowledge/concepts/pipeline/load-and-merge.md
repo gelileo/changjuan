@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases); 2026-06-11 feat/genre-profiles final-review: profile-wired relation vocab (Task 5)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases); 2026-06-11 feat/genre-profiles final-review: profile-wired relation vocab (Task 5); 2026-06-11 groups type/group_type split (load_candidate_groups gains profile param; type merged from candidate; group_type set from default_group_type)
 status: thin
 load_bearing: true
 references:
@@ -102,11 +102,22 @@ Scalar fields merged: `type`, `lat`, `lon`, `coord_confidence`, `modern_equiv`. 
 
 Every create emits `audit_log` with `change_kind='create'` and `after_json={"value": name, "confidence": ...}`. Every scalar field update emits `change_kind='set'` with the new value and confidence.
 
-## States
+## Groups
 
-`pipeline/stage7_load/states.py::load_candidate_states` mirrors `places.py` exactly, adapted for the `states` table. Candidates are matched against existing canonical `states` rows by `name` equality only. If no match exists, a new State is created with id `sta:<slug>`, using the same SHA-256 hex-suffix collision guard.
+`pipeline/stage7_load/groups.py::load_candidate_groups` mirrors `places.py`, adapted for the `groups` table. Signature: `load_candidate_groups(conn, pipeline_run_id, profile="history")`.
 
-Scalar fields merged: `type`, `ruling_clan`, `founded_date_json`, `ended_date_json`. For the date JSON fields (`founded_date_json`, `ended_date_json`), the same opaque-string merge rule applies as for other scalars: skip if `None`; set unconditionally if existing value is `None`; otherwise apply the `_SIMILAR_CONFIDENCE_DELTA = 0.1` threshold using per-field confidence from `audit_log`. A dedicated `merge_date_field` helper (Task 18) will later provide semantic date-aware merging; for now the simple higher-confidence-wins rule is used. The `state_capitals` relation table (a separate join table between states and places) is not populated here — that is handled in Task 19 (`load_candidate_relations`). Citation accumulation works identically: `record_citation(conn, "state", state_id, chunk_id)` is called for every candidate. Every create emits `audit_log` with `change_kind='create'`; every field update emits `change_kind='set'`.
+Candidates are matched against existing canonical `groups` rows by `name` equality only. If no match exists, a new Group is created with id `sta:<slug>` (the `sta:` prefix is stable data), using the same SHA-256 hex-suffix collision guard.
+
+**Two separate fields — do not conflate:**
+
+| Field | Source | Behaviour |
+|-------|--------|-----------|
+| `type` | Extracted from candidate; corpus-derived sub-classification (诸侯国/戎/邑/…) | Merged using higher-confidence-wins semantics (same rules as `ruling_clan`) |
+| `group_type` | Set from `profile.default_group_type(profile)` at create time | NEVER merged from candidates; only written at GROUP CREATE |
+
+The loader reads `type` from `candidate_groups.type` (not `group_type`). On create, it stamps `group_type = default_group_type(profile)`. On merge, `type` participates in the scalar merge loop; `group_type` does not — it is intentionally excluded from `_GROUP_SCALAR_FIELDS`.
+
+Scalar fields merged (from candidates): `type`, `ruling_clan`, `founded_date_json`, `ended_date_json`. For date JSON fields the same opaque-string merge rule applies. The `group_seats` relation table is handled separately in Task 19 (`load_candidate_relations`). Citation accumulation works identically: `record_citation(conn, "group", group_id, chunk_id)`. Every create emits `audit_log` with `change_kind='create'`; every field update emits `change_kind='set'`.
 
 ## Events
 

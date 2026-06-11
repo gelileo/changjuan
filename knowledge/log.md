@@ -1,5 +1,27 @@
 # Build Log
 
+## 2026-06-11 — fix(schema): groups keeps extracted 'type' + loader-set 'group_type' (was conflated)
+
+The `State→Group` rename had conflated two distinct axes into a single `group_type` column:
+- `type` (corpus-derived sub-classification: 诸侯国/戎/邑/王朝/…) — comes FROM extraction.
+- `group_type` (collective kind: state/clan/faction/…) — SET BY loader from the active profile.
+
+Changes:
+1. `pipeline/schemas/canonical_schema.sql`: `groups` now has BOTH `type TEXT` + `group_type TEXT`; `candidate_groups` has `type` (not `group_type`).
+2. `pipeline/schemas/extract_output.py`: `_GROUP_SCHEMA` property renamed `group_type` → `type`; extraction provides the sub-type, not the collective kind.
+3. `pipeline/stage3_extract.py`: reads `grp.get("type")`, inserts into `candidate_groups.type`.
+4. `pipeline/profile.py`: added `"default_group_type": "state"` to the history profile; added `default_group_type(profile)` helper (raises `UnknownProfileError` consistently with `relation_kinds_for`).
+5. `pipeline/stage7_load/groups.py`: `load_candidate_groups` accepts `profile: str = "history"`; reads `type` from candidate; writes `groups.type = candidate.type` AND `groups.group_type = default_group_type(profile)`. Scalar merge field list updated to use `type` (not `group_type`).
+6. `pipeline/cli.py` `load` command: passes `profile=` into `load_candidate_groups`; `qa-sample` fallback reads `candidate_groups.type`.
+7. `pipeline/migrations/migrate_0001_state_to_group.py`: `groups` CREATE includes `type TEXT`; INSERT…SELECT copies `states.type` → `groups.type` and hardcodes `group_type='state'`.
+8. Tests: updated `test_canonical_schema_groups.py`, `test_state_to_group_migration.py`, `test_extract_output_groups.py`, `test_stage7_load_states.py`, `test_cli.py`; added new test for extract-schema and load correctness. Fixture `ch01-extraction-v1.yaml` updated (`group_type:` → `type:`).
+
+Suite: **353 passed, 1 skipped**.
+
+Re-exported `dzl` from the pre-migrate backup as `2026-06-v9-groups`. Distribution: 诸侯国=60, 戎=16, 邑/王朝/夷/国=1 each; group_type all `state`.
+
+Articles touched: `concepts/data-model/knowledge-graph.md` (added groups.type vs groups.group_type section).
+
 ## 2026-06-11 — fix: wire relation-vocab to profile + clear final-review leftovers
 
 Completed Task 5 (relation-kind validation wired to genre-profile) and cleared five final-review issues in `feat/genre-profiles`:

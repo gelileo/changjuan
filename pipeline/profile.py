@@ -38,6 +38,7 @@ PROFILES: dict[str, dict[str, object]] = {
         "capabilities": ["persons", "relations", "events", "chronology", "geography", "groups"],
         "person_relation_kinds": _HISTORY_PERSON_KINDS,
         "event_relation_kinds": _HISTORY_EVENT_KINDS,
+        "default_group_type": "state",
     },
     # "cast" profile lands in Plan 3 (red-chamber slice).
 }
@@ -49,6 +50,18 @@ _READER_TAB_RULES: list[tuple[str, str]] = [
     ("groups", "groups"),
     ("themes", "themes"),
 ]
+
+
+def default_group_type(profile: str) -> str:
+    """Return the collective kind that the loader stamps on every group for this profile.
+
+    Raises UnknownProfileError for an unrecognised profile (consistent with
+    relation_kinds_for).  Falls back to 'state' if the profile entry omits the key
+    (future-proofing for profiles added before the key was mandatory).
+    """
+    if profile not in PROFILES:
+        raise UnknownProfileError(profile)
+    return str(PROFILES[profile].get("default_group_type", "state"))
 
 
 def relation_kinds_for(profile: str, relation: str) -> set[str]:

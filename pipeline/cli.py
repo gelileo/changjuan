@@ -89,7 +89,7 @@ def load(
         apply_schema(conn, CANONICAL_SCHEMA)
         # Order matters: places + groups first (events + relations reference them via FK).
         n_places = load_candidate_places(conn, pipeline_run_id=pipeline_run_id)
-        n_groups = load_candidate_groups(conn, pipeline_run_id=pipeline_run_id)
+        n_groups = load_candidate_groups(conn, pipeline_run_id=pipeline_run_id, profile=profile)
         n_persons = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
         n_events = load_candidate_events(conn, pipeline_run_id=pipeline_run_id)
         n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id, profile=profile)
@@ -679,7 +679,7 @@ def qa_sample_cmd(
                     )
 
         for row in canonical.execute(
-            "SELECT id, name, group_type, ruling_clan, quote "
+            "SELECT id, name, type, ruling_clan, quote "
             "FROM candidate_groups WHERE pipeline_run_id = ?",
             (pipeline_run_id,),
         ):

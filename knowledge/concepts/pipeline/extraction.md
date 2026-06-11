@@ -3,7 +3,7 @@ title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed)
+implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed); 2026-06-11 group 'type' fix (group extraction schema property renamed group_type→type; candidate_groups column renamed accordingly)
 status: thin
 load_bearing: true
 references:
@@ -100,6 +100,12 @@ score = min(base + citation_bonus + justification_bonus, 0.95)
 ```
 
 The 0.95 ceiling reserves 1.0 for curated records. Stage 3 never claims 1.0. Future phases tune weights against sampling-QA reliability diagrams; the function signature is stable so callers do not change.
+
+## Group extraction: 'type' field (not 'group_type')
+
+In the extraction schema (`EXTRACT_OUTPUT_SCHEMA._GROUP_SCHEMA`) the corpus-derived sub-classification field for groups is `type` (e.g. `诸侯国`, `戎`, `邑`, `王朝`). This is what the text calls the group — it is purely an extraction output.
+
+`group_type` (the collective kind: `state`, `clan`, etc.) is NOT an extraction field. It is stamped by the Stage 7 loader from the active genre profile's `default_group_type` key. The extraction schema has `additionalProperties: false` so any extractor emitting `group_type` would fail schema validation. `candidate_groups` carries a `type` column (not `group_type`); `groups` carries both — `type` (merged from candidates) and `group_type` (set by loader, never merged).
 
 ## Sampling QA "different prompt only" limitation
 

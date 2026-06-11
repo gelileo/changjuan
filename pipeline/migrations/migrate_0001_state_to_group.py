@@ -16,18 +16,18 @@ def run(conn: sqlite3.Connection) -> None:
 
     cur.execute("PRAGMA foreign_keys = OFF;")
 
-    # 1. groups <- states (+ group_type='state')
+    # 1. groups <- states (preserve extracted type; stamp group_type='state')
     cur.execute(
         "CREATE TABLE groups (id TEXT PRIMARY KEY, name TEXT NOT NULL, "
         "founded_date_json TEXT, ended_date_json TEXT, ruling_clan TEXT, "
-        "group_type TEXT, confidence REAL NOT NULL, provenance TEXT NOT NULL, "
+        "type TEXT, group_type TEXT, confidence REAL NOT NULL, provenance TEXT NOT NULL, "
         "pipeline_run_id TEXT, created_at TEXT, updated_at TEXT);"
     )
     cur.execute(
         "INSERT INTO groups (id,name,founded_date_json,ended_date_json,ruling_clan,"
-        "group_type,confidence,provenance,pipeline_run_id,created_at,updated_at) "
+        "type,group_type,confidence,provenance,pipeline_run_id,created_at,updated_at) "
         "SELECT id,name,founded_date_json,ended_date_json,ruling_clan,"
-        "'state',confidence,provenance,pipeline_run_id,created_at,updated_at FROM states;"
+        "type,'state',confidence,provenance,pipeline_run_id,created_at,updated_at FROM states;"
     )
     cur.execute("DROP TABLE states;")
 

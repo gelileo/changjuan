@@ -129,7 +129,7 @@ _GROUP_SCHEMA: dict[str, object] = {
     "properties": {
         "id": {"type": "string", "pattern": r"^s\d+$"},
         "name": {"type": "string", "minLength": 1},
-        "group_type": {"type": "string"},
+        "type": {"type": ["string", "null"]},
         "ruling_clan": {"type": ["string", "null"]},
         "founded_date": _DATE_SCHEMA,
         "ended_date": _DATE_SCHEMA,

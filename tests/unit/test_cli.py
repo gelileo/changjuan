@@ -49,13 +49,13 @@ def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
             ("cand:pla:chk1", "镐京", "capital", 34.5, 109.2, 0.9, run_id, "chk:1", "镐京"),
         )
 
-        # 2. Candidate state (now groups)
+        # 2. Candidate state (now groups); type = extracted sub-classification
         conn.execute(
             "INSERT INTO candidate_groups "
-            "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
+            "(id, name, type, ruling_clan, founded_date_json, ended_date_json, "
             "confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)",
-            ("cand:sta:chk1", "周", "dynasty", "姬", 0.9, run_id, "chk:1", "周"),
+            ("cand:sta:chk1", "周", "王朝", "姬", 0.9, run_id, "chk:1", "周"),
         )
 
         # 3. Candidate person

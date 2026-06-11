@@ -633,7 +633,7 @@ places:
 groups:
   - id: s1
     name: 周
-    group_type: 王朝
+    type: 王朝
     ruling_clan: 姬
     founded_date:
       year_bce: 1046
@@ -651,7 +651,7 @@ groups:
 
   - id: s2
     name: 姜戎
-    group_type: 戎
+    type: 戎
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 5
@@ -663,7 +663,7 @@ groups:
 
   - id: s3
     name: 犬戎
-    group_type: 戎
+    type: 戎
     citation:
       chunk_id: "chk:dzl:1:0"
       paragraph: 9
@@ -675,7 +675,7 @@ groups:
 
   - id: s4
     name: 晋
-    group_type: 诸侯国
+    type: 诸侯国
     citation:
       chunk_id: "chk:dzl:1:14"
       paragraph: 19

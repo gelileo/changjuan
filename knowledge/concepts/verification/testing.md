@@ -3,6 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
+note: 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:)
 status: mature
 load_bearing: false
 references:

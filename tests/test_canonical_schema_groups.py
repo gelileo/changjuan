@@ -22,7 +22,16 @@ def test_groups_table_replaces_states():
     c = _conn()
     tables = _tables(c)
     assert "groups" in tables and "states" not in tables
+    # groups carries both the extracted sub-classification and the loader-set collective kind
+    assert "type" in _cols(c, "groups")
     assert "group_type" in _cols(c, "groups")
+
+
+def test_candidate_groups_has_type_not_group_type():
+    c = _conn()
+    cols = _cols(c, "candidate_groups")
+    assert "type" in cols
+    assert "group_type" not in cols
 
 
 def test_person_and_junctions_renamed():

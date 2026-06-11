@@ -101,8 +101,6 @@ properties:
         citation: *id001
         ended_date: *id002
         founded_date: *id002
-        group_type:
-          type: string
         id:
           pattern: ^s\d+$
           type: string
@@ -114,6 +112,10 @@ properties:
           minLength: 1
           type: string
         ruling_clan:
+          type:
+          - string
+          - 'null'
+        type:
           type:
           - string
           - 'null'

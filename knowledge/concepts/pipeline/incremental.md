@@ -3,6 +3,7 @@ title: Incremental extraction — re-extract semantics and prompt-version accumu
 type: concept
 area: pipeline
 updated: 2026-06-11
+note: 2026-06-11 extraction-schema.yaml auto-regenerated: group schema property renamed group_type→type (corpus-derived sub-classification; collective kind group_type is not an extraction field)
 status: thin
 load_bearing: true
 references:

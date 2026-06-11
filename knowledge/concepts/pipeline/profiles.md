@@ -3,7 +3,7 @@ title: Genre profiles — capability selection and relation-kind vocabulary
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: feat/genre-profiles (2026-06-11)
+implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry
 status: current
 load_bearing: true
 references:
@@ -52,6 +52,12 @@ Only tabs whose required ETL cap is present in the book's capability list appear
 ### Export plumbing
 
 `pipeline/stage9_export.py::manifest_reader_capabilities(book_meta)` calls `derive_reader_capabilities` and writes the result to `manifest.json "capabilities"`. `SCHEMA_VERSION = 7` marks bundles produced under the full State→Group rename + genre-profile backbone.
+
+## default_group_type — loader-set collective kind
+
+Each profile entry in `PROFILES` carries a `default_group_type` key (string). `pipeline/profile.py::default_group_type(profile)` returns this value; it raises `UnknownProfileError` for an unknown profile (consistent with `relation_kinds_for`). The Stage 7 groups loader (`load_candidate_groups`) calls this helper and stamps `groups.group_type = default_group_type(profile)` on every new group it creates. This value is NEVER merged from `candidate_groups` — it is profile-driven, not extraction-driven.
+
+The history profile sets `default_group_type = 'state'`. Future profiles (e.g. `cast` for 红楼梦 family networks) may set `'clan'`, `'faction'`, etc.
 
 ## Relation-kind vocabulary as profile config
 

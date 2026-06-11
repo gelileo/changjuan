@@ -1,6 +1,10 @@
 """Stage 7 — load_candidate_groups. Mirrors places.py for groups.
 
-Scalar merge fields: name, group_type, ruling_clan, founded_date_json, ended_date_json.
+Scalar merge fields (extracted, merged from candidates): type, ruling_clan,
+    founded_date_json, ended_date_json.
+Loader-set field (NOT merged from candidates): group_type — stamped from the
+    active profile's default_group_type at create time and never overwritten by
+    subsequent candidates.
 Match key: name.
 No variants table — groups are matched by name only.
 group_seats (a relation table) is handled separately in Task 19.
@@ -12,11 +16,13 @@ import hashlib
 import json as _json
 import sqlite3
 
+from pipeline.profile import default_group_type
 from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.helpers import _SIMILAR_CONFIDENCE_DELTA, _slugify
 
-_GROUP_SCALAR_FIELDS = ("group_type", "ruling_clan", "founded_date_json", "ended_date_json")
+# Extracted scalar fields merged from candidates (higher-confidence-wins).
+_GROUP_SCALAR_FIELDS = ("type", "ruling_clan", "founded_date_json", "ended_date_json")
 
 
 def _last_field_confidence(
@@ -34,15 +40,21 @@ def _last_field_confidence(
     return float(row[0])
 
 
-def load_candidate_groups(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
+def load_candidate_groups(
+    conn: sqlite3.Connection, pipeline_run_id: str, profile: str = "history"
+) -> int:
     """Promote candidate_groups rows tagged with pipeline_run_id into canonical groups.
 
     Matches candidates against existing Groups by name. Creates a new Group if no
-    match found. Merges scalar fields with higher-confidence-wins semantics.
+    match found. Merges extracted scalar fields (type, ruling_clan, founded_date_json,
+    ended_date_json) with higher-confidence-wins semantics.  group_type is stamped
+    from the active profile at create time and is never updated by merge.
     Returns the number of candidates processed.
     """
+    grp_type = default_group_type(profile)
+
     cands = conn.execute(
-        "SELECT id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
+        "SELECT id, name, type, ruling_clan, founded_date_json, ended_date_json, "
         "chunk_id, confidence "
         "FROM candidate_groups WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
@@ -75,13 +87,14 @@ def load_candidate_groups(conn: sqlite3.Connection, pipeline_run_id: str) -> int
 
             conn.execute(
                 "INSERT INTO groups "
-                "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
+                "(id, name, type, group_type, ruling_clan, founded_date_json, ended_date_json, "
                 "provenance, confidence, pipeline_run_id) "
-                "VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 'auto', ?, ?)",
                 (
                     group_id,
                     name,
                     stype,
+                    grp_type,
                     ruling_clan,
                     founded_date_json,
                     ended_date_json,
@@ -104,7 +117,7 @@ def load_candidate_groups(conn: sqlite3.Connection, pipeline_run_id: str) -> int
         else:
             group_id = existing[0]
             current = conn.execute(
-                "SELECT group_type, ruling_clan, founded_date_json, ended_date_json, confidence "
+                "SELECT type, ruling_clan, founded_date_json, ended_date_json, confidence "
                 "FROM groups WHERE id = ?",
                 (group_id,),
             ).fetchone()

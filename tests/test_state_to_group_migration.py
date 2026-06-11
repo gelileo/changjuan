@@ -33,8 +33,9 @@ def test_migration_preserves_rows_and_sets_group_type_state():
 
     migrate.run(c)
 
-    g = c.execute("SELECT id,name,group_type FROM groups").fetchone()
-    assert g == ("sta:jin", "晋", "state")
+    g = c.execute("SELECT id,name,type,group_type FROM groups").fetchone()
+    # extracted sub-classification preserved; collective kind set by migration
+    assert g == ("sta:jin", "晋", "诸侯国", "state")
     assert c.execute("SELECT group_id FROM persons WHERE id='per:x'").fetchone()[0] == "sta:jin"
     assert c.execute("SELECT group_id FROM person_groups").fetchone()[0] == "sta:jin"
     assert c.execute("SELECT entity_kind FROM entity_citations").fetchone()[0] == "group"

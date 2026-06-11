@@ -280,13 +280,13 @@ def load_extraction(
     # ===== groups =====
     for grp in groups:
         cand_id = f"cand:grp:{pipeline_run_id}:{grp['id']}"
-        scoring = dict(grp, _scalar_fields=["name", "group_type", "ruling_clan"])
+        scoring = dict(grp, _scalar_fields=["name", "type", "ruling_clan"])
         conf = score_extraction_record(scoring)
         founded_json = json.dumps(grp["founded_date"]) if grp.get("founded_date") else None
         ended_json = json.dumps(grp["ended_date"]) if grp.get("ended_date") else None
         canonical_conn.execute(
             "INSERT INTO candidate_groups "
-            "(id, name, founded_date_json, ended_date_json, ruling_clan, group_type, "
+            "(id, name, founded_date_json, ended_date_json, ruling_clan, type, "
             " confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -295,7 +295,7 @@ def load_extraction(
                 founded_json,
                 ended_json,
                 grp.get("ruling_clan"),
-                grp.get("group_type"),
+                grp.get("type"),
                 conf,
                 pipeline_run_id,
                 grp["citation"]["chunk_id"],

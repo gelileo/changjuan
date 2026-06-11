@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-06-11
-note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule). 2026-06-11: State entity renamed to Group (tables states→groups, person_states→person_groups, state_capitals→group_seats, candidate_states→candidate_groups, candidate_person_states→candidate_person_groups); persons.state_id→group_id; person_relations.kind CHECK removed (validation moves to profile loader).
+note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule). 2026-06-11: State entity renamed to Group (tables states→groups, person_states→person_groups, state_capitals→group_seats, candidate_states→candidate_groups, candidate_person_states→candidate_person_groups); persons.state_id→group_id; person_relations.kind CHECK removed (validation moves to profile loader). 2026-06-11: groups table gains two separate columns: `type` (corpus-derived sub-classification, e.g. 诸侯国/戎/邑) and `group_type` (collective kind, set by loader from active profile, e.g. 'state'). These were previously conflated in a single `group_type` column. candidate_groups uses `type` (not `group_type`); the extraction schema property is `type`; `group_type` is loader-set only.
 status: mature
 load_bearing: true
 references:
@@ -18,6 +18,17 @@ affects:
 ## What this is
 
 The output of `changjuan` is a typed knowledge graph of Eastern-Zhou history, built from 《东周列国志》 and validated against 《左传》 / 《史记》. Six entity types — **Person, Group, Place, Event, Citation, Conflict** — connected by typed relations (`event_participants`, `person_relations`, `person_groups`, `event_places`, `group_seats`, …). The `State` entity was renamed to `Group` in Task 2 of the genre-profiles branch to allow a single schema to handle states, alliances, families, and other collective entities; the `sta:` id prefix is preserved (id values are data, not schema). A `Family` entity was considered and deferred; clan/lineage facts ride on `Person.clan_name` + `person_relations(kind="clan_member")` until the data demands promotion. Every entity and every relation carries at least one **citation** (a verbatim quote span in a source corpus), a deterministic-computed **confidence** score, and full **audit history**. Dates are structured values (`year_bce`, `uncertainty`, `original`, `era`, `inference_kind`), never primitives. Name variants are first-class on Person — `重耳`, `晋文公`, `公子重耳` resolve to one id.
+
+## groups.type vs groups.group_type
+
+The `groups` table carries **two distinct columns** for different axes of classification:
+
+| Column | Source | Values | Who sets it |
+|--------|--------|--------|-------------|
+| `type` | Corpus extraction | 诸侯国, 戎, 邑, 王朝, 夷, 国, … | Extractor (Stage 3), merged by loader |
+| `group_type` | Profile config | state, clan, faction, sect, … | Loader (Stage 7) from `profile.default_group_type` |
+
+`type` is the corpus-derived sub-classification (what the text calls the entity). `group_type` is the collective kind as determined by the active genre profile (what the pipeline calls the entity at the schema level). The extraction schema (`extract_output.py`) defines a `type` property on group objects; `group_type` does NOT appear in extraction output. `candidate_groups` has a `type` column (not `group_type`). The loader stamps `group_type` from `profile.default_group_type(profile)` at create time and never overwrites it from candidates. The migration `migrate_0001_state_to_group` preserves `states.type` into `groups.type` and sets `groups.group_type = 'state'`.
 
 ## Why this shape, not the alternatives
 
