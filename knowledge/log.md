@@ -1,5 +1,14 @@
 # Build Log
 
+## 2026-06-11 — refactor: emit cand:grp: prefix + clean up post-rename leftovers
+
+Fixed the candidate-id prefix mismatch left from the State→Group rename:
+- `pipeline/stage3_extract.py`: groups loop now emits `cand:grp:` prefix (was `cand:sta:`); loop variable renamed `st` → `grp`; line-103 comment clarifies `s\d+` ids are groups.
+- `pipeline/stage7_load/id_maps.py`: `cand:grp:` is now the primary prefix in `build_group_id_map`; `cand:sta:` fallback retained for rows persisted before the rename; module docstring updated; comment reworded to state intent explicitly.
+- `pipeline/cli.py`: `states` local variable → `groups`; `# ===== states (now groups) =====` → `# ===== groups =====`; example id in comment updated to `cand:grp:`; downstream reference updated.
+
+No articles required (cosmetic rename + prefix fix, no behavioural or schema change). Suite: 343 passed, 1 skipped.
+
 ## 2026-06-11 — refactor(python): complete State→Group rename in Python layer (remove bridges/aliases)
 
 Removed all bridges and aliases that preserved old `state` names in the Python ETL layer after the SQL schema rename (prior commit `7ab4d7d`). Every bridge is gone; the rename is clean end-to-end.

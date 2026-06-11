@@ -100,7 +100,7 @@ def validate_record(
         ref = record.get(ref_field)
         if ref is None:
             continue
-        # Chunk-local ids look like 'p\d+', 'e\d+', 'pl\d+', 's\d+' (no colon).
+        # Chunk-local ids look like 'p\d+', 'e\d+', 'pl\d+', 's\d+' (groups) (no colon).
         # Canonical ids contain ':'.
         if ":" not in str(ref) and ref not in declared_local_ids:
             raise InvariantError(
@@ -278,12 +278,12 @@ def load_extraction(
         stats["places_written"] += 1
 
     # ===== groups =====
-    for st in groups:
-        cand_id = f"cand:sta:{pipeline_run_id}:{st['id']}"
-        scoring = dict(st, _scalar_fields=["name", "group_type", "ruling_clan"])
+    for grp in groups:
+        cand_id = f"cand:grp:{pipeline_run_id}:{grp['id']}"
+        scoring = dict(grp, _scalar_fields=["name", "group_type", "ruling_clan"])
         conf = score_extraction_record(scoring)
-        founded_json = json.dumps(st["founded_date"]) if st.get("founded_date") else None
-        ended_json = json.dumps(st["ended_date"]) if st.get("ended_date") else None
+        founded_json = json.dumps(grp["founded_date"]) if grp.get("founded_date") else None
+        ended_json = json.dumps(grp["ended_date"]) if grp.get("ended_date") else None
         canonical_conn.execute(
             "INSERT INTO candidate_groups "
             "(id, name, founded_date_json, ended_date_json, ruling_clan, group_type, "
@@ -291,18 +291,18 @@ def load_extraction(
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 cand_id,
-                st["name"],
+                grp["name"],
                 founded_json,
                 ended_json,
-                st.get("ruling_clan"),
-                st.get("group_type"),
+                grp.get("ruling_clan"),
+                grp.get("group_type"),
                 conf,
                 pipeline_run_id,
-                st["citation"]["chunk_id"],
-                st["citation"]["quote"],
+                grp["citation"]["chunk_id"],
+                grp["citation"]["quote"],
             ),
         )
-        local_to_cand[st["id"]] = cand_id
+        local_to_cand[grp["id"]] = cand_id
         stats["groups_written"] += 1
 
     # ===== relations =====

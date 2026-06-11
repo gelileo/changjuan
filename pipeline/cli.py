@@ -465,19 +465,19 @@ def golden_eval_cmd(
         chunk_local_id = row[0].split(":")[-1]  # 'cand:pla:run:xxx:pl1' → 'pl1'
         places.append({"id": chunk_local_id, "name": row[1]})
 
-    # ===== states (now groups) =====
-    states = []
+    # ===== groups =====
+    groups = []
     for row in canonical.execute(
         "SELECT id, name FROM candidate_groups WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
-        chunk_local_id = row[0].split(":")[-1]  # 'cand:sta:run:xxx:s1' → 's1'
-        states.append({"id": chunk_local_id, "name": row[1]})
+        chunk_local_id = row[0].split(":")[-1]  # 'cand:grp:run:xxx:s1' → 's1'
+        groups.append({"id": chunk_local_id, "name": row[1]})
 
     # ===== relations =====
     # Relation tables store full 'cand:*' ids in their FK columns.
     # Extract the chunk-local suffix so they align with the id keys in the
-    # persons/events/places/states lookup maps built above.
+    # persons/events/places/groups lookup maps built above.
     def _cl(full_id: str | None) -> str | None:
         """chunk-local id: 'cand:per:run:xxx:p1' → 'p1'; None → None."""
         return full_id.split(":")[-1] if full_id else None
@@ -546,7 +546,7 @@ def golden_eval_cmd(
         "persons": persons,
         "events": events,
         "places": places,
-        "states": states,
+        "states": groups,
         "relations": relations,
     }
 

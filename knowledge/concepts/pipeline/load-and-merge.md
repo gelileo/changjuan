@@ -205,7 +205,7 @@ Before Phase 6, `person_relations` stayed at 0 rows because stage 3 wrote empty-
 
 All Stage 7 loaders updated to use new column/table names:
 
-- `id_maps.py::build_state_id_map`: joins `candidate_groups` → `groups`
+- `id_maps.py::build_group_id_map` (was `build_state_id_map`): joins `candidate_groups` → `groups`; primary prefix `cand:grp:`, fallback `cand:sta:` for pre-rename rows
 - `states.py` → loads `candidate_groups` into `groups`, `group_type`; audit/citation kind `"group"`
 - `helpers.py`: `_PERSON_SCALAR_FIELDS` uses `"group_id"` (was `"state_id"`)
 - `persons.py`: INSERT/SELECT uses `group_id`; warning log key `raw_group_id`

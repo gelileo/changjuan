@@ -108,6 +108,9 @@ uses `group_id`; SELECT from `candidate_groups` (was `candidate_states`);
 / `candidate_state_id`); `candidate_groups.group_type` (was `type`).
 User-facing command names and flags are unchanged.
 
+Local variable `states` → `groups` in the `golden-eval` candidate-fetch block;
+example id comment updated to `cand:grp:run:xxx:s1`.
+
 ## What would invalidate this article
 
 - A stage acquiring more than one user-facing verb (e.g., separate `link` and `link-rescue`).

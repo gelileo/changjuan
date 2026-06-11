@@ -3,12 +3,12 @@
 candidate_persons.id format: cand:per:{run_id}:{local_id}
 candidate_events.id format:  cand:evt:{run_id}:{local_id}
 candidate_places.id format:  cand:pla:{run_id}:{local_id}
-candidate_groups.id format:  cand:sta:{run_id}:{local_id}
+candidate_groups.id format:  cand:grp:{run_id}:{local_id}  (legacy: cand:sta:…)
 
 These maps are used by relation loaders to resolve the local extraction ids
 stored in candidate_* FK columns (e.g. 'p1', 'e1', 'pl1', 's1') to the
 canonical ids in the corresponding canonical tables (e.g. 'per:zhou-xuan-wang',
-'evt:崩-783bce', 'pla:qishan', 'sta:zhou').
+'evt:崩-783bce', 'pla:qishan', 'grp:zhou').
 
 All build_* functions require the corresponding canonical table to have already
 been populated for the run (i.e. load_candidate_{entities} must have run first).
@@ -51,8 +51,8 @@ def build_group_id_map(conn: sqlite3.Connection, run_id: str) -> dict[str, str]:
     Joins candidate_groups against groups on name.
     """
     prefix = f"cand:grp:{run_id}:"
-    # candidate_groups ids use prefix 'cand:sta:' (historical extraction id format); also
-    # support 'cand:grp:' for any future runs that switch to the new prefix.
+    # cand:grp: is the current prefix; cand:sta: is retained to resolve candidate rows
+    # persisted before the State->Group rename.
     prefix_sta = f"cand:sta:{run_id}:"
     rows = conn.execute(
         "SELECT cs.id, s.id FROM candidate_groups cs "
@@ -62,7 +62,7 @@ def build_group_id_map(conn: sqlite3.Connection, run_id: str) -> dict[str, str]:
     ).fetchall()
     result: dict[str, str] = {}
     for cand_id, canonical_id in rows:
-        local = _extract_local(cand_id, prefix_sta) or _extract_local(cand_id, prefix)
+        local = _extract_local(cand_id, prefix) or _extract_local(cand_id, prefix_sta)
         if local:
             result[local] = canonical_id
     return result

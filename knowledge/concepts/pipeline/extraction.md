@@ -190,9 +190,10 @@ YAML extraction schema (`extract_output.py`) changes:
 `stage7_load/`: `load_candidate_groups` (was `load_candidate_states`);
 `build_group_id_map` (was `build_state_id_map`); `resolved_group_id` in persons loader.
 
-`stage7_load/id_maps.py::build_group_id_map` supports both `cand:grp:` (new) and
-`cand:sta:` (historical) candidate id prefixes, so runs extracted before the rename
-still load correctly.
+`stage3_extract.py` groups loop now emits `cand:grp:{run_id}:{local_id}` as the
+candidate id prefix (was `cand:sta:`). `stage7_load/id_maps.py::build_group_id_map`
+resolves `cand:grp:` as the primary prefix and retains `cand:sta:` as a fallback to
+load candidate rows persisted before the State→Group rename.
 
 `export_enrich.py::add_group_prominence` (was `add_state_prominence`).
 
