@@ -1,5 +1,23 @@
 # Build Log
 
+## 2026-06-11 — docs(knowledge): genre-profile backbone + State→Group rename + schema_version 7
+
+Created `knowledge/concepts/pipeline/profiles.md` — the first standalone reference article
+for the genre-profile backbone introduced in `feat/genre-profiles`:
+
+- What a profile is: declarative `book-meta.json` fields `"profile"` + `"capabilities"`.
+- Two capability vocabularies: fine-grained ETL caps vs coarse reader-tab caps; derivation
+  table (`derive_reader_capabilities` via `_READER_TAB_RULES`).
+- Export plumbing: `manifest_reader_capabilities` in `stage9_export.py`; `SCHEMA_VERSION = 7`.
+- Relation-kind vocabulary as profile config: DB CHECK removed; validation now in
+  `stage7_load/relations.py` mirroring `PROFILES`; `relation_kinds_for(profile, relation)`
+  returns a set copy, raises `UnknownProfileError` / `ValueError`.
+- `sta:` id stability rule: `groups` schema rename but `sta:` data values unchanged.
+- Defined profiles: `history` (landed), `cast` (Plan 3 stub).
+
+Added article-mapping row in `CLAUDE.md`: `pipeline/profile.py` or `pipeline/**/profile*.py`
+→ `concepts/pipeline/profiles.md`.
+
 ## 2026-06-11 — test(parity): dzl profile=history + state->group migration count parity
 
 - `data/books/dzl/book-meta.json`: replaced coarse reader caps `["cast","timeline","states"]` with fine-grained ETL caps `["persons","relations","events","chronology","geography","groups"]` and added `"profile": "history"`. Reader caps are now derived at export time via `manifest_reader_capabilities` → `["cast","timeline","groups"]`.
