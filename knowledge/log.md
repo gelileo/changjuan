@@ -1,5 +1,13 @@
 # Build Log
 
+## 2026-06-11 — test(parity): dzl profile=history + state->group migration count parity
+
+- `data/books/dzl/book-meta.json`: replaced coarse reader caps `["cast","timeline","states"]` with fine-grained ETL caps `["persons","relations","events","chronology","geography","groups"]` and added `"profile": "history"`. Reader caps are now derived at export time via `manifest_reader_capabilities` → `["cast","timeline","groups"]`.
+- `pipeline/migrations/migrate_0001_state_to_group.py`: fixed bug in step 5 — `entity_citations` carries a CHECK constraint with old kind values; the old code issued a bare `UPDATE` that violated the constraint. Fix: recreate the table as `entity_citations_new` with the updated CHECK (`group`/`person_group`/`group_seat`), INSERT-with-CASE to rename the three old values, drop old table, rename new table into place.
+- `tests/test_dzl_export_parity.py`: two new tests — `test_reader_caps_for_dzl_meta` (unit; checks profile + derived reader caps) and `test_dzl_migration_preserves_counts` (integration; operates on a tmp copy of `data/books/dzl/canonical.sqlite`; asserts groups==80, person_groups==1234, persons with group_id non-null==1664, all group_type='state').
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (migration fix), `concepts/verification/testing.md` (new parity tests). Suite: 335 passed.
+
 ## 2026-06-11 — feat(migrate): one-time state->group canonical migration (group_type=state)
 
 Added `pipeline/migrations/migrate_0001_state_to_group.py` — an idempotent, one-time migration

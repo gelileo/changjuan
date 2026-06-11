@@ -45,9 +45,30 @@ def run(conn: sqlite3.Connection) -> None:
         cur.execute("ALTER TABLE group_seats RENAME COLUMN state_id TO group_id;")
 
     # 5. entity_citations value rename
-    cur.execute("UPDATE entity_citations SET entity_kind='group' WHERE entity_kind='state';")
+    # The table carries a CHECK constraint with old kind names. We must recreate
+    # the table with the updated constraint before rewriting the values.
     cur.execute(
-        "UPDATE entity_citations SET entity_kind='group_seat' WHERE entity_kind='state_capital';"
+        "CREATE TABLE entity_citations_new ("
+        "entity_kind TEXT NOT NULL CHECK (entity_kind IN ("
+        "'person','group','place','event',"
+        "'event_participant','event_place','event_relation',"
+        "'person_relation','person_group','group_seat'"
+        ")),"
+        "entity_id TEXT NOT NULL,"
+        "citation_id TEXT NOT NULL,"
+        "PRIMARY KEY (entity_kind, entity_id, citation_id)"
+        ");"
     )
+    cur.execute(
+        "INSERT INTO entity_citations_new (entity_kind, entity_id, citation_id) "
+        "SELECT CASE entity_kind "
+        "  WHEN 'state' THEN 'group' "
+        "  WHEN 'person_state' THEN 'person_group' "
+        "  WHEN 'state_capital' THEN 'group_seat' "
+        "  ELSE entity_kind END, "
+        "entity_id, citation_id FROM entity_citations;"
+    )
+    cur.execute("DROP TABLE entity_citations;")
+    cur.execute("ALTER TABLE entity_citations_new RENAME TO entity_citations;")
 
     conn.commit()

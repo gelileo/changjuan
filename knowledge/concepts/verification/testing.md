@@ -765,6 +765,15 @@ Full suite: 343 passed, 1 skipped.
 
 These tests use `sqlite3.connect(":memory:")` directly (no `apply_schema` wrapper) because the purpose is to exercise the migration on the *old* schema, not the current canonical schema. Full suite: 345 passed, 1 skipped.
 
+## dzl export-parity tests (2026-06-11)
+
+`tests/test_dzl_export_parity.py` adds two tests that verify the dzl book-meta profile declaration and the state→group migration against the real (copied) `data/books/dzl/canonical.sqlite`.
+
+- `test_reader_caps_for_dzl_meta` (unit) — reads `data/books/dzl/book-meta.json`, asserts `profile == "history"` and `manifest_reader_capabilities(meta) == ["cast", "timeline", "groups"]`. Guards the book-meta→manifest derivation contract.
+- `test_dzl_migration_preserves_counts` (integration, `@pytest.mark.integration`) — copies the real DB into `tmp_path`, captures pre-migration counts (80 states, 1234 person_states, 1664 persons with non-null state_id), runs `migrate_0001_state_to_group.run(conn)`, then asserts all four post-migration count invariants hold. Never mutates the original.
+
+This test also exposed a bug in `migrate_0001_state_to_group`: the `entity_citations` table carries a `CHECK` constraint listing old kind names; a bare `UPDATE` violated it. The fix recreates the table as `entity_citations_new` with the updated CHECK, uses `INSERT … SELECT … CASE` to rename the three old values, drops the old table, and renames the new one. The idempotency test in `test_state_to_group_migration.py` still passes (old schema has no constraint; new schema already has the updated kinds). Full suite: 335 passed.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
