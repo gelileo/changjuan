@@ -52,14 +52,16 @@ _READER_TAB_RULES: list[tuple[str, str]] = [
 
 
 def relation_kinds_for(profile: str, relation: str) -> set[str]:
-    """Return the allowed relation `kind` vocabulary for a profile.
+    """Return a copy of the allowed relation `kind` vocabulary for a profile.
 
-    relation is 'person' or 'event'. Raises UnknownProfileError on unknown profile.
+    relation must be 'person' or 'event'. Raises UnknownProfileError on an unknown
+    profile, ValueError on an unknown relation kind.
     """
     if profile not in PROFILES:
         raise UnknownProfileError(profile)
-    key = f"{relation}_relation_kinds"
-    return PROFILES[profile][key]  # type: ignore[return-value]
+    if relation not in ("person", "event"):
+        raise ValueError(f"relation must be 'person' or 'event', got {relation!r}")
+    return set(PROFILES[profile][f"{relation}_relation_kinds"])  # type: ignore
 
 
 def derive_reader_capabilities(etl_capabilities: list[str]) -> list[str]:

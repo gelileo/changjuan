@@ -1,5 +1,17 @@
 # Build Log
 
+## 2026-06-11 — fix(profile): return copied relation sets + validate relation arg
+
+Fixed two mutation hazards and validation gaps in `pipeline/profile.py`:
+1. `relation_kinds_for` now returns a set copy instead of the live internal registry
+   (prevents callers from mutating `PROFILES` state).
+2. `relation_kinds_for` validates the `relation` argument explicitly, raising `ValueError`
+   for invalid relation kinds (e.g., `"typo"`) instead of bare `KeyError`.
+   Added two tests to `tests/test_profile.py`: `test_relation_kinds_for_rejects_unknown_relation`
+   and `test_relation_kinds_for_returns_a_copy_not_the_live_set`. All 9 tests pass.
+
+Articles touched: `concepts/verification/testing.md`.
+
 ## 2026-06-10 — feat(profile): genre-profile registry + reader-capability derivation
 
 Created `pipeline/profile.py` with declarative genre-profile registry, relation-kind

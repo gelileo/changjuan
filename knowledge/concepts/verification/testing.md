@@ -149,7 +149,7 @@ schema_version 6 (chapter_texts) adds two unit tests and one bundle-level test, 
 
 ## Genre-profile registry tests
 
-`tests/test_profile.py` (Phase 4 Task 1) exercises `pipeline.profile` — the declarative genre-profile registry mapping profiles to ETL and reader capabilities. Seven tests:
+`tests/test_profile.py` (Phase 4 Task 1) exercises `pipeline.profile` — the declarative genre-profile registry mapping profiles to ETL and reader capabilities. Nine tests:
 
 - `test_history_profile_has_expected_etl_capabilities` — asserts `PROFILES["history"]["capabilities"]` is the expected 6-element list.
 - `test_history_person_relation_kinds_match_legacy_set` — asserts `relation_kinds_for("history", "person")` returns the 11-element person-relation set.
@@ -158,6 +158,8 @@ schema_version 6 (chapter_texts) adds two unit tests and one bundle-level test, 
 - `test_derive_reader_capabilities_for_history` — maps history ETL capabilities to reader tabs: `["cast", "timeline", "groups"]` (persons → cast, chronology → timeline, groups → groups).
 - `test_derive_reader_capabilities_for_cast_like_set` — exercises a different ETL set: `["cast", "groups", "themes"]` (groups and themes preserved, chronology absent → no timeline).
 - `test_derive_reader_capabilities_is_order_stable` — asserts tab order is determined by the canonical `_READER_TAB_RULES` list, not input order.
+- `test_relation_kinds_for_rejects_unknown_relation` (Phase 4 Task 1 code-review fix) — asserts `relation_kinds_for("history", "typo")` raises `ValueError` with appropriate message — validates the relation argument explicitly instead of raising bare `KeyError`.
+- `test_relation_kinds_for_returns_a_copy_not_the_live_set` (Phase 4 Task 1 code-review fix) — calls `relation_kinds_for`, adds a junk value to the returned set, calls again, and asserts the junk value is not in the second result — verifies that the function returns a defensive copy rather than the live internal registry (prevents caller mutation of `PROFILES` state).
 
 Tests use pure function calls with hand-constructed inputs; no fixtures or database are needed.
 

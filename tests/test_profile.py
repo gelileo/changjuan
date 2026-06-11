@@ -57,3 +57,14 @@ def test_derive_reader_capabilities_for_cast_like_set():
 def test_derive_reader_capabilities_is_order_stable():
     etl = ["groups", "themes", "persons", "chronology"]
     assert derive_reader_capabilities(etl) == ["cast", "timeline", "groups", "themes"]
+
+
+def test_relation_kinds_for_rejects_unknown_relation():
+    with pytest.raises(ValueError):
+        relation_kinds_for("history", "typo")
+
+
+def test_relation_kinds_for_returns_a_copy_not_the_live_set():
+    kinds = relation_kinds_for("history", "person")
+    kinds.add("invented")
+    assert "invented" not in relation_kinds_for("history", "person")
