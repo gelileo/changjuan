@@ -212,6 +212,18 @@ All Stage 7 loaders updated to use new column/table names:
 - `relations.py`: `_VALID_PERSON_GROUP_ROLES` (was `_VALID_PERSON_STATE_ROLES`); loads `candidate_person_groups` into `person_groups`; citation kind `"person_group"`
 - Load ordering contract text above uses old names (`states`, `state_id`) — mentally substitute `groups`, `group_id`
 
+## One-time migration: state→group canonical.sqlite (migrate_0001)
+
+`pipeline/migrations/migrate_0001_state_to_group.py::run(conn)` is an idempotent one-time migration for DBs created under the old `states` schema. It brings any existing `canonical.sqlite` to the groups-named schema (schema_version 7) without re-extraction:
+
+1. Creates `groups` table from `states`, setting `group_type='state'` on every migrated row.
+2. Renames `persons.state_id` → `persons.group_id` via `ALTER TABLE … RENAME COLUMN`.
+3. Renames `person_states` → `person_groups`; renames its `state_id` → `group_id`.
+4. Renames `state_capitals` → `group_seats` and its `state_id` → `group_id` (if the table is present).
+5. Updates `entity_citations.entity_kind` values `'state'` → `'group'` and `'state_capital'` → `'group_seat'`.
+
+Idempotency: if `groups` exists and `states` is absent, `run()` returns immediately (no-op). The CLI command `changjuan migrate --book-id dzl` invokes this migration.
+
 ## What would invalidate this article
 
 - Changing the confidence-delta threshold.

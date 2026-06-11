@@ -1,5 +1,22 @@
 # Build Log
 
+## 2026-06-11 — feat(migrate): one-time state->group canonical migration (group_type=state)
+
+Added `pipeline/migrations/migrate_0001_state_to_group.py` — an idempotent, one-time migration
+that brings an existing `canonical.sqlite` (created under the old `states` schema) up to the
+groups-named schema (schema_version 7) without re-extraction:
+
+- Creates `groups` table from `states`, setting `group_type='state'` on every row.
+- Renames `persons.state_id` → `persons.group_id` via `ALTER TABLE … RENAME COLUMN`.
+- Renames `person_states` → `person_groups`; renames its `state_id` → `group_id`.
+- Handles optional `state_capitals` → `group_seats` rename if the table is present.
+- Updates `entity_citations.entity_kind` values `'state'` → `'group'` and `'state_capital'` → `'group_seat'`.
+- `pipeline/migrations/__init__.py` package init re-exports the module.
+- `pipeline/cli.py`: new `migrate` subcommand wires the migration to the CLI.
+- Two tests in `tests/test_state_to_group_migration.py`: correctness + idempotency. Suite: 345 passed, 1 skipped.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (migration is a load-layer concern).
+
 ## 2026-06-11 — refactor: emit cand:grp: prefix + clean up post-rename leftovers
 
 Fixed the candidate-id prefix mismatch left from the State→Group rename:

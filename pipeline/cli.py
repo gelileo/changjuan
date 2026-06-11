@@ -847,6 +847,20 @@ def extract_load_cmd(
 
 
 @app.command()
+def migrate(
+    book_id: str = typer.Option("dzl"),
+    repo_root: Path | None = typer.Option(None),
+) -> None:
+    """Run the one-time state->group migration on a book's canonical.sqlite."""
+    from pipeline.migrations import migrate_0001_state_to_group
+
+    cfg = _cfg(repo_root, book_id)
+    with connect(cfg.canonical_db) as conn:
+        migrate_0001_state_to_group.run(conn)
+    typer.echo(f"migrated {cfg.canonical_db} to groups schema")
+
+
+@app.command()
 def curator() -> None:
     """Launch the Streamlit curator UI."""
     import os

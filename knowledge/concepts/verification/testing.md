@@ -756,6 +756,15 @@ live DB copy (created before this rename) works with the new pipeline code.
 renames, person_relations kind CHECK removal, entity_citations CHECK values).
 Full suite: 343 passed, 1 skipped.
 
+## Migration tests
+
+`tests/test_state_to_group_migration.py` exercises `pipeline.migrations.migrate_0001_state_to_group.run`. Two tests:
+
+- `test_migration_preserves_rows_and_sets_group_type_state` — builds a minimal `:memory:` DB with the old `states` schema (four tables: `states`, `persons`, `person_states`, `entity_citations`), seeds one row in each, calls `migrate.run(conn)`, then asserts: `groups` table has the migrated row with `group_type='state'`; `persons.group_id` reflects the renamed FK; `person_groups.group_id` reflects the renamed FK and table; `entity_citations.entity_kind` is `'group'`; neither `states` nor `person_states` table exists.
+- `test_migration_is_idempotent` — runs `migrate.run(conn)` twice; asserts no exception and exactly one row in `groups`.
+
+These tests use `sqlite3.connect(":memory:")` directly (no `apply_schema` wrapper) because the purpose is to exercise the migration on the *old* schema, not the current canonical schema. Full suite: 345 passed, 1 skipped.
+
 ## What would invalidate this article
 
 - Adding a second test runner.
