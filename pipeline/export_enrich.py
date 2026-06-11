@@ -290,12 +290,12 @@ def add_group_prominence(graph_db: Path, overrides_path: Path | None = None) -> 
                 "WHERE p.group_id IS NOT NULL GROUP BY p.group_id;"
             )
         )
-        states = g.execute("SELECT id, name FROM groups;").fetchall()
+        group_rows = g.execute("SELECT id, name FROM groups;").fetchall()
         g.executemany(
             "UPDATE groups SET prominence = ?, prominence_tier = ? WHERE id = ?;",
             [
                 (round(scores.get(sid, 0.0), 2), "major" if name in major_names else "minor", sid)
-                for sid, name in states
+                for sid, name in group_rows
             ],
         )
 

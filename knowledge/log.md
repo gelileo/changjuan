@@ -1,5 +1,20 @@
 # Build Log
 
+## 2026-06-11 — fix: wire relation-vocab to profile + clear final-review leftovers
+
+Completed Task 5 (relation-kind validation wired to genre-profile) and cleared five final-review issues in `feat/genre-profiles`:
+
+1. **Issue 1** — `pipeline/stage7_load/relations.py`: removed hardcoded `_VALID_EVENT_RELATION_KINDS` / `_VALID_PERSON_RELATION_KINDS` constants; replaced with `_valid_person_kinds(profile)` / `_valid_event_kinds(profile)` helpers wrapping `pipeline.profile.relation_kinds_for`; threaded `profile: str = "history"` through `load_candidate_event_relations`, `load_candidate_person_relations`, and `load_candidate_relations`.
+2. **Issue 1 (CLI)** — `pipeline/cli.py` `load` command: added `--book-id` option (default `dzl`); reads `book-meta.json` if present; passes `meta.get("profile","history")` as `profile=` into `load_candidate_relations`.
+3. **Issue 2** — `tests/integration/test_roundtrip.py`: replaced stale coarse caps `["cast","timeline","states"]` with fine-grained ETL caps `["persons","events","chronology","groups"]`.
+4. **Issue 3** — golden-eval `"states"` dict key rename across `pipeline/cli.py`, `tests/golden/precision_recall.py`, `tests/golden/loader.py` (now reads `groups.yaml`), `tests/integration/test_golden_ch01.py`, `tests/unit/test_precision_recall.py`; `git mv tests/golden/ch01/states.yaml tests/golden/ch01/groups.yaml`.
+5. **Issue 4** — `pipeline/export_enrich.py` `add_group_prominence`: local var `states` → `group_rows`.
+6. **Issue 5** — New `tests/unit/test_extract_output_groups.py` and `tests/unit/test_relation_vocab.py`.
+
+Grep gate clean. Suite: **350 passed, 1 skipped**.
+
+Articles touched: `concepts/pipeline/load-and-merge.md` (profile-wired vocab section), `concepts/runtime/cli.md` (`load` command `--book-id`).
+
 ## 2026-06-11 — docs(knowledge): genre-profile backbone + State→Group rename + schema_version 7
 
 Created `knowledge/concepts/pipeline/profiles.md` — the first standalone reference article

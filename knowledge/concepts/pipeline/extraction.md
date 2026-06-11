@@ -203,6 +203,16 @@ group names); left unchanged — renaming it would require curator re-work for n
 `sta:` id prefix on data values (e.g. `sta:jin`) is preserved (data, not schema).
 Local extraction ids like `s1` are also preserved (data, not schema).
 
+## Golden-loader groups.yaml rename (2026-06-11 final-review)
+
+`tests/golden/loader.py::load_golden` now reads `groups.yaml` (renamed from `states.yaml`)
+and returns the loaded list under key `"groups"` (was `"states"`). The precision/recall
+harness in `tests/golden/precision_recall.py` likewise reads `golden["groups"]` and
+`candidates["groups"]` (was `["states"]`). The `pipeline/cli.py` golden-eval candidates
+dict also uses key `"groups"`. The golden fixture file `tests/golden/ch01/states.yaml` was
+`git mv`'d to `tests/golden/ch01/groups.yaml`; its internal keys were already using `id`
+(not `state_id`), so no YAML edits were required.
+
 ## What would invalidate this article
 
 - Adding an `ANTHROPIC_API_KEY` to the project and wiring a direct SDK call (would eliminate the two-actor split).

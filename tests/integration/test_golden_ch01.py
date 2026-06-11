@@ -134,7 +134,7 @@ def _build_candidates(
         "persons": persons,
         "events": events,
         "places": places,
-        "states": states,
+        "groups": states,
         "relations": relations,
     }
 

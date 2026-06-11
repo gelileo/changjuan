@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases); 2026-06-11 feat/genre-profiles final-review: profile-wired relation vocab (Task 5)
 status: thin
 load_bearing: true
 references:
@@ -185,7 +185,7 @@ The shared `_resolve_fk(raw_id, id_map)` helper handles three cases:
 2. `raw_id` contains `:` but not `cand:` prefix → already canonical, pass through unchanged.
 3. `raw_id` has no `:` → short local id (e.g. `p1`), look up in map directly.
 
-Rows whose FK cannot be resolved (map miss) are silently skipped rather than crashing; this tolerates name-mismatch failures in the canonical entity loaders without cascading. Rows with invalid `kind`/`role` values (i.e. not in the canonical CHECK constraint allowlist) are also skipped.
+Rows whose FK cannot be resolved (map miss) are silently skipped rather than crashing; this tolerates name-mismatch failures in the canonical entity loaders without cascading. Rows with invalid `kind`/`role` values (i.e. not in the profile's vocabulary) are also skipped.
 
 `persons.py` and `events.py` now import from `id_maps.py` instead of defining their own `_build_candidate_state_id_map` / `_build_candidate_place_id_map` helpers (those were removed in this fix).
 
@@ -197,9 +197,15 @@ Candidate relation tables use `candidate_*_id` column names (e.g. `candidate_eve
 
 Candidate relation tables do not carry a `confidence` column. All promoted rows receive `confidence=0.9` and `provenance='auto'`.
 
+## Profile-wired relation vocab (feat/genre-profiles Task 5)
+
+`load_candidate_event_relations` and `load_candidate_person_relations` no longer reference hardcoded module-level constants `_VALID_EVENT_RELATION_KINDS` / `_VALID_PERSON_RELATION_KINDS`. Instead, they accept a `profile: str = "history"` parameter and call `pipeline.profile.relation_kinds_for(profile, "event")` / `relation_kinds_for(profile, "person")` at call time. The public `load_candidate_relations(conn, pipeline_run_id, profile="history")` threads `profile` into both callers. The CLI `load` command now accepts `--book-id` (default `dzl`), reads `data/books/<book_id>/book-meta.json` if present, and passes `meta.get("profile", "history")` as the profile. This means a different book with a different profile (e.g. a future romance profile with additional person-relation kinds) will automatically validate against its own vocabulary without code changes in Stage 7.
+
+Module-level helpers `_valid_person_kinds(profile)` and `_valid_event_kinds(profile)` are thin wrappers exported from `pipeline/stage7_load/relations.py` for direct unit testing.
+
 ## `person_relations` populated (Phase 6 Task C1)
 
-Before Phase 6, `person_relations` stayed at 0 rows because stage 3 wrote empty-string `kind` values into `candidate_person_relations` (the loader read a non-existent `relation_kind` field instead of the actual `kind_detail` field — see `concepts/pipeline/extraction.md`). `load_candidate_person_relations` filters rows whose `kind` is not in `_VALID_PERSON_RELATION_KINDS`, so every record was silently dropped. With the one-line fix at `pipeline/stage3_extract.py:377` the candidate rows now carry real kinds and stage 7 promotes them. The contradiction detection for directional kinds (`parent`, `child`, `killed_by`, `ruler`, `minister`, `mentor`) is now exercised for the first time on real data — expect some new rows in the `conflicts` table after the Phase 6 Task C2 backfill.
+Before Phase 6, `person_relations` stayed at 0 rows because stage 3 wrote empty-string `kind` values into `candidate_person_relations` (the loader read a non-existent `relation_kind` field instead of the actual `kind_detail` field — see `concepts/pipeline/extraction.md`). `load_candidate_person_relations` filters rows whose `kind` is not in the profile's allowed set, so every record was silently dropped. With the one-line fix at `pipeline/stage3_extract.py:377` the candidate rows now carry real kinds and stage 7 promotes them. The contradiction detection for directional kinds (`parent`, `child`, `killed_by`, `ruler`, `minister`, `mentor`) is now exercised for the first time on real data — expect some new rows in the `conflicts` table after the Phase 6 Task C2 backfill.
 
 ## State→Group rename (2026-06-11)
 

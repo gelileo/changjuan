@@ -2,7 +2,7 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-06-11
+updated: 2026-06-11 (final-review: group_rows local var rename in add_group_prominence — no contract change)
 status: mature
 load_bearing: true
 affects:

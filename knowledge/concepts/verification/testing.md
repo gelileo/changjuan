@@ -774,6 +774,20 @@ These tests use `sqlite3.connect(":memory:")` directly (no `apply_schema` wrappe
 
 This test also exposed a bug in `migrate_0001_state_to_group`: the `entity_citations` table carries a `CHECK` constraint listing old kind names; a bare `UPDATE` violated it. The fix recreates the table as `entity_citations_new` with the updated CHECK, uses `INSERT … SELECT … CASE` to rename the three old values, drops the old table, and renames the new one. The idempotency test in `test_state_to_group_migration.py` still passes (old schema has no constraint; new schema already has the updated kinds). Full suite: 335 passed.
 
+## feat/genre-profiles final-review tests (2026-06-11)
+
+Five issues cleared; three new test files added:
+
+- `tests/unit/test_relation_vocab.py` — two tests exercising `_valid_person_kinds("history")` and `_valid_event_kinds("history")` from `pipeline.stage7_load.relations`. Verifies that the profile-wired vocab helpers return the expected sets (clan_member/ally present; 恋慕 absent; event kinds exact match).
+- `tests/unit/test_extract_output_groups.py` — one test asserting `EXTRACT_OUTPUT_SCHEMA` has top-level key `groups` (not `states`) in both `properties` and `required`.
+- `tests/integration/test_roundtrip.py` — `capabilities` in the inline `_meta` dict updated from coarse reader caps `["cast","timeline","states"]` to fine-grained ETL caps `["persons","events","chronology","groups"]` (the coarse reader caps are now derived at export time via `manifest_reader_capabilities`).
+- `tests/golden/loader.py` — `load_golden` reads `groups.yaml` (was `states.yaml`); returns key `"groups"` (was `"states"`).
+- `tests/golden/precision_recall.py` — `compute_pr` reads `golden["groups"]` / `candidates["groups"]` (was `["states"]`).
+- `tests/integration/test_golden_ch01.py` + `tests/unit/test_precision_recall.py` — candidates dict key `"groups"` (was `"states"`).
+- Golden fixture `tests/golden/ch01/states.yaml` → `tests/golden/ch01/groups.yaml` (git mv).
+
+Suite: 350 passed, 1 skipped (3 new tests from this pass).
+
 ## What would invalidate this article
 
 - Adding a second test runner.

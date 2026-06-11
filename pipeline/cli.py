@@ -77,10 +77,14 @@ def load(
     pipeline_run_id: str = typer.Argument(
         ..., help="Pipeline run id to promote (matches candidate_persons.pipeline_run_id)."
     ),
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
     repo_root: Path | None = typer.Option(None),
 ) -> None:
     """Stage 7: promote candidates → canonical with field-level merge."""
-    cfg = _cfg(repo_root)
+    cfg = _cfg(repo_root, book_id)
+    meta_path = cfg.books_dir / book_id / "book-meta.json"
+    meta = _json.loads(meta_path.read_text("utf-8")) if meta_path.exists() else {}
+    profile = meta.get("profile", "history")
     with connect(cfg.canonical_db) as conn:
         apply_schema(conn, CANONICAL_SCHEMA)
         # Order matters: places + groups first (events + relations reference them via FK).
@@ -88,7 +92,7 @@ def load(
         n_groups = load_candidate_groups(conn, pipeline_run_id=pipeline_run_id)
         n_persons = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
         n_events = load_candidate_events(conn, pipeline_run_id=pipeline_run_id)
-        n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id)
+        n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id, profile=profile)
     typer.echo(
         f"loaded: places={n_places} groups={n_groups} persons={n_persons} "
         f"events={n_events} relations={n_rels} (run={pipeline_run_id})"
@@ -546,7 +550,7 @@ def golden_eval_cmd(
         "persons": persons,
         "events": events,
         "places": places,
-        "states": groups,
+        "groups": groups,
         "relations": relations,
     }
 

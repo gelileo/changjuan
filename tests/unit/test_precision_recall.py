@@ -10,7 +10,7 @@ def _g(**overrides: list[dict[str, object]]) -> dict[str, list[dict[str, object]
         "persons": [],
         "events": [],
         "places": [],
-        "states": [],
+        "groups": [],
         "citations": [],
         "relations": [],
     }
@@ -123,11 +123,11 @@ def test_person_match_with_chunk_local_state_id_resolves_via_lookup() -> None:
     's1' (candidate) and canonical 'sta:zhou' (golden) both resolve to '周'."""
     golden = _g(
         persons=[{"id": "per:a", "canonical_name": "周宣王", "state_id": "sta:zhou"}],
-        states=[{"id": "sta:zhou", "name": "周"}],
+        groups=[{"id": "sta:zhou", "name": "周"}],
     )
     cands = _g(
         persons=[{"id": "p1", "canonical_name": "周宣王", "state_id": "s1"}],
-        states=[{"id": "s1", "name": "周"}],
+        groups=[{"id": "s1", "name": "周"}],
     )
     report = compute_pr(golden, cands)
     assert report["per_entity_type"]["person"]["tp"] == 1

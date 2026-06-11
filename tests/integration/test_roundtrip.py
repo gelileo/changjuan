@@ -73,7 +73,7 @@ def test_phase1_roundtrip(tmp_path: Path) -> None:
         "author": "冯梦龙 / 蔡元放",
         "edition": "明刊本",
         "cover": None,
-        "capabilities": ["cast", "timeline", "states"],
+        "capabilities": ["persons", "events", "chronology", "groups"],
     }
     export_bundle(
         cfg.canonical_db,

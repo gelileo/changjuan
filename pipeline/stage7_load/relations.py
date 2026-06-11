@@ -25,6 +25,7 @@ import json as _json
 import sqlite3
 import uuid
 
+from pipeline.profile import relation_kinds_for
 from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.id_maps import (
@@ -38,22 +39,15 @@ from pipeline.stage7_load.id_maps import (
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-_VALID_EVENT_RELATION_KINDS = frozenset({"causes", "precedes", "related"})
-_VALID_PERSON_RELATION_KINDS = frozenset(
-    {
-        "parent",
-        "child",
-        "spouse",
-        "sibling",
-        "mentor",
-        "ruler",
-        "minister",
-        "ally",
-        "rival",
-        "killed_by",
-        "clan_member",
-    }
-)
+
+def _valid_person_kinds(profile: str) -> set[str]:
+    return relation_kinds_for(profile, "person")
+
+
+def _valid_event_kinds(profile: str) -> set[str]:
+    return relation_kinds_for(profile, "event")
+
+
 _VALID_PERSON_GROUP_ROLES = frozenset(
     {"ruler", "minister", "exile", "defector", "citizen", "other"}
 )
@@ -262,15 +256,18 @@ def load_candidate_event_places(conn: sqlite3.Connection, run_id: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-def load_candidate_event_relations(conn: sqlite3.Connection, run_id: str) -> int:
+def load_candidate_event_relations(
+    conn: sqlite3.Connection, run_id: str, profile: str = "history"
+) -> int:
     """Promote candidate_event_relations rows for run_id.
 
     Unique key: (from_event_id, to_event_id, kind).
-    kind must be one of 'causes','precedes','related' per canonical schema CHECK.
+    kind must satisfy the profile's event_relation_kinds vocabulary.
     Resolves from_candidate_event_id / to_candidate_event_id local extraction ids
     (e.g. 'e1', 'e2') to canonical ids. Rows that cannot be resolved are skipped.
     """
     event_map = build_event_id_map(conn, run_id)
+    valid_event_kinds = _valid_event_kinds(profile)
 
     rows = conn.execute(
         "SELECT from_candidate_event_id, to_candidate_event_id, kind, pipeline_run_id "
@@ -287,7 +284,7 @@ def load_candidate_event_relations(conn: sqlite3.Connection, run_id: str) -> int
         to_id = _resolve_fk(raw_to_id, event_map)
 
         # Both FKs are NOT NULL and kind must satisfy the CHECK constraint; skip if invalid.
-        if from_id is None or to_id is None or kind not in _VALID_EVENT_RELATION_KINDS:
+        if from_id is None or to_id is None or kind not in valid_event_kinds:
             continue
 
         existing = conn.execute(
@@ -329,7 +326,9 @@ def load_candidate_event_relations(conn: sqlite3.Connection, run_id: str) -> int
 # ---------------------------------------------------------------------------
 
 
-def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> int:
+def load_candidate_person_relations(
+    conn: sqlite3.Connection, run_id: str, profile: str = "history"
+) -> int:
     """Promote candidate_person_relations rows for run_id.
 
     Unique key: (from_person_id, to_person_id, kind).
@@ -340,6 +339,7 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
     (e.g. 'p1', 'p2') to canonical ids. Rows that cannot be resolved are skipped.
     """
     person_map = build_person_id_map(conn, run_id)
+    valid_person_kinds = _valid_person_kinds(profile)
 
     rows = conn.execute(
         "SELECT from_candidate_person_id, to_candidate_person_id, kind, date_json,"
@@ -358,7 +358,7 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
         to_id = _resolve_fk(raw_to_id, person_map)
 
         # Both FKs are NOT NULL and kind must satisfy the CHECK constraint; skip if invalid.
-        if from_id is None or to_id is None or kind not in _VALID_PERSON_RELATION_KINDS:
+        if from_id is None or to_id is None or kind not in valid_person_kinds:
             continue
 
         existing = conn.execute(
@@ -515,7 +515,9 @@ def load_candidate_group_seats(conn: sqlite3.Connection, run_id: str) -> int:
 # ---------------------------------------------------------------------------
 
 
-def load_candidate_relations(conn: sqlite3.Connection, pipeline_run_id: str) -> int:
+def load_candidate_relations(
+    conn: sqlite3.Connection, pipeline_run_id: str, profile: str = "history"
+) -> int:
     """Call all six relation loaders in order.
 
     Returns total count of candidate relation rows processed across all six kinds.
@@ -523,8 +525,8 @@ def load_candidate_relations(conn: sqlite3.Connection, pipeline_run_id: str) -> 
     total = 0
     total += load_candidate_event_participants(conn, pipeline_run_id)
     total += load_candidate_event_places(conn, pipeline_run_id)
-    total += load_candidate_event_relations(conn, pipeline_run_id)
-    total += load_candidate_person_relations(conn, pipeline_run_id)
+    total += load_candidate_event_relations(conn, pipeline_run_id, profile=profile)
+    total += load_candidate_person_relations(conn, pipeline_run_id, profile=profile)
     total += load_candidate_person_groups(conn, pipeline_run_id)
     total += load_candidate_group_seats(conn, pipeline_run_id)
     return total

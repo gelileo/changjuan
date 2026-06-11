@@ -105,7 +105,7 @@ def load_golden(chapter_dir: Path) -> dict[str, Any]:
     persons = _load_yaml(chapter_dir / "persons.yaml")
     events = _load_yaml(chapter_dir / "events.yaml")
     places = _load_yaml(chapter_dir / "places.yaml")
-    states = _load_yaml(chapter_dir / "states.yaml")
+    states = _load_yaml(chapter_dir / "groups.yaml")
     citations = _load_yaml(chapter_dir / "citations.yaml")
     relations = _load_yaml(chapter_dir / "relations.yaml")
 
@@ -144,7 +144,7 @@ def load_golden(chapter_dir: Path) -> dict[str, Any]:
         "persons": persons,
         "events": events,
         "places": places,
-        "states": states,
+        "groups": states,
         "citations": citations,
         "relations": relations,
     }

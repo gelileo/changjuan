@@ -191,8 +191,8 @@ def compute_pr(golden: dict[str, Any], candidates: dict[str, Any]) -> dict[str, 
     # Build name-lookups for both sides
     person_g = _person_name_lookup(golden["persons"])
     person_c = _person_name_lookup(candidates["persons"])
-    state_g = _name_lookup(golden["states"])
-    state_c = _name_lookup(candidates["states"])
+    state_g = _name_lookup(golden["groups"])
+    state_c = _name_lookup(candidates["groups"])
     place_g = _name_lookup(golden["places"])
     place_c = _name_lookup(candidates["places"])
     event_g = _event_name_lookup(golden["events"])
@@ -216,7 +216,7 @@ def compute_pr(golden: dict[str, Any], candidates: dict[str, Any]) -> dict[str, 
             "person": _score(golden["persons"], candidates["persons"], person_matcher),
             "event": _score(golden["events"], candidates["events"], event_matcher),
             "place": _score(golden["places"], candidates["places"], _place_match),
-            "state": _score(golden["states"], candidates["states"], _state_match),
+            "state": _score(golden["groups"], candidates["groups"], _state_match),
             "relation": _score(golden["relations"], candidates["relations"], relation_matcher),
         },
     }
