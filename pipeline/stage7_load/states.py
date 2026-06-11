@@ -1,9 +1,9 @@
-"""Stage 7 — load_candidate_states. Mirrors places.py for states.
+"""Stage 7 — load_candidate_states. Mirrors places.py for groups.
 
-Scalar merge fields: name, type, ruling_clan, founded_date_json, ended_date_json.
+Scalar merge fields: name, group_type, ruling_clan, founded_date_json, ended_date_json.
 Match key: name.
-No variants table — states are matched by name only.
-state_capitals (a relation table) is handled separately in Task 19.
+No variants table — groups are matched by name only.
+group_seats (a relation table) is handled separately in Task 19.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pipeline.stage7_load.audit import _audit
 from pipeline.stage7_load.citations import record_citation
 from pipeline.stage7_load.helpers import _SIMILAR_CONFIDENCE_DELTA, _slugify
 
-_STATE_SCALAR_FIELDS = ("type", "ruling_clan", "founded_date_json", "ended_date_json")
+_STATE_SCALAR_FIELDS = ("group_type", "ruling_clan", "founded_date_json", "ended_date_json")
 
 
 def _last_field_confidence(
@@ -42,9 +42,9 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
     Returns the number of candidates processed.
     """
     cands = conn.execute(
-        "SELECT id, name, type, ruling_clan, founded_date_json, ended_date_json, "
+        "SELECT id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
         "chunk_id, confidence "
-        "FROM candidate_states WHERE pipeline_run_id = ?",
+        "FROM candidate_groups WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ).fetchall()
 
@@ -61,21 +61,21 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
             confidence,
         ) = cand
 
-        existing = conn.execute("SELECT id FROM states WHERE name = ?", (name,)).fetchone()
+        existing = conn.execute("SELECT id FROM groups WHERE name = ?", (name,)).fetchone()
 
         if existing is None:
             # Build slug-based id; guard against slug collisions.
             state_id = f"sta:{_slugify(name)}"
             if (
-                conn.execute("SELECT 1 FROM states WHERE id = ?", (state_id,)).fetchone()
+                conn.execute("SELECT 1 FROM groups WHERE id = ?", (state_id,)).fetchone()
                 is not None
             ):
                 h = hashlib.sha256(name.encode("utf-8")).hexdigest()[:6]
                 state_id = f"{state_id}-{h}"
 
             conn.execute(
-                "INSERT INTO states "
-                "(id, name, type, ruling_clan, founded_date_json, ended_date_json, "
+                "INSERT INTO groups "
+                "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
                 "provenance, confidence, pipeline_run_id) "
                 "VALUES (?, ?, ?, ?, ?, ?, 'auto', ?, ?)",
                 (
@@ -91,7 +91,7 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
             )
             _audit(
                 conn,
-                "state",
+                "group",
                 state_id,
                 "create",
                 after_json=_json.dumps(
@@ -100,12 +100,12 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                 actor="load@v1",
                 pipeline_run_id=pipeline_run_id,
             )
-            record_citation(conn, "state", state_id, chunk_id)
+            record_citation(conn, "group", state_id, chunk_id)
         else:
             state_id = existing[0]
             current = conn.execute(
-                "SELECT type, ruling_clan, founded_date_json, ended_date_json, confidence "
-                "FROM states WHERE id = ?",
+                "SELECT group_type, ruling_clan, founded_date_json, ended_date_json, confidence "
+                "FROM groups WHERE id = ?",
                 (state_id,),
             ).fetchone()
             cur_conf = float(current[4] or 0.0)
@@ -120,12 +120,12 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                     continue
                 if cur_val is None:
                     conn.execute(
-                        f"UPDATE states SET {field} = ?, updated_at = datetime('now') WHERE id = ?",
+                        f"UPDATE groups SET {field} = ?, updated_at = datetime('now') WHERE id = ?",
                         (cand_val, state_id),
                     )
                     _audit(
                         conn,
-                        "state",
+                        "group",
                         state_id,
                         "set",
                         after_json=_json.dumps(
@@ -138,16 +138,16 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                     )
                     continue
                 # Both non-null: use per-field confidence from audit_log, fall back to row-level.
-                prior_conf = _last_field_confidence(conn, "state", state_id, field) or cur_conf
+                prior_conf = _last_field_confidence(conn, "group", state_id, field) or cur_conf
                 if confidence > prior_conf + _SIMILAR_CONFIDENCE_DELTA:
                     conn.execute(
-                        f"UPDATE states SET {field} = ?, confidence = ?, "
+                        f"UPDATE groups SET {field} = ?, confidence = ?, "
                         "updated_at = datetime('now') WHERE id = ?",
                         (cand_val, confidence, state_id),
                     )
                     _audit(
                         conn,
-                        "state",
+                        "group",
                         state_id,
                         "set",
                         after_json=_json.dumps(
@@ -162,7 +162,7 @@ def load_candidate_states(conn: sqlite3.Connection, pipeline_run_id: str) -> int
                         pipeline_run_id=pipeline_run_id,
                         field=field,
                     )
-            record_citation(conn, "state", state_id, chunk_id)
+            record_citation(conn, "group", state_id, chunk_id)
         n += 1
     conn.commit()
     return n

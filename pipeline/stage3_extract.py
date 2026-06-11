@@ -200,7 +200,7 @@ def load_extraction(
         canonical_conn.execute(
             "INSERT INTO candidate_persons "
             "(id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-            " state_id, clan_name, social_category, variants_json, "
+            " group_id, clan_name, social_category, variants_json, "
             " confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -210,7 +210,7 @@ def load_extraction(
                 birth_json,
                 death_json,
                 p.get("notes"),
-                p.get("state_id"),
+                p.get("state_id"),  # YAML key stays 'state_id'; maps to DB column group_id
                 p.get("clan_name"),
                 p.get("social_category"),
                 variants_json,
@@ -277,7 +277,7 @@ def load_extraction(
         local_to_cand[pl["id"]] = cand_id
         stats["places_written"] += 1
 
-    # ===== states =====
+    # ===== states (now groups) =====
     for st in states:
         cand_id = f"cand:sta:{pipeline_run_id}:{st['id']}"
         scoring = dict(st, _scalar_fields=["name", "type", "ruling_clan"])
@@ -285,8 +285,8 @@ def load_extraction(
         founded_json = json.dumps(st["founded_date"]) if st.get("founded_date") else None
         ended_json = json.dumps(st["ended_date"]) if st.get("ended_date") else None
         canonical_conn.execute(
-            "INSERT INTO candidate_states "
-            "(id, name, founded_date_json, ended_date_json, ruling_clan, type, "
+            "INSERT INTO candidate_groups "
+            "(id, name, founded_date_json, ended_date_json, ruling_clan, group_type, "
             " confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -295,7 +295,7 @@ def load_extraction(
                 founded_json,
                 ended_json,
                 st.get("ruling_clan"),
-                st.get("type"),
+                st.get("type"),  # YAML key stays 'type'; maps to DB column group_type
                 conf,
                 pipeline_run_id,
                 st["citation"]["chunk_id"],
@@ -386,8 +386,8 @@ def load_extraction(
             from_date_json = json.dumps(r["from_date"]) if r.get("from_date") else None
             to_date_json = json.dumps(r["to_date"]) if r.get("to_date") else None
             canonical_conn.execute(
-                "INSERT OR IGNORE INTO candidate_person_states "
-                "(candidate_person_id, candidate_state_id, role, "
+                "INSERT OR IGNORE INTO candidate_person_groups "
+                "(candidate_person_id, candidate_group_id, role, "
                 " from_date_json, to_date_json, pipeline_run_id) "
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 (
@@ -401,7 +401,7 @@ def load_extraction(
             )
 
         elif kind == "state_capital":
-            # No candidate_state_capitals staging table in current schema.
+            # No candidate_group_seats staging table in current schema.
             # Record the count but skip the DB write (matches load_candidate_state_capitals stub).
             pass
 

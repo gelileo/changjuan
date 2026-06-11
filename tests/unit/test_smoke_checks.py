@@ -34,7 +34,7 @@ def _seed_pipeline_run(conn: sqlite3.Connection, run_id: str, chapter: int) -> N
 def test_smoke_check_passes_on_clean_run(conn: sqlite3.Connection) -> None:
     _seed_pipeline_run(conn, "run:ch2", 2)
     conn.execute(
-        "INSERT INTO states (id, name, provenance, confidence, pipeline_run_id) "
+        "INSERT INTO groups (id, name, provenance, confidence, pipeline_run_id) "
         "VALUES ('sta:jin', '晋', 'auto', 0.9, 'run:ch2')"
     )
     conn.execute(

@@ -1,5 +1,18 @@
 # Build Log
 
+## 2026-06-11 — refactor(schema): rename State→Group across canonical + candidate tables
+
+Renamed the `State` entity to `Group` in `pipeline/schemas/canonical_schema.sql`:
+- Tables: `states→groups`, `state_capitals→group_seats`, `person_states→person_groups`, `candidate_states→candidate_groups`, `candidate_person_states→candidate_person_groups`.
+- Columns: `states.type→groups.group_type`, `persons.state_id→persons.group_id`, `group_seats.state_id→group_seats.group_id`, `person_groups.state_id→person_groups.group_id`, `candidate_persons.state_id→candidate_persons.group_id`, `candidate_person_groups.candidate_state_id→candidate_person_groups.candidate_group_id`.
+- `entity_citations.entity_kind` CHECK: `'state'→'group'`, `'person_state'→'person_group'`, `'state_capital'→'group_seat'`.
+- `merge_candidates.kind` CHECK: `'state'→'group'`.
+- `person_relations.kind` CHECK constraint removed entirely (validation moves to profile loader in later task).
+- Updated all pipeline Python files and tests to match. `sta:` id prefix on data values unchanged.
+- 4 new schema-targeted tests in `tests/test_canonical_schema_groups.py`; full suite 343 pass.
+
+Articles touched: `concepts/data-model/knowledge-graph.md`.
+
 ## 2026-06-11 — fix(profile): return copied relation sets + validate relation arg
 
 Fixed two mutation hazards and validation gaps in `pipeline/profile.py`:

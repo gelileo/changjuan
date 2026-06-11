@@ -2,8 +2,8 @@
 title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
-updated: 2026-05-23
-note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule).
+updated: 2026-06-11
+note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule). 2026-06-11: State entity renamed to Group (tables states→groups, person_states→person_groups, state_capitals→group_seats, candidate_states→candidate_groups, candidate_person_states→candidate_person_groups); persons.state_id→group_id; person_relations.kind CHECK removed (validation moves to profile loader).
 status: mature
 load_bearing: true
 references:
@@ -17,7 +17,7 @@ affects:
 
 ## What this is
 
-The output of `changjuan` is a typed knowledge graph of Eastern-Zhou history, built from 《东周列国志》 and validated against 《左传》 / 《史记》. Six entity types — **Person, State, Place, Event, Citation, Conflict** — connected by typed relations (`event_participants`, `person_relations` including `clan_member`, `person_states`, `event_places`, `state_capitals`, …). A `Family` entity was considered and deferred; clan/lineage facts ride on `Person.clan_name` + `person_relations(kind="clan_member")` until the data demands promotion. Every entity and every relation carries at least one **citation** (a verbatim quote span in a source corpus), a deterministic-computed **confidence** score, and full **audit history**. Dates are structured values (`year_bce`, `uncertainty`, `original`, `era`, `inference_kind`), never primitives. Name variants are first-class on Person — `重耳`, `晋文公`, `公子重耳` resolve to one id.
+The output of `changjuan` is a typed knowledge graph of Eastern-Zhou history, built from 《东周列国志》 and validated against 《左传》 / 《史记》. Six entity types — **Person, Group, Place, Event, Citation, Conflict** — connected by typed relations (`event_participants`, `person_relations`, `person_groups`, `event_places`, `group_seats`, …). The `State` entity was renamed to `Group` in Task 2 of the genre-profiles branch to allow a single schema to handle states, alliances, families, and other collective entities; the `sta:` id prefix is preserved (id values are data, not schema). A `Family` entity was considered and deferred; clan/lineage facts ride on `Person.clan_name` + `person_relations(kind="clan_member")` until the data demands promotion. Every entity and every relation carries at least one **citation** (a verbatim quote span in a source corpus), a deterministic-computed **confidence** score, and full **audit history**. Dates are structured values (`year_bce`, `uncertainty`, `original`, `era`, `inference_kind`), never primitives. Name variants are first-class on Person — `重耳`, `晋文公`, `公子重耳` resolve to one id.
 
 ## Why this shape, not the alternatives
 
@@ -25,7 +25,7 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 
 ## entity_citations table
 
-`entity_citations(entity_kind, entity_id, citation_id)` is the citation accumulator for all canonical records. The `entity_kind` CHECK constraint (Task 19) covers four entity kinds (`person`, `state`, `place`, `event`) and six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_state`, `state_capital`). For relation rows (which have composite PKs and no surrogate `id`), `entity_id` is a synthetic string formed by joining the composite key elements with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
+`entity_citations(entity_kind, entity_id, citation_id)` is the citation accumulator for all canonical records. The `entity_kind` CHECK constraint (Task 19, updated Task 2) covers four entity kinds (`person`, `group`, `place`, `event`) and six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_group`, `group_seat`). For relation rows (which have composite PKs and no surrogate `id`), `entity_id` is a synthetic string formed by joining the composite key elements with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
 
 ## What would invalidate this article
 
@@ -43,7 +43,8 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 - Person identity rule: `canonical_name` + `variants[]` with `kind ∈ {本名, 字, 谥号, 封号, 别名}`.
 - Person carries an optional `social_category` enum (royalty / noble / official / military / religious / clergy / commoner / servant / foreign / mythic / unknown). Added 2026-05-21 after annotating golden Ch.1 exposed that unnamed-but-acting figures (老宫人, 女婴, 妇人, 男子) have no state-office to put in `person_states.role` — the field is too narrow for coarse social class. `social_category` is independent of `person_states.role`: specific positions (太宰, 大宗伯, etc.) remain in `person_states.role`; `social_category` applies even when no state-role record exists. Optional in the schema — a record may omit it — but expected to be filled by the extractor whenever the text provides a clue.
 - Every relation row carries its own `citation_id`, `confidence`, `provenance` — not just entities.
-- `person_relations.relation_detail` (nullable TEXT, added 2026-05-31) qualifies `kind` without growing the `kind` enum. Convention: **NULL = default/unspecified** (e.g. a blood sibling); tag only exceptions — `结义` (sworn brother, e.g. 伍员↔专诸 vs the blood 伍尚↔伍员), and reusable later for `异母`/`同母异父` (half-sibling), `养` (adoptive), 继室, etc. Chosen over a `sworn_sibling` enum value because SQLite can't ALTER a CHECK (enum change = full table rebuild) and a single qualifier column absorbs all such nuances. Mirrored on `candidate_person_relations.relation_detail`. Queries for blood-only siblings must filter `kind='sibling' AND (relation_detail IS NULL OR relation_detail!='结义')`. The extraction prompt does not yet emit it (ETL complete); back-tagging existing rows is a curation task.
+- `person_relations.kind` (Task 2): the `CHECK (kind IN (...))` constraint has been removed from the canonical schema. Relation-kind validation now happens in the loader against a genre profile, not in the DB schema. The `kind` column remains `TEXT NOT NULL`. `candidate_person_relations.kind` was already unconstrained.
+- `person_relations.relation_detail` (nullable TEXT, added 2026-05-31) qualifies `kind` without growing the `kind` enum. Convention: **NULL = default/unspecified** (e.g. a blood sibling); tag only exceptions — `结义` (sworn brother, e.g. 伍员↔专诸 vs the blood 伍尚↔伍员), and reusable later for `异母`/`同母异父` (half-sibling), `养` (adoptive), 继室, etc. Mirrored on `candidate_person_relations.relation_detail`. The extraction prompt does not yet emit it (ETL complete); back-tagging existing rows is a curation task.
 - Date type: `{year_bce, uncertainty (point|range|circa), year_bce_end?, original, era, inference_kind}`.
 - Stable IDs are human-readable slugs (`per:jin-wen-gong`, `evt:cheng-pu-zhi-zhan-632bce`), seeded from curated `canonical_name`.
 

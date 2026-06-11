@@ -27,8 +27,8 @@ def _seed_candidate_state(
     confidence: float = 0.9,
 ) -> None:
     conn.execute(
-        "INSERT OR IGNORE INTO candidate_states "
-        "(id, name, type, ruling_clan, founded_date_json, ended_date_json, "
+        "INSERT OR IGNORE INTO candidate_groups "
+        "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
         "confidence, pipeline_run_id, chunk_id, quote) "
         "VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)",
         (
@@ -48,7 +48,7 @@ def _seed_candidate_state(
 def test_creates_canonical_state_on_first_load(canonical: sqlite3.Connection) -> None:
     _seed_candidate_state(canonical, run_id="run:1")
     load_candidate_states(canonical, "run:1")
-    rows = canonical.execute("SELECT id, name FROM states").fetchall()
+    rows = canonical.execute("SELECT id, name FROM groups").fetchall()
     assert len(rows) == 1
     assert rows[0][1] == "周"
 
@@ -59,12 +59,12 @@ def test_second_load_with_same_name_merges_not_creates(canonical: sqlite3.Connec
     _seed_candidate_state(canonical, run_id="run:2", chunk_id="chk:t2", ruling_clan="姬")
     load_candidate_states(canonical, "run:2")
 
-    rows = canonical.execute("SELECT id, name, ruling_clan FROM states").fetchall()
+    rows = canonical.execute("SELECT id, name, ruling_clan FROM groups").fetchall()
     assert len(rows) == 1
     assert rows[0][2] == "姬"  # ruling_clan updated from null → 姬
 
     citations = canonical.execute(
-        "SELECT citation_id FROM entity_citations WHERE entity_kind='state'"
+        "SELECT citation_id FROM entity_citations WHERE entity_kind='group'"
     ).fetchall()
     assert len(citations) == 2
 
@@ -79,5 +79,5 @@ def test_higher_confidence_field_overrides_lower(canonical: sqlite3.Connection) 
     )
     load_candidate_states(canonical, "run:2")
 
-    row = canonical.execute("SELECT ruling_clan FROM states").fetchone()
+    row = canonical.execute("SELECT ruling_clan FROM groups").fetchone()
     assert row[0] == "姬"

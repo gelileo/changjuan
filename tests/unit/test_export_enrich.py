@@ -282,15 +282,15 @@ def test_add_event_prominence_tiers_with_boundary_promotion(tmp_path: Path) -> N
 
 
 def test_add_state_prominence_curated_allowlist(tmp_path: Path) -> None:
-    """state score = deed-sum over its persons; tier = curated allow-list (major) else minor."""
+    """group score = deed-sum over its persons; tier = curated allow-list (major) else minor."""
     from pipeline.export_enrich import add_state_prominence
 
     graph = tmp_path / "graph.sqlite"
     with sqlite3.connect(graph) as c:
-        c.execute("CREATE TABLE states (id TEXT PRIMARY KEY, name TEXT);")
-        c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, state_id TEXT);")
+        c.execute("CREATE TABLE groups (id TEXT PRIMARY KEY, name TEXT);")
+        c.execute("CREATE TABLE persons (id TEXT PRIMARY KEY, group_id TEXT);")
         c.execute("CREATE TABLE deed_importance (event_id TEXT, person_id TEXT, score REAL);")
-        c.executemany("INSERT INTO states VALUES (?,?);", [("sta:晋", "晋"), ("sta:滑", "滑")])
+        c.executemany("INSERT INTO groups VALUES (?,?);", [("sta:晋", "晋"), ("sta:滑", "滑")])
         c.executemany(
             "INSERT INTO persons VALUES (?,?);",
             [("per:a", "sta:晋"), ("per:b", "sta:晋"), ("per:c", "sta:滑")],
@@ -305,8 +305,8 @@ def test_add_state_prominence_curated_allowlist(tmp_path: Path) -> None:
     add_state_prominence(graph, overrides)
 
     with sqlite3.connect(graph) as c:
-        tiers = dict(c.execute("SELECT id, prominence_tier FROM states;"))
-        scores = dict(c.execute("SELECT id, prominence FROM states;"))
+        tiers = dict(c.execute("SELECT id, prominence_tier FROM groups;"))
+        scores = dict(c.execute("SELECT id, prominence FROM groups;"))
     assert tiers["sta:晋"] == "major"  # on the allow-list
     assert tiers["sta:滑"] == "minor"  # not on the allow-list
     assert scores["sta:晋"] == 400.0  # 300 + 100

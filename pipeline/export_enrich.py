@@ -255,14 +255,14 @@ def add_narrative_seq(graph_db: Path) -> None:
 
 
 def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> None:
-    """Add `states.prominence` (REAL) + `states.prominence_tier` (TEXT:
+    """Add `groups.prominence` (REAL) + `groups.prominence_tier` (TEXT:
     'major' | 'minor') to the snapshot.
 
-    `prominence` = SUM(deed_importance.score) over the state's persons — used for
-    SORT order only (big states first); MUST run after build_deed_importance().
-    `prominence_tier` is 'major' iff the state's name is in the curated allow-list
+    `prominence` = SUM(deed_importance.score) over the group's persons — used for
+    SORT order only (big groups first); MUST run after build_deed_importance().
+    `prominence_tier` is 'major' iff the group's name is in the curated allow-list
     under the `states:` key of prominence_overrides.yaml, else 'minor'. Only ~80
-    states, so the default reader list is a curated editorial set, not a rank.
+    groups, so the default reader list is a curated editorial set, not a rank.
     """
     major_names: set[str] = set()
     if overrides_path and overrides_path.exists():
@@ -272,22 +272,22 @@ def add_state_prominence(graph_db: Path, overrides_path: Path | None = None) -> 
         major_names = set(data.get("states") or [])
 
     with sqlite3.connect(graph_db) as g:
-        cols = [r[1] for r in g.execute("PRAGMA table_info(states);")]
+        cols = [r[1] for r in g.execute("PRAGMA table_info(groups);")]
         if "prominence" not in cols:
-            g.execute("ALTER TABLE states ADD COLUMN prominence REAL;")
+            g.execute("ALTER TABLE groups ADD COLUMN prominence REAL;")
         if "prominence_tier" not in cols:
-            g.execute("ALTER TABLE states ADD COLUMN prominence_tier TEXT;")
+            g.execute("ALTER TABLE groups ADD COLUMN prominence_tier TEXT;")
 
         scores = dict(
             g.execute(
-                "SELECT p.state_id, COALESCE(SUM(d.score),0) "
+                "SELECT p.group_id, COALESCE(SUM(d.score),0) "
                 "FROM deed_importance d JOIN persons p ON p.id = d.person_id "
-                "WHERE p.state_id IS NOT NULL GROUP BY p.state_id;"
+                "WHERE p.group_id IS NOT NULL GROUP BY p.group_id;"
             )
         )
-        states = g.execute("SELECT id, name FROM states;").fetchall()
+        states = g.execute("SELECT id, name FROM groups;").fetchall()
         g.executemany(
-            "UPDATE states SET prominence = ?, prominence_tier = ? WHERE id = ?;",
+            "UPDATE groups SET prominence = ?, prominence_tier = ? WHERE id = ?;",
             [
                 (round(scores.get(sid, 0.0), 2), "major" if name in major_names else "minor", sid)
                 for sid, name in states

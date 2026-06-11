@@ -19,9 +19,9 @@ def conn(tmp_path: Path) -> sqlite3.Connection:
 
 
 def _seed_state(c: sqlite3.Connection, state_id: str) -> None:
-    """Insert the state row if needed (for FK satisfaction)."""
+    """Insert the group row if needed (for FK satisfaction)."""
     c.execute(
-        "INSERT OR IGNORE INTO states (id, name, provenance, confidence, pipeline_run_id) "
+        "INSERT OR IGNORE INTO groups (id, name, provenance, confidence, pipeline_run_id) "
         "VALUES (?, ?, 'auto', 0.9, 'run:setup')",
         (state_id, state_id),
     )
@@ -41,7 +41,7 @@ def _seed_canonical(
         _seed_state(c, state_id)
     c.execute(
         "INSERT INTO persons "
-        "(id, canonical_name, state_id, social_category, provenance, confidence, pipeline_run_id) "
+        "(id, canonical_name, group_id, social_category, provenance, confidence, pipeline_run_id) "
         "VALUES (?, ?, ?, ?, 'auto', 0.9, 'run:setup')",
         (person_id, name, state_id, social_category),
     )
@@ -73,7 +73,7 @@ def _seed_candidate(
     )
     c.execute(
         "INSERT INTO candidate_persons "
-        "(id, canonical_name, state_id, social_category, clan_name, variants_json, "
+        "(id, canonical_name, group_id, social_category, clan_name, variants_json, "
         " chunk_id, quote, confidence, pipeline_run_id) "
         "VALUES (?, ?, ?, ?, ?, ?, 'chk:t', '', 0.9, ?)",
         (cand_id, name, state_id, social_category, clan_name, variants_json, run_id),

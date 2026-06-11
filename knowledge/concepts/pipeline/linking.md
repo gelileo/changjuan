@@ -2,7 +2,7 @@
 title: Stage 5 — Link & Dedup
 type: concept
 area: pipeline
-updated: 2026-05-23
+updated: 2026-06-11
 implemented: Phase 3 Tasks 5-13; Phase 4 Task 7 (candidate_pool state-id resolution); Phase 5 Tasks 1-6 (merge module); Phase 6 A3 (_load_reject_payload moved to precede reject_merge per module helper convention); Phase 6 A4 (linker filters rejected pairs; ignore_rejections kwarg); Phase 6 A6 (linker skips already-open duplicate pairs)
 status: thin
 load_bearing: true
@@ -247,6 +247,17 @@ The filter is applied **after** the rejected-check, inside the same queue-band b
 `fingerprint_for_candidate_a(conn, cand_a_id) → str | None` (added to `pipeline/stage5_link/fingerprint.py`) performs the Phase 5.1 dual-table lookup: it checks `candidate_persons` first, falls back to `persons`, and returns `None` if the id is in neither table. When `None` is returned the pair is **not** filtered (conservative: can't deduplicate what can't be identified).
 
 Stats dict gains `already_open_skipped` (always present, default 0).
+
+## State→Group rename (2026-06-11)
+
+`candidate_pool.py` now reads `group_id` from both `candidate_persons` and
+`persons`, aliasing it as `state_id` in the SELECT (`group_id AS state_id`)
+so the scoring layer's internal dict key (`person["state_id"]`) is unchanged.
+`_resolve_state_local_to_canonical` joins `candidate_groups` → `groups`
+(was `candidate_states` → `states`). `merge.py` updates:
+`_SNAPSHOTTABLE_TABLES` has `"groups"` (was `"states"`); `_ALLOWED_EDIT_FIELDS`
+and `nullable_fields` use `"group_id"`; `_resolve_collisions_person_states`
+queries `person_groups`.
 
 ## What would invalidate this article
 

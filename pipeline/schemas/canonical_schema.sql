@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS persons (
     birth_date_json TEXT,
     death_date_json TEXT,
     notes           TEXT,
-    state_id        TEXT REFERENCES states(id),
+    group_id        TEXT REFERENCES groups(id),
     clan_name       TEXT,
     social_category TEXT,
     confidence      REAL NOT NULL,
@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS person_variants (
     UNIQUE (person_id, variant, kind)
 );
 
-CREATE TABLE IF NOT EXISTS states (
+CREATE TABLE IF NOT EXISTS groups (
     id                  TEXT PRIMARY KEY,
     name                TEXT NOT NULL,
     founded_date_json   TEXT,
     ended_date_json     TEXT,
     ruling_clan         TEXT,
-    type                TEXT,
+    group_type          TEXT,
     confidence          REAL NOT NULL,
     provenance          TEXT NOT NULL CHECK (provenance IN ('auto','curated')),
     pipeline_run_id     TEXT,
@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS places (
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS state_capitals (
+CREATE TABLE IF NOT EXISTS group_seats (
     id                  TEXT PRIMARY KEY,
-    state_id            TEXT NOT NULL REFERENCES states(id),
+    group_id            TEXT NOT NULL REFERENCES groups(id),
     place_id            TEXT NOT NULL REFERENCES places(id),
     from_date_json      TEXT,
     to_date_json        TEXT,
@@ -122,10 +122,7 @@ CREATE TABLE IF NOT EXISTS event_relations (
 CREATE TABLE IF NOT EXISTS person_relations (
     from_person_id  TEXT NOT NULL REFERENCES persons(id),
     to_person_id    TEXT NOT NULL REFERENCES persons(id),
-    kind            TEXT NOT NULL CHECK (kind IN (
-        'parent','child','spouse','sibling','mentor','ruler','minister',
-        'ally','rival','killed_by','clan_member'
-    )),
+    kind            TEXT NOT NULL,
     date_json       TEXT,
     citation_id     TEXT,
     confidence      REAL NOT NULL,
@@ -136,23 +133,23 @@ CREATE TABLE IF NOT EXISTS person_relations (
     PRIMARY KEY (from_person_id, to_person_id, kind)
 );
 
-CREATE TABLE IF NOT EXISTS person_states (
+CREATE TABLE IF NOT EXISTS person_groups (
     person_id       TEXT NOT NULL REFERENCES persons(id),
-    state_id        TEXT NOT NULL REFERENCES states(id),
+    group_id        TEXT NOT NULL REFERENCES groups(id),
     role            TEXT NOT NULL CHECK (role IN ('ruler','minister','exile','defector','citizen','other')),
     from_date_json  TEXT,
     to_date_json    TEXT,
     citation_id     TEXT,
     confidence      REAL NOT NULL,
     provenance      TEXT NOT NULL CHECK (provenance IN ('auto','curated')),
-    PRIMARY KEY (person_id, state_id, role, from_date_json)
+    PRIMARY KEY (person_id, group_id, role, from_date_json)
 );
 
 CREATE TABLE IF NOT EXISTS entity_citations (
     entity_kind     TEXT NOT NULL CHECK (entity_kind IN (
-        'person','state','place','event',
+        'person','group','place','event',
         'event_participant','event_place','event_relation',
-        'person_relation','person_state','state_capital'
+        'person_relation','person_group','group_seat'
     )),
     entity_id       TEXT NOT NULL,
     citation_id     TEXT NOT NULL,
@@ -170,7 +167,7 @@ CREATE TABLE IF NOT EXISTS candidate_persons (
     birth_date_json TEXT,
     death_date_json TEXT,
     notes           TEXT,
-    state_id        TEXT,
+    group_id        TEXT,
     clan_name       TEXT,
     social_category TEXT,
     variants_json   TEXT,
@@ -225,13 +222,13 @@ CREATE TABLE IF NOT EXISTS candidate_places (
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS candidate_states (
+CREATE TABLE IF NOT EXISTS candidate_groups (
     id              TEXT PRIMARY KEY,
     name            TEXT NOT NULL,
     founded_date_json TEXT,
     ended_date_json TEXT,
     ruling_clan     TEXT,
-    type            TEXT,
+    group_type      TEXT,
     confidence      REAL NOT NULL,
     pipeline_run_id TEXT NOT NULL,
     chunk_id        TEXT NOT NULL,
@@ -274,14 +271,14 @@ CREATE TABLE IF NOT EXISTS candidate_person_relations (
     PRIMARY KEY (from_candidate_person_id, to_candidate_person_id, kind)
 );
 
-CREATE TABLE IF NOT EXISTS candidate_person_states (
+CREATE TABLE IF NOT EXISTS candidate_person_groups (
     candidate_person_id TEXT NOT NULL,
-    candidate_state_id  TEXT NOT NULL,
+    candidate_group_id  TEXT NOT NULL,
     role                TEXT NOT NULL,
     from_date_json      TEXT,
     to_date_json        TEXT,
     pipeline_run_id     TEXT NOT NULL,
-    PRIMARY KEY (candidate_person_id, candidate_state_id, role)
+    PRIMARY KEY (candidate_person_id, candidate_group_id, role)
 );
 
 CREATE TABLE IF NOT EXISTS candidate_facts (
@@ -355,7 +352,7 @@ CREATE TABLE IF NOT EXISTS llm_cache (
 
 CREATE TABLE IF NOT EXISTS merge_candidates (
     id                  TEXT PRIMARY KEY,
-    kind                TEXT NOT NULL CHECK (kind IN ('person','state','place','event')),
+    kind                TEXT NOT NULL CHECK (kind IN ('person','group','place','event')),
     candidate_a_id      TEXT NOT NULL,
     candidate_b_id      TEXT NOT NULL,
     score               REAL NOT NULL,

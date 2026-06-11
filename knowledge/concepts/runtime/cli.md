@@ -2,7 +2,7 @@
 title: changjuan CLI commands
 type: concept
 area: runtime
-updated: 2026-05-22
+updated: 2026-06-11
 status: mature
 load_bearing: false
 references:
@@ -99,6 +99,14 @@ Equivalent to `streamlit run curation/app.py` but registered as a CLI
 verb for symmetry with `extract`, `link`, `load`, etc. Phase 5 surface
 implements the merge-candidates queue only; conflicts and low-confidence
 are Phase 6.
+
+## State→Group rename (2026-06-11)
+
+`pipeline/cli.py` internal queries updated: SELECT from `candidate_persons`
+uses `group_id`; SELECT from `candidate_groups` (was `candidate_states`);
+`candidate_person_groups` / `candidate_group_id` (was `candidate_person_states`
+/ `candidate_state_id`); `candidate_groups.group_type` (was `type`).
+User-facing command names and flags are unchanged.
 
 ## What would invalidate this article
 

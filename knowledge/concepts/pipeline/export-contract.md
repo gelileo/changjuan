@@ -210,6 +210,13 @@ v5 adds `events.narrative_seq` (INTEGER) — see the section above. Additive, bu
 
 v6 adds `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` — full chapter prose folded into the bundle so a downloaded book is one self-contained `.sqlite` file. Populated by `export_enrich.build_chapter_texts` from `readable/ch[0-9]*.md`. Additive: the bundled reader still uses the separate `texts/` payload; only downloaded books (B2) read this table.
 
+## State→Group rename (2026-06-11)
+
+`export_enrich.py::add_state_prominence` now targets the `groups` table
+(was `states`) and joins via `persons.group_id` (was `persons.state_id`).
+The exported `graph.sqlite` will reflect the renamed tables/columns starting
+with the next bundle produced after this migration.
+
 ## What would invalidate this article
 
 - Schema version bumped beyond v6 (incompatible structural change to the canonical tables).

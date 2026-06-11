@@ -2,7 +2,7 @@
 title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
-updated: 2026-06-02
+updated: 2026-06-11
 implemented: Task 38 (variants_json stored in candidate_persons)
 status: thin
 load_bearing: true
@@ -165,6 +165,19 @@ The skill's `system-prompt.md` evolves between versions; each prompt revision is
 ## `kind_detail` vs `kind` for person_relation entries (Phase 6 Task C1)
 
 The extractor emits `person_relation` entries with two `kind`-ish fields: a top-level `kind: person_relation` (the type discriminator that routes the record in `load_extraction`) and a per-record `kind_detail: parent | child | spouse | sibling | mentor | ruler | minister | ally | rival | killed_by | clan_member`. The `kind_detail` value is what becomes `candidate_person_relations.kind` and eventually `person_relations.kind`. Before Phase 6, `load_extraction` mistakenly read `r["relation_kind"]` (a field that does not exist in the schema), defaulting to `""`. Empty kinds pass the candidate-side INSERT but stage 7 (`load_candidate_person_relations`) silently skips them via the `_VALID_PERSON_RELATION_KINDS` filter — so `person_relations` stayed at 0 rows. The fix at `pipeline/stage3_extract.py:377` reads `r["kind_detail"]` instead. The canonical CHECK constraint vocabulary (in `pipeline/schemas/canonical_schema.sql`) is the source of truth for which `kind_detail` values are accepted downstream.
+
+## State→Group rename (2026-06-11)
+
+`stage3_extract.py` maps YAML vocabulary to DB column names at write time.
+The LLM-facing YAML schema (`extract_output.py`) retains `states`, `state_id`,
+`type`, `person_state`, and `state_capital` so prompts are unchanged. The bridge
+in `load_extraction` translates on INSERT:
+
+- `candidate_persons.group_id` ← YAML `p["state_id"]`
+- `candidate_groups` (was `candidate_states`), `group_type` ← YAML `st["type"]`
+- `candidate_person_groups` (was `candidate_person_states`), `candidate_group_id`
+
+`sta:` id prefix on data values is preserved (data, not schema).
 
 ## What would invalidate this article
 

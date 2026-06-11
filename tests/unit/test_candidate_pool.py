@@ -27,7 +27,7 @@ def _seed_candidate(
 ) -> None:
     conn.execute(
         "INSERT INTO candidate_persons "
-        "(id, canonical_name, state_id, chunk_id, quote, confidence, pipeline_run_id) "
+        "(id, canonical_name, group_id, chunk_id, quote, confidence, pipeline_run_id) "
         "VALUES (?, ?, ?, 'chk:t', '', 0.9, ?)",
         (cand_id, name, state_id, run_id),
     )
@@ -45,13 +45,13 @@ def _seed_canonical(
 ) -> None:
     if state_id is not None:
         conn.execute(
-            "INSERT OR IGNORE INTO states (id, name, provenance, confidence, pipeline_run_id) "
+            "INSERT OR IGNORE INTO groups (id, name, provenance, confidence, pipeline_run_id) "
             "VALUES (?, ?, 'auto', 0.9, 'run:test')",
             (state_id, state_id),
         )
     conn.execute(
         "INSERT INTO persons "
-        "(id, canonical_name, state_id, provenance, confidence, pipeline_run_id) "
+        "(id, canonical_name, group_id, provenance, confidence, pipeline_run_id) "
         "VALUES (?, ?, ?, 'auto', 0.9, 'run:test')",
         (person_id, name, state_id),
     )

@@ -44,7 +44,7 @@ def _seed_entities(conn: sqlite3.Connection) -> None:
         " VALUES ('pla:1', 'P1', 'auto', 0.9, 'run:setup')"
     )
     conn.execute(
-        "INSERT INTO states (id, name, provenance, confidence, pipeline_run_id)"
+        "INSERT INTO groups (id, name, provenance, confidence, pipeline_run_id)"
         " VALUES ('sta:1', 'S1', 'auto', 0.9, 'run:setup')"
     )
     conn.commit()
@@ -122,11 +122,11 @@ def _seed_person_state(
     state_id: str = "sta:1",
     role: str = "ruler",
 ) -> None:
-    # candidate_person_states PK is (candidate_person_id, candidate_state_id, role)
+    # candidate_person_groups PK is (candidate_person_id, candidate_group_id, role)
     # Use INSERT OR REPLACE to allow multiple runs with same key
     conn.execute(
-        "INSERT OR REPLACE INTO candidate_person_states"
-        " (candidate_person_id, candidate_state_id, role, pipeline_run_id)"
+        "INSERT OR REPLACE INTO candidate_person_groups"
+        " (candidate_person_id, candidate_group_id, role, pipeline_run_id)"
         " VALUES (?, ?, ?, ?)",
         (person_id, state_id, role, run_id),
     )
@@ -296,7 +296,7 @@ def test_person_state_first_load_creates_row(canonical: sqlite3.Connection) -> N
     _seed_entities(canonical)
     _seed_person_state(canonical, "run:1")
     load_candidate_relations(canonical, "run:1")
-    rows = canonical.execute("SELECT person_id, state_id, role FROM person_states").fetchall()
+    rows = canonical.execute("SELECT person_id, group_id, role FROM person_groups").fetchall()
     assert len(rows) == 1
     assert rows[0][2] == "ruler"
 
@@ -308,11 +308,11 @@ def test_person_state_idempotence_accumulates_citations(canonical: sqlite3.Conne
     _seed_person_state(canonical, "run:2")
     load_candidate_relations(canonical, "run:2")
 
-    rows = canonical.execute("SELECT person_id FROM person_states").fetchall()
+    rows = canonical.execute("SELECT person_id FROM person_groups").fetchall()
     assert len(rows) == 1
 
     cites = canonical.execute(
-        "SELECT citation_id FROM entity_citations WHERE entity_kind = 'person_state'"
+        "SELECT citation_id FROM entity_citations WHERE entity_kind = 'person_group'"
     ).fetchall()
     assert len(cites) == 2
 
@@ -326,5 +326,5 @@ def test_state_capitals_stub_returns_zero(canonical: sqlite3.Connection) -> None
     _seed_entities(canonical)
     n = load_candidate_relations(canonical, "run:1")
     assert n == 0
-    rows = canonical.execute("SELECT * FROM state_capitals").fetchall()
+    rows = canonical.execute("SELECT * FROM group_seats").fetchall()
     assert len(rows) == 0

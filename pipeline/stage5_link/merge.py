@@ -20,7 +20,7 @@ from typing import Any
 from pipeline.stage5_link.fingerprint import candidate_fingerprint
 
 # Tables that _row_snapshot is permitted to read.
-_SNAPSHOTTABLE_TABLES: frozenset[str] = frozenset({"persons", "events", "places", "states"})
+_SNAPSHOTTABLE_TABLES: frozenset[str] = frozenset({"persons", "events", "places", "groups"})
 
 # Fields that curator is permitted to edit via accept_merge edits=.
 _ALLOWED_EDIT_FIELDS: frozenset[str] = frozenset(
@@ -29,15 +29,15 @@ _ALLOWED_EDIT_FIELDS: frozenset[str] = frozenset(
         "birth_date_json",
         "death_date_json",
         "notes",
-        "state_id",
+        "group_id",
         "clan_name",
         "canonical_name",
     }
 )
 
-# Local-extraction state_id pattern: 's' followed by one or more digits.
+# Local-extraction group_id pattern: 's' followed by one or more digits.
 # IDs in this format (e.g. 's1', 's12') reference per-chunk extraction slots,
-# not canonical states rows. They must not be folded into canonical persons.
+# not canonical groups rows. They must not be folded into canonical persons.
 _LOCAL_STATE_ID_RE: re.Pattern[str] = re.compile(r"^s\d+$")
 
 
@@ -175,13 +175,13 @@ def _resolve_self_loops_person_relations(
 def _resolve_collisions_person_states(
     conn: sqlite3.Connection, candidate_id: str, canonical_id: str
 ) -> int:
-    """PK is (person_id, state_id, role, from_date_json). Higher-confidence wins."""
+    """PK is (person_id, group_id, role, from_date_json). Higher-confidence wins."""
     cur = conn.execute(
-        "SELECT cand.state_id, cand.role, cand.from_date_json, "
+        "SELECT cand.group_id, cand.role, cand.from_date_json, "
         "       cand.confidence AS cand_conf, can.confidence AS can_conf "
-        "FROM person_states cand "
-        "JOIN person_states can "
-        "  ON cand.state_id = can.state_id "
+        "FROM person_groups cand "
+        "JOIN person_groups can "
+        "  ON cand.group_id = can.group_id "
         " AND cand.role = can.role "
         " AND COALESCE(cand.from_date_json, '') = COALESCE(can.from_date_json, '') "
         "WHERE cand.person_id = ? AND can.person_id = ?",
@@ -191,26 +191,26 @@ def _resolve_collisions_person_states(
     for c in collisions:
         loser_person = candidate_id if c["cand_conf"] <= c["can_conf"] else canonical_id
         loser_row = conn.execute(
-            "SELECT * FROM person_states "
-            "WHERE person_id = ? AND state_id = ? AND role = ? "
+            "SELECT * FROM person_groups "
+            "WHERE person_id = ? AND group_id = ? AND role = ? "
             "  AND COALESCE(from_date_json, '') = COALESCE(?, '')",
-            (loser_person, c["state_id"], c["role"], c["from_date_json"]),
+            (loser_person, c["group_id"], c["role"], c["from_date_json"]),
         ).fetchone()
         conn.execute(
-            "DELETE FROM person_states "
-            "WHERE person_id = ? AND state_id = ? AND role = ? "
+            "DELETE FROM person_groups "
+            "WHERE person_id = ? AND group_id = ? AND role = ? "
             "  AND COALESCE(from_date_json, '') = COALESCE(?, '')",
-            (loser_person, c["state_id"], c["role"], c["from_date_json"]),
+            (loser_person, c["group_id"], c["role"], c["from_date_json"]),
         )
         conn.execute(
             "INSERT INTO audit_log "
             "(id, entity_kind, entity_id, field, change_kind, "
             "before_json, after_json, actor, at) "
-            "VALUES (?, 'person_state', ?, NULL, "
+            "VALUES (?, 'person_group', ?, NULL, "
             "'merge_collision_resolved', ?, NULL, 'curator', ?)",
             (
                 _new_audit_id(),
-                f"{loser_person}:{c['state_id']}:{c['role']}",
+                f"{loser_person}:{c['group_id']}:{c['role']}",
                 json.dumps(dict(loser_row), ensure_ascii=False),
                 _now_iso(),
             ),
@@ -345,7 +345,7 @@ def accept_merge(
         "birth_date_json",
         "death_date_json",
         "notes",
-        "state_id",
+        "group_id",
         "clan_name",
     )
     field_updates: dict[str, Any] = {}
@@ -441,7 +441,7 @@ def accept_merge(
             (canonical_id, candidate_id),
         ).rowcount
         relations_retargeted += conn.execute(
-            "UPDATE person_states SET person_id = ? WHERE person_id = ?",
+            "UPDATE person_groups SET person_id = ? WHERE person_id = ?",
             (canonical_id, candidate_id),
         ).rowcount
         relations_retargeted += conn.execute(
@@ -719,13 +719,13 @@ def _candidate_persons_snapshot(
 
     Drops candidate_persons-only columns (social_category, pipeline_run_id,
     chunk_id, quote, variants_json, match_target_id) and filters out local
-    state_id values (e.g. 's1') that cannot be safely folded into canonical rows.
+    group_id values (e.g. 's1') that cannot be safely folded into canonical rows.
 
     Returns None if the row does not exist.
     """
     row = conn.execute(
         "SELECT id, canonical_name, gender, birth_date_json, death_date_json, "
-        "notes, state_id, clan_name, confidence "
+        "notes, group_id, clan_name, confidence "
         "FROM candidate_persons WHERE id = ?",
         (candidate_id,),
     ).fetchone()
@@ -734,17 +734,17 @@ def _candidate_persons_snapshot(
 
     snapshot: dict[str, Any] = dict(row)
 
-    # Filter out local-extraction state_id values so they are never folded
+    # Filter out local-extraction group_id values so they are never folded
     # into the canonical row.  If detection is ambiguous, treat as NULL.
-    raw_state = snapshot.get("state_id")
+    raw_state = snapshot.get("group_id")
     if raw_state is not None:
         is_local = bool(_LOCAL_STATE_ID_RE.match(str(raw_state)))
         if is_local:
-            snapshot["state_id"] = None
+            snapshot["group_id"] = None
         else:
-            # Also verify the state_id exists in the states table; if not, treat as NULL.
-            exists = conn.execute("SELECT 1 FROM states WHERE id = ?", (raw_state,)).fetchone()
+            # Also verify the group_id exists in the groups table; if not, treat as NULL.
+            exists = conn.execute("SELECT 1 FROM groups WHERE id = ?", (raw_state,)).fetchone()
             if exists is None:
-                snapshot["state_id"] = None
+                snapshot["group_id"] = None
 
     return snapshot

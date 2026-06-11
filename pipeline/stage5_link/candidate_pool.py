@@ -17,12 +17,12 @@ def _resolve_state_local_to_canonical(
     candidate_id: str,
     raw_state_id: str | None,
 ) -> str | None:
-    """Resolve a candidate's local state_id (e.g. 's1') to canonical (e.g. 'sta:zhou').
+    """Resolve a candidate's local group_id (e.g. 's1') to canonical (e.g. 'sta:zhou').
 
-    Local extraction state ids only have meaning within a single run; the canonical
-    states table is the comparison surface. Resolves via candidate_states.name →
-    states.name join. Returns the canonical id, or the original value if already
-    canonical (contains ':'), or None if no canonical state with matching name exists.
+    Local extraction group ids only have meaning within a single run; the canonical
+    groups table is the comparison surface. Resolves via candidate_groups.name →
+    groups.name join. Returns the canonical id, or the original value if already
+    canonical (contains ':'), or None if no canonical group with matching name exists.
     """
     if raw_state_id is None or ":" in raw_state_id:
         return raw_state_id
@@ -32,8 +32,8 @@ def _resolve_state_local_to_canonical(
         return raw_state_id
     run_id = ":".join(parts[2:-1])
     row = conn.execute(
-        "SELECT s.id FROM candidate_states cs "
-        "JOIN states s ON s.name = cs.name "
+        "SELECT s.id FROM candidate_groups cs "
+        "JOIN groups s ON s.name = cs.name "
         "WHERE cs.pipeline_run_id = ? AND cs.id LIKE ?",
         (run_id, f"%:{raw_state_id}"),
     ).fetchone()
@@ -41,9 +41,9 @@ def _resolve_state_local_to_canonical(
 
 
 def _load_candidate(conn: sqlite3.Connection, candidate_id: str) -> dict[str, Any] | None:
-    """Load the candidate Person + its variants. Resolves local state_id → canonical."""
+    """Load the candidate Person + its variants. Resolves local group_id → canonical."""
     row = conn.execute(
-        "SELECT id, canonical_name, state_id, social_category, clan_name, "
+        "SELECT id, canonical_name, group_id AS state_id, social_category, clan_name, "
         "       birth_date_json, death_date_json "
         "FROM candidate_persons WHERE id = ?",
         (candidate_id,),
@@ -67,7 +67,7 @@ def _row_to_dict_with_resolved_state(
     variants: list[dict[str, Any]],
     target_kind: str,
 ) -> dict[str, Any]:
-    """_row_to_dict + resolve local state_id for candidate-side rows."""
+    """_row_to_dict + resolve local group_id for candidate-side rows."""
     d = _row_to_dict(row, variants, target_kind)
     if target_kind in ("self", "candidate"):
         d["state_id"] = _resolve_state_local_to_canonical(conn, source_id, d["state_id"])
@@ -134,7 +134,8 @@ def candidate_pool(
     # Canonical persons sharing a name string with the candidate
     canonical_rows = conn.execute(
         f"""
-        SELECT DISTINCT p.id, p.canonical_name, p.state_id, p.social_category, p.clan_name,
+        SELECT DISTINCT p.id, p.canonical_name, p.group_id AS state_id,
+                        p.social_category, p.clan_name,
                         p.birth_date_json, p.death_date_json
         FROM persons p
         LEFT JOIN person_variants pv ON pv.person_id = p.id
@@ -156,7 +157,8 @@ def candidate_pool(
     # Same-run candidates sharing a name string
     candidate_rows = conn.execute(
         f"""
-        SELECT DISTINCT c.id, c.canonical_name, c.state_id, c.social_category, c.clan_name,
+        SELECT DISTINCT c.id, c.canonical_name, c.group_id AS state_id,
+                        c.social_category, c.clan_name,
                         c.birth_date_json, c.death_date_json
         FROM candidate_persons c
         LEFT JOIN candidate_person_variants cv ON cv.candidate_person_id = c.id

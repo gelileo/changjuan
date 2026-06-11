@@ -30,7 +30,7 @@ def _build_candidates(
     (split(':')[-1])."""
     persons = []
     for row in canonical.execute(
-        "SELECT id, canonical_name, state_id, social_category FROM candidate_persons "
+        "SELECT id, canonical_name, group_id, social_category FROM candidate_persons "
         "WHERE pipeline_run_id = ?",
         (run_id,),
     ):
@@ -38,7 +38,7 @@ def _build_candidates(
             {
                 "id": row[0].split(":")[-1],
                 "canonical_name": row[1],
-                "state_id": row[2],
+                "state_id": row[2],  # internal scoring key stays 'state_id'
                 "social_category": row[3],
                 "variants": [],
             }
@@ -66,7 +66,7 @@ def _build_candidates(
         places.append({"id": row[0].split(":")[-1], "name": row[1]})
     states = []
     for row in canonical.execute(
-        "SELECT id, name FROM candidate_states WHERE pipeline_run_id = ?",
+        "SELECT id, name FROM candidate_groups WHERE pipeline_run_id = ?",
         (run_id,),
     ):
         states.append({"id": row[0].split(":")[-1], "name": row[1]})
@@ -117,7 +117,7 @@ def _build_candidates(
             {"kind": row[2], "from_person_id": _cl(row[0]), "to_person_id": _cl(row[1])}
         )
     for row in canonical.execute(
-        "SELECT candidate_person_id, candidate_state_id, role FROM candidate_person_states "
+        "SELECT candidate_person_id, candidate_group_id, role FROM candidate_person_groups "
         "WHERE pipeline_run_id = ?",
         (run_id,),
     ):

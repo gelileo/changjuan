@@ -113,6 +113,84 @@ def _migrate_rejected_merges(db_path: Path) -> None:
         conn.close()
 
 
+def _migrate_states_to_groups(db_path: Path) -> None:
+    """Rename states→groups schema (Task 2: State→Group rename).
+
+    Idempotent: if the groups table already exists, returns immediately.
+    """
+    conn = sqlite3.connect(db_path)
+    try:
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if "groups" in tables:
+            return  # already migrated
+        # Rename tables
+        conn.execute("PRAGMA legacy_alter_table=ON")
+        for old, new in [
+            ("states", "groups"),
+            ("state_capitals", "group_seats"),
+            ("person_states", "person_groups"),
+            ("candidate_states", "candidate_groups"),
+            ("candidate_person_states", "candidate_person_groups"),
+        ]:
+            if old in tables:
+                conn.execute(f"ALTER TABLE {old} RENAME TO {new}")
+        conn.execute("PRAGMA legacy_alter_table=OFF")
+        # Rename columns via recreate (SQLite pre-3.25 lacks RENAME COLUMN)
+        # persons: state_id → group_id
+        col_names = {r[1] for r in conn.execute("PRAGMA table_info(persons)")}
+        if "state_id" in col_names:
+            conn.execute("ALTER TABLE persons ADD COLUMN group_id TEXT")
+            conn.execute("UPDATE persons SET group_id = state_id")
+        # candidate_persons: state_id → group_id
+        col_names = {r[1] for r in conn.execute("PRAGMA table_info(candidate_persons)")}
+        if "state_id" in col_names:
+            conn.execute("ALTER TABLE candidate_persons ADD COLUMN group_id TEXT")
+            conn.execute("UPDATE candidate_persons SET group_id = state_id")
+        # groups: type → group_type
+        col_names = {r[1] for r in conn.execute("PRAGMA table_info(groups)")}
+        if "type" in col_names and "group_type" not in col_names:
+            conn.execute("ALTER TABLE groups ADD COLUMN group_type TEXT")
+            conn.execute("UPDATE groups SET group_type = type")
+        # candidate_groups: type → group_type
+        if "candidate_groups" in tables or "candidate_states" in tables:
+            t = "candidate_groups"
+            col_names = {r[1] for r in conn.execute(f"PRAGMA table_info({t})")}
+            if "type" in col_names and "group_type" not in col_names:
+                conn.execute(f"ALTER TABLE {t} ADD COLUMN group_type TEXT")
+                conn.execute(f"UPDATE {t} SET group_type = type")
+        # group_seats: state_id → group_id
+        if "group_seats" in {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }:
+            col_names = {r[1] for r in conn.execute("PRAGMA table_info(group_seats)")}
+            if "state_id" in col_names and "group_id" not in col_names:
+                conn.execute("ALTER TABLE group_seats ADD COLUMN group_id TEXT")
+                conn.execute("UPDATE group_seats SET group_id = state_id")
+        # person_groups: state_id → group_id
+        if "person_groups" in {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }:
+            col_names = {r[1] for r in conn.execute("PRAGMA table_info(person_groups)")}
+            if "state_id" in col_names and "group_id" not in col_names:
+                conn.execute("ALTER TABLE person_groups ADD COLUMN group_id TEXT")
+                conn.execute("UPDATE person_groups SET group_id = state_id")
+        # candidate_person_groups: candidate_state_id → candidate_group_id
+        if "candidate_person_groups" in {
+            r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }:
+            col_names = {r[1] for r in conn.execute("PRAGMA table_info(candidate_person_groups)")}
+            if "candidate_state_id" in col_names and "candidate_group_id" not in col_names:
+                conn.execute(
+                    "ALTER TABLE candidate_person_groups ADD COLUMN candidate_group_id TEXT"
+                )
+                conn.execute(
+                    "UPDATE candidate_person_groups SET candidate_group_id = candidate_state_id"
+                )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @pytest.fixture
 def db_copy(tmp_path: Path) -> Path:
     if not LIVE_DB.exists():
@@ -121,6 +199,7 @@ def db_copy(tmp_path: Path) -> Path:
     shutil.copy(LIVE_DB, dst)
     _migrate_audit_log_check(dst)
     _migrate_rejected_merges(dst)
+    _migrate_states_to_groups(dst)
     return dst
 
 
@@ -194,7 +273,7 @@ def test_curator_smoke_resolves_all_open_candidates(db_copy: Path) -> None:
         "LEFT JOIN persons p1 ON pr.from_person_id = p1.id WHERE p1.id IS NULL",
         "SELECT COUNT(*) AS n FROM person_relations pr "
         "LEFT JOIN persons p2 ON pr.to_person_id = p2.id WHERE p2.id IS NULL",
-        "SELECT COUNT(*) AS n FROM person_states ps "
+        "SELECT COUNT(*) AS n FROM person_groups ps "
         "LEFT JOIN persons p ON ps.person_id = p.id WHERE p.id IS NULL",
         "SELECT COUNT(*) AS n FROM entity_citations ec "
         "LEFT JOIN persons p ON ec.entity_id = p.id "

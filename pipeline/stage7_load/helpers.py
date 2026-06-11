@@ -12,7 +12,7 @@ _PERSON_SCALAR_FIELDS = (
     "birth_date_json",
     "death_date_json",
     "notes",
-    "state_id",
+    "group_id",
     "clan_name",
     "social_category",
 )

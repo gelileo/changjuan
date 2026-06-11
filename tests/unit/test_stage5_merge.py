@@ -167,8 +167,8 @@ def test_accept_merge_person_states_collision_keeps_higher_confidence(
     assert result.collisions_resolved == 1
     with connect(db_path) as conn:
         rows = conn.execute(
-            "SELECT person_id, confidence FROM person_states "
-            "WHERE state_id = 'sta:周' AND role = 'ruler'"
+            "SELECT person_id, confidence FROM person_groups "
+            "WHERE group_id = 'sta:周' AND role = 'ruler'"
         ).fetchall()
     assert len(rows) == 1
     assert rows[0]["confidence"] == 0.95
@@ -427,21 +427,21 @@ def test_accept_merge_candidate_in_candidate_persons_happy_path(
 def test_accept_merge_candidate_persons_local_state_id_skipped(
     tmp_path: Path,
 ) -> None:
-    """Local state_id (e.g. 's1') is NOT folded into the canonical row."""
+    """Local group_id (e.g. 's1') is NOT folded into the canonical row."""
 
     from tests.fixtures.curation.seed_merge_db import seed_with_candidate_in_candidate_persons
 
     db_path = tmp_path / "state_test.sqlite"
     mc_id = seed_with_candidate_in_candidate_persons(db_path)
-    # canonical has state_id=NULL (seeder sets it); candidate has state_id='s1'.
+    # canonical has group_id=NULL (seeder sets it); candidate has group_id='s1'.
     with connect(db_path) as conn:
         accept_merge(conn, mc_id)
     with connect(db_path) as conn:
         row = conn.execute(
-            "SELECT state_id FROM persons WHERE id = 'per:test:canonical'"
+            "SELECT group_id FROM persons WHERE id = 'per:test:canonical'"
         ).fetchone()
     # Local 's1' id must not have been folded into the canonical row.
-    assert row["state_id"] is None
+    assert row["group_id"] is None
 
 
 def test_accept_merge_candidate_persons_variants_json_folded(
@@ -480,12 +480,12 @@ def _seed_cand_vs_cand(db_path: Path, *, b_match_target: str | None, with_canoni
                 "VALUES ('per:范鞅', '范鞅', 'M', 0.9, 'auto')"
             )
         conn.execute(
-            "INSERT INTO candidate_persons (id, canonical_name, gender, state_id, confidence, "
+            "INSERT INTO candidate_persons (id, canonical_name, gender, group_id, confidence, "
             "pipeline_run_id, chunk_id, quote, variants_json) "
             "VALUES ('cand:per:a', '赵鞅', 'M', 'sta:jin', 0.8, 'run:x', 'c', 'q', '[]')"
         )
         conn.execute(
-            "INSERT INTO candidate_persons (id, canonical_name, gender, state_id, confidence, "
+            "INSERT INTO candidate_persons (id, canonical_name, gender, group_id, confidence, "
             "pipeline_run_id, chunk_id, quote, variants_json, match_target_id) "
             "VALUES ('cand:per:b', '士鞅', 'M', 'sta:jin', 0.8, 'run:x', 'c', 'q', '[]', ?)",
             (b_match_target,),

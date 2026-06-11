@@ -2,7 +2,7 @@
 title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
-updated: 2026-06-09
+updated: 2026-06-11
 status: mature
 load_bearing: false
 references:
@@ -744,6 +744,17 @@ Two tests added to `tests/unit/test_publish_depot.py` via a shared `_full_manife
 - `test_build_entry_omits_prices_when_absent` — calls `build_entry(_full_manifest(), ...)` (no `prices` key) and asserts `"prices" not in entry`. Verifies the free-book contract: absent `prices` in the manifest → absent in the catalog entry.
 
 The `_full_manifest(**extra)` helper builds a minimal manifest dict from a fixed `base` (`dict[str, object]`) and merges `extra` over it, enabling single-kwarg overrides in each test.
+
+## State→Group rename (2026-06-11)
+
+All unit and integration tests updated to use new table/column names.
+`tests/integration/test_curator_smoke.py` gained `_migrate_states_to_groups(db_path)`
+— an idempotent migration function called in the `db_copy` fixture that
+renames tables and adds new columns via `ALTER TABLE … ADD COLUMN` so the
+live DB copy (created before this rename) works with the new pipeline code.
+`tests/test_canonical_schema_groups.py` added (4 tests: groups table, junction
+renames, person_relations kind CHECK removal, entity_citations CHECK values).
+Full suite: 343 passed, 1 skipped.
 
 ## What would invalidate this article
 

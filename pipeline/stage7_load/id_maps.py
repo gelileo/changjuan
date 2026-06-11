@@ -46,14 +46,14 @@ def build_person_id_map(conn: sqlite3.Connection, run_id: str) -> dict[str, str]
 
 
 def build_state_id_map(conn: sqlite3.Connection, run_id: str) -> dict[str, str]:
-    """Return {local_id → canonical_state_id} for all candidate_states in this run.
+    """Return {local_id → canonical_group_id} for all candidate_groups in this run.
 
-    Joins candidate_states against states on name.
+    Joins candidate_groups against groups on name.
     """
     prefix = f"cand:sta:{run_id}:"
     rows = conn.execute(
-        "SELECT cs.id, s.id FROM candidate_states cs "
-        "JOIN states s ON s.name = cs.name "
+        "SELECT cs.id, s.id FROM candidate_groups cs "
+        "JOIN groups s ON s.name = cs.name "
         "WHERE cs.pipeline_run_id = ?",
         (run_id,),
     ).fetchall()

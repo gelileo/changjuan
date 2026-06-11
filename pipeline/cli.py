@@ -423,7 +423,7 @@ def golden_eval_cmd(
     # cross-entity id values stored in state_id / relation fields ('p1', 's1', etc.).
     persons = []
     for row in canonical.execute(
-        "SELECT id, canonical_name, state_id, social_category FROM candidate_persons "
+        "SELECT id, canonical_name, group_id, social_category FROM candidate_persons "
         "WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
@@ -432,7 +432,7 @@ def golden_eval_cmd(
             {
                 "id": chunk_local_id,
                 "canonical_name": row[1],
-                "state_id": row[2],
+                "state_id": row[2],  # internal scoring key stays 'state_id'
                 "social_category": row[3],
                 "variants": [],  # candidate_person_variants is a Phase-3 expansion
             }
@@ -465,10 +465,10 @@ def golden_eval_cmd(
         chunk_local_id = row[0].split(":")[-1]  # 'cand:pla:run:xxx:pl1' → 'pl1'
         places.append({"id": chunk_local_id, "name": row[1]})
 
-    # ===== states =====
+    # ===== states (now groups) =====
     states = []
     for row in canonical.execute(
-        "SELECT id, name FROM candidate_states WHERE pipeline_run_id = ?",
+        "SELECT id, name FROM candidate_groups WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
         chunk_local_id = row[0].split(":")[-1]  # 'cand:sta:run:xxx:s1' → 's1'
@@ -526,9 +526,9 @@ def golden_eval_cmd(
         relations.append(
             {"kind": row[2], "from_person_id": _cl(row[0]), "to_person_id": _cl(row[1])}
         )
-    # candidate_person_states: person_id + state_id + role
+    # candidate_person_groups: person_id + group_id + role
     for row in canonical.execute(
-        "SELECT candidate_person_id, candidate_state_id, role FROM candidate_person_states "
+        "SELECT candidate_person_id, candidate_group_id, role FROM candidate_person_groups "
         "WHERE pipeline_run_id = ?",
         (pipeline_run_id,),
     ):
@@ -540,7 +540,7 @@ def golden_eval_cmd(
                 "role": row[2],
             }
         )
-    # state_capital has no candidate_* table (Task 19 stub — omitted)
+    # group_seat has no candidate_* table (Task 19 stub — omitted)
 
     candidates = {
         "persons": persons,
@@ -675,8 +675,8 @@ def qa_sample_cmd(
                     )
 
         for row in canonical.execute(
-            "SELECT id, name, type, ruling_clan, quote "
-            "FROM candidate_states WHERE pipeline_run_id = ?",
+            "SELECT id, name, group_type, ruling_clan, quote "
+            "FROM candidate_groups WHERE pipeline_run_id = ?",
             (pipeline_run_id,),
         ):
             cand_id, name, stype, ruling_clan, quote = row

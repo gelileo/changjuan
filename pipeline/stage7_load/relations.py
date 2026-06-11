@@ -10,11 +10,11 @@ is never stored in the relation table itself.
 Relation tables do not have a provenance column in candidate_* tables; all
 promoted rows receive provenance='auto'. Confidence and pipeline_run_id are
 propagated from the candidate row where present; otherwise reasonable defaults
-are used (confidence=0.9 for event/person/state relations that lack a separate
+are used (confidence=0.9 for event/person/group relations that lack a separate
 confidence column in the candidate table).
 
-Note: candidate_state_capitals does not exist in the current schema — state
-capitals are expressed via the canonical state_capitals table and seeded only
+Note: candidate_group_seats does not exist in the current schema — group
+seats are expressed via the canonical group_seats table and seeded only
 by load_candidate_states or by curator override. load_candidate_state_capitals
 is therefore a no-op stub that returns 0.
 """
@@ -54,7 +54,7 @@ _VALID_PERSON_RELATION_KINDS = frozenset(
         "clan_member",
     }
 )
-_VALID_PERSON_STATE_ROLES = frozenset(
+_VALID_PERSON_GROUP_ROLES = frozenset(
     {"ruler", "minister", "exile", "defector", "citizen", "other"}
 )
 
@@ -420,92 +420,92 @@ def load_candidate_person_relations(conn: sqlite3.Connection, run_id: str) -> in
 
 
 def load_candidate_person_states(conn: sqlite3.Connection, run_id: str) -> int:
-    """Promote candidate_person_states rows for run_id.
+    """Promote candidate_person_groups rows for run_id.
 
-    Unique key: (person_id, state_id, role, from_date_json) — matching the
-    canonical person_states PRIMARY KEY. The candidate table omits from_date_json
+    Unique key: (person_id, group_id, role, from_date_json) — matching the
+    canonical person_groups PRIMARY KEY. The candidate table omits from_date_json
     from its PK, so when from_date_json is None in the candidate row the canonical
-    key is (person_id, state_id, role, NULL).
-    Resolves candidate_person_id / candidate_state_id local extraction ids
+    key is (person_id, group_id, role, NULL).
+    Resolves candidate_person_id / candidate_group_id local extraction ids
     (e.g. 'p1', 's1') to canonical ids. Rows that cannot be resolved are skipped.
     """
     person_map = build_person_id_map(conn, run_id)
     state_map = build_state_id_map(conn, run_id)
 
     rows = conn.execute(
-        "SELECT candidate_person_id, candidate_state_id, role, from_date_json,"
+        "SELECT candidate_person_id, candidate_group_id, role, from_date_json,"
         " to_date_json, pipeline_run_id "
-        "FROM candidate_person_states WHERE pipeline_run_id = ?;",
+        "FROM candidate_person_groups WHERE pipeline_run_id = ?;",
         (run_id,),
     ).fetchall()
     n = 0
     for row in rows:
         raw_person_id: str = row[0]
-        raw_state_id: str = row[1]
+        raw_group_id: str = row[1]
         role: str = row[2]
         from_date_json: str | None = row[3]
         to_date_json: str | None = row[4]
 
         person_id = _resolve_fk(raw_person_id, person_map)
-        state_id = _resolve_fk(raw_state_id, state_map)
+        group_id = _resolve_fk(raw_group_id, state_map)
 
         # Both FKs are NOT NULL and role must satisfy the CHECK constraint; skip if invalid.
-        if person_id is None or state_id is None or role not in _VALID_PERSON_STATE_ROLES:
+        if person_id is None or group_id is None or role not in _VALID_PERSON_GROUP_ROLES:
             continue
 
         if from_date_json is None:
             existing = conn.execute(
-                "SELECT 1 FROM person_states"
-                " WHERE person_id = ? AND state_id = ? AND role = ? AND from_date_json IS NULL;",
-                (person_id, state_id, role),
+                "SELECT 1 FROM person_groups"
+                " WHERE person_id = ? AND group_id = ? AND role = ? AND from_date_json IS NULL;",
+                (person_id, group_id, role),
             ).fetchone()
         else:
             existing = conn.execute(
-                "SELECT 1 FROM person_states"
-                " WHERE person_id = ? AND state_id = ? AND role = ? AND from_date_json = ?;",
-                (person_id, state_id, role, from_date_json),
+                "SELECT 1 FROM person_groups"
+                " WHERE person_id = ? AND group_id = ? AND role = ? AND from_date_json = ?;",
+                (person_id, group_id, role, from_date_json),
             ).fetchone()
 
         # Synthetic relation_id for citation tracking
         date_part = from_date_json or "null"
-        relation_id = f"{person_id}:{state_id}:{role}:{date_part}"
+        relation_id = f"{person_id}:{group_id}:{role}:{date_part}"
 
         if existing is None:
             conn.execute(
-                "INSERT INTO person_states"
-                " (person_id, state_id, role, from_date_json, to_date_json, confidence, provenance)"
+                "INSERT INTO person_groups"
+                " (person_id, group_id, role, from_date_json, to_date_json, confidence, provenance)"
                 " VALUES (?, ?, ?, ?, ?, 0.9, 'auto');",
-                (person_id, state_id, role, from_date_json, to_date_json),
+                (person_id, group_id, role, from_date_json, to_date_json),
             )
             _audit(
                 conn,
-                "person_state",
+                "person_group",
                 relation_id,
                 "create",
                 after_json=_json.dumps(
-                    {"person_id": person_id, "state_id": state_id, "role": role},
+                    {"person_id": person_id, "group_id": group_id, "role": role},
                     ensure_ascii=False,
                 ),
                 actor="load@v1",
                 pipeline_run_id=run_id,
             )
 
-        record_citation(conn, "person_state", relation_id, run_id)
+        record_citation(conn, "person_group", relation_id, run_id)
         n += 1
     conn.commit()
     return n
 
 
 # ---------------------------------------------------------------------------
-# state_capitals  (stub — no candidate_state_capitals staging table)
+# group_seats  (stub — no candidate_group_seats staging table)
 # ---------------------------------------------------------------------------
 
 
 def load_candidate_state_capitals(conn: sqlite3.Connection, run_id: str) -> int:
-    """No-op stub: candidate_state_capitals does not exist in the current schema.
+    """No-op stub: candidate_group_seats does not exist in the current schema.
 
-    State capital relations are seeded by load_candidate_states or by curator
-    override directly into the canonical state_capitals table. Returns 0.
+    Group seat relations are seeded by load_candidate_states or by curator
+    override directly into the canonical group_seats table. Returns 0.
     """
     return 0
 

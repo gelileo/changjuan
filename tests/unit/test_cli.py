@@ -49,10 +49,10 @@ def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
             ("cand:pla:chk1", "镐京", "capital", 34.5, 109.2, 0.9, run_id, "chk:1", "镐京"),
         )
 
-        # 2. Candidate state
+        # 2. Candidate state (now groups)
         conn.execute(
-            "INSERT INTO candidate_states "
-            "(id, name, type, ruling_clan, founded_date_json, ended_date_json, "
+            "INSERT INTO candidate_groups "
+            "(id, name, group_type, ruling_clan, founded_date_json, ended_date_json, "
             "confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)",
             ("cand:sta:chk1", "周", "dynasty", "姬", 0.9, run_id, "chk:1", "周"),
@@ -62,7 +62,7 @@ def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
         conn.execute(
             "INSERT INTO candidate_persons "
             "(id, canonical_name, gender, birth_date_json, death_date_json, notes, "
-            "state_id, clan_name, confidence, pipeline_run_id, chunk_id, quote) "
+            "group_id, clan_name, confidence, pipeline_run_id, chunk_id, quote) "
             "VALUES (?, ?, ?, NULL, NULL, NULL, NULL, NULL, ?, ?, ?, ?)",
             ("cand:per:chk1", "重耳", "M", 0.95, run_id, "chk:1", "重耳"),
         )
@@ -102,8 +102,8 @@ def test_cli_load_wires_all_five_entity_kinds(tmp_path: Path) -> None:
         places = canonical.execute("SELECT COUNT(*) as cnt FROM places").fetchone()
         assert places[0] > 0, "places table is empty after load"
 
-        states = canonical.execute("SELECT COUNT(*) as cnt FROM states").fetchone()
-        assert states[0] > 0, "states table is empty after load"
+        states = canonical.execute("SELECT COUNT(*) as cnt FROM groups").fetchone()
+        assert states[0] > 0, "groups table is empty after load"
 
         persons = canonical.execute("SELECT COUNT(*) as cnt FROM persons").fetchone()
         assert persons[0] > 0, "persons table is empty after load"

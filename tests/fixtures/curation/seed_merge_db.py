@@ -116,17 +116,17 @@ def add_person_states_collision(db_path: Path) -> None:
     """
     with connect(db_path) as conn:
         conn.execute(
-            "INSERT INTO states (id, name, type, confidence, provenance) "
+            "INSERT INTO groups (id, name, group_type, confidence, provenance) "
             "VALUES ('sta:周', '周', 'state', 0.9, 'auto')"
         )
         conn.execute(
-            "INSERT INTO person_states "
-            "(person_id, state_id, role, confidence, provenance) "
+            "INSERT INTO person_groups "
+            "(person_id, group_id, role, confidence, provenance) "
             "VALUES ('per:test:candidate', 'sta:周', 'ruler', 0.8, 'auto')"
         )
         conn.execute(
-            "INSERT INTO person_states "
-            "(person_id, state_id, role, confidence, provenance) "
+            "INSERT INTO person_groups "
+            "(person_id, group_id, role, confidence, provenance) "
             "VALUES ('per:test:canonical', 'sta:周', 'ruler', 0.95, 'auto')"
         )
 
@@ -166,7 +166,7 @@ def seed_with_candidate_in_candidate_persons(db_path: Path) -> str:
         # A side: candidate_persons row.
         conn.execute(
             "INSERT INTO candidate_persons "
-            "(id, canonical_name, gender, state_id, confidence, "
+            "(id, canonical_name, gender, group_id, confidence, "
             "pipeline_run_id, chunk_id, quote, variants_json) "
             "VALUES ('cand:per:test:p1', '周宣王', 'M', 's1', 0.85, "
             "'run:test', 'chunk:1', 'quote text', ?)",
