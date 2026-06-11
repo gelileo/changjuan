@@ -147,6 +147,20 @@ schema_version 6 (chapter_texts) adds two unit tests and one bundle-level test, 
 - `test_export_folds_chapter_texts_and_bumps_schema` (test_stage9_export) — end-to-end bundle test reusing the standard `apply_schema(conn, CANONICAL_SCHEMA)` + one-person setup; populates a `readable/` with two chapters, exports, and asserts `manifest["schema_version"] == 6` and `chapter_texts` in `graph.sqlite` contains exactly chapters 1 and 2 in order.
 - `test_export_creates_manifest_and_sqlite` (test_stage9_export): the `schema_version` assertion bumps `5 → 6` — required assertion change; the snapshot now carries `chapter_texts`.
 
+## Genre-profile registry tests
+
+`tests/test_profile.py` (Phase 4 Task 1) exercises `pipeline.profile` — the declarative genre-profile registry mapping profiles to ETL and reader capabilities. Seven tests:
+
+- `test_history_profile_has_expected_etl_capabilities` — asserts `PROFILES["history"]["capabilities"]` is the expected 6-element list.
+- `test_history_person_relation_kinds_match_legacy_set` — asserts `relation_kinds_for("history", "person")` returns the 11-element person-relation set.
+- `test_history_event_relation_kinds` — asserts `relation_kinds_for("history", "event")` returns the 3-element event-relation set.
+- `test_unknown_profile_raises` — asserts `relation_kinds_for("nonsuch", "person")` raises `UnknownProfileError`.
+- `test_derive_reader_capabilities_for_history` — maps history ETL capabilities to reader tabs: `["cast", "timeline", "groups"]` (persons → cast, chronology → timeline, groups → groups).
+- `test_derive_reader_capabilities_for_cast_like_set` — exercises a different ETL set: `["cast", "groups", "themes"]` (groups and themes preserved, chronology absent → no timeline).
+- `test_derive_reader_capabilities_is_order_stable` — asserts tab order is determined by the canonical `_READER_TAB_RULES` list, not input order.
+
+Tests use pure function calls with hand-constructed inputs; no fixtures or database are needed.
+
 ## CLI tests
 
 `tests/unit/test_cli.py` exercises `pipeline.cli` via `typer.testing.CliRunner`. Five tests: `test_cli_has_ingest_chunk_load_export_commands` (invokes `app --help`, asserts exit 0, asserts all four subcommand names appear in stdout), `test_cli_ingest_dry_runs` (invokes `ingest --repo-root <empty-tmp-dir>`, asserts exit code in `{0, 1}` and no `Traceback` in stdout — the empty-dir case must exit cleanly with an error message, not crash), `test_cli_load_wires_all_five_entity_kinds` (Phase 2 Task 20 — integration test verifying the load command dispatches to all five loaders; seeds one candidate each of places, states, persons, events; invokes load; asserts all five canonical tables receive rows), `test_extract_load_cli_loads_yaml_via_cli` (Phase 2 Task 23 — end-to-end CLI test for the `extract-load` verb; creates minimal corpus and extraction YAML, invokes the verb with `--chapter`, `--extraction-file`, `--prompt-version`; asserts exit 0 and `"persons=1"` in stdout), and `test_export_missing_book_meta_exits_cleanly` (export bundle v1 code-review fix — invokes `export test-v1 --book-id dzl` against an empty `tmp_path` with no `data/books/dzl/book-meta.json`; asserts exit 1 and `"book-meta.json not found"` in output, no `Traceback`). These tests use `typer.testing.CliRunner` so no subprocess is spawned and `monkeypatch.chdir` can be used safely.

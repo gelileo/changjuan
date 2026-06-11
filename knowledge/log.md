@@ -1,5 +1,14 @@
 # Build Log
 
+## 2026-06-10 — feat(profile): genre-profile registry + reader-capability derivation
+
+Created `pipeline/profile.py` with declarative genre-profile registry, relation-kind
+vocabularies (persons, events), and `derive_reader_capabilities` mapping (ETL fine
+capabilities → reader coarse tabs). First self-contained module of the larger
+genre-profiles + entity-rename task. Tests in `tests/test_profile.py` (7 unit tests).
+
+Articles touched: `concepts/verification/testing.md`.
+
 ## 2026-06-09 — factory prices passthrough (catalog)
 
 `publish_depot.build_entry` now copies `prices` from the manifest into the
