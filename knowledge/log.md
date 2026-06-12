@@ -1,5 +1,23 @@
 # Build Log
 
+## 2026-06-11 — feat(load): capability-gated theme loading; Plan 3b complete — themes capability
+
+Plan 3b final task (CLI load gating). `pipeline/cli.py::load`:
+- Added `load_candidate_themes` to the stage7 import block.
+- After `load_candidate_relations`, reads `PROFILES.get(profile, {}).get("capabilities", [])` and
+  calls `load_candidate_themes` only when `"themes"` is present (cast: yes; history: n_themes=0).
+- Echo summary gains `themes=N` field.
+
+Confirmed: CLI import clean (`from pipeline.cli import app` → ok).
+Export visibility: `themes` and `theme_occurrences` are canonical tables, exported automatically
+via the dynamic `_snapshot_canonical_only` path — no export-code change needed.
+Full suite: 369 passed, 2 skipped.
+
+Articles touched: `concepts/pipeline/profiles.md` (§themes capability — gated load added);
+`concepts/pipeline/export-contract.md` (§themes/theme_occurrences auto-export added);
+`concepts/runtime/cli.md` (load verb description updated with themes gating + echo field);
+`knowledge/log.md` (this entry).
+
 ## 2026-06-11 — feat(load): load_candidate_themes — promote themes + resolve occurrences
 
 Plan 3b Task 3 (themes loader). Added `pipeline/stage7_load/themes.py::load_candidate_themes`.

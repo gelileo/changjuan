@@ -2,7 +2,7 @@
 title: Export contract
 type: concept
 area: pipeline
-updated: 2026-06-11 (final-review: group_rows local var rename in add_group_prominence — no contract change)
+updated: 2026-06-11 (final-review: group_rows local var rename in add_group_prominence — no contract change; Plan 3b complete: themes/theme_occurrences auto-exported via dynamic snapshot)
 status: mature
 load_bearing: true
 affects:
@@ -226,6 +226,12 @@ v6 adds `chapter_texts(chapter INTEGER PRIMARY KEY, markdown TEXT NOT NULL)` —
 ### v7 (current)
 
 v7 completes the State→Group rename across the canonical schema (tables `states→groups`, `person_states→person_groups`, `state_capitals→group_seats`, columns `persons.state_id→persons.group_id` etc.) and introduces `manifest_reader_capabilities` — the manifest's `capabilities` field now carries coarse reader-tab capabilities derived from ETL caps via `pipeline.profile.derive_reader_capabilities`, not the raw ETL cap list. Both changes are non-backward-compatible for readers that gate on `"states"` tab name or `state_id` column.
+
+## `themes` / `theme_occurrences`: automatic export (Plan 3b)
+
+`themes` and `theme_occurrences` are canonical tables (not `candidate_*`) and are therefore included in the `graph.sqlite` snapshot automatically by the dynamic `_snapshot_canonical_only` / `_count_rows` path — no export-code change needed. They appear in manifest `counts` and are present in every bundle produced from a cast-profile book whose `load` step ran `load_candidate_themes`.
+
+The reader theme-view (a future tab) is deferred: the tables are present in the bundle but no reader UI consumes them yet. Reader consumers should gate on `"themes" in manifest["capabilities"]` before querying these tables.
 
 ## What would invalidate this article
 

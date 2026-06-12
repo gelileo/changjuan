@@ -33,6 +33,7 @@ from pipeline.stage7_load import (
     load_candidate_persons,
     load_candidate_places,
     load_candidate_relations,
+    load_candidate_themes,
 )
 from pipeline.stage9_export import export_bundle
 
@@ -100,9 +101,17 @@ def load(
         n_persons = load_candidate_persons(conn, pipeline_run_id=pipeline_run_id)
         n_events = load_candidate_events(conn, pipeline_run_id=pipeline_run_id)
         n_rels = load_candidate_relations(conn, pipeline_run_id=pipeline_run_id, profile=profile)
+        from typing import cast as _cast
+
+        from pipeline.profile import PROFILES
+
+        n_themes = 0
+        _caps = _cast(list[str], PROFILES.get(profile, {}).get("capabilities", []))
+        if "themes" in _caps:
+            n_themes = load_candidate_themes(conn, pipeline_run_id=pipeline_run_id)
     typer.echo(
         f"loaded: places={n_places} groups={n_groups} persons={n_persons} "
-        f"events={n_events} relations={n_rels} (run={pipeline_run_id})"
+        f"events={n_events} relations={n_rels} themes={n_themes} (run={pipeline_run_id})"
     )
 
 

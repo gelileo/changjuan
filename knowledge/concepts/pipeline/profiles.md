@@ -3,7 +3,7 @@ title: Genre profiles — capability selection and relation-kind vocabulary
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry; 2026-06-11 cast profile implemented with domestic relation vocab
+implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry; 2026-06-11 cast profile implemented with domestic relation vocab; 2026-06-11 Plan 3b complete: themes capability gated in CLI load command
 status: current
 load_bearing: true
 references:
@@ -86,7 +86,25 @@ The `cast` profile uses domestic relation vocabulary (spouse, master, servant, r
 
 ## Capability-guarded behaviors
 
-Any pipeline stage or export step that is gated on a capability checks the book-meta `"capabilities"` list directly. Examples: a book without `"chronology"` produces no timeline tab; without `"groups"` the reader shows no groups tab. Future stages (themes indexer, etc.) gate similarly.
+Any pipeline stage or export step that is gated on a capability checks the book-meta `"capabilities"` list directly. Examples: a book without `"chronology"` produces no timeline tab; without `"groups"` the reader shows no groups tab.
+
+### `themes` capability — gated load
+
+The `themes` capability controls whether `load_candidate_themes` runs during the `changjuan load` command. In `pipeline/cli.py::load`, after `load_candidate_relations`, the CLI reads the profile's `capabilities` from `PROFILES` and calls `load_candidate_themes` only when `"themes"` is present:
+
+```python
+from pipeline.profile import PROFILES
+n_themes = 0
+if "themes" in PROFILES.get(profile, {}).get("capabilities", []):
+    n_themes = load_candidate_themes(conn, pipeline_run_id=pipeline_run_id)
+```
+
+- **`history` profile** — no `themes` capability → `load_candidate_themes` is never called; `n_themes = 0`.
+- **`cast` profile** — `themes` present → candidates are promoted to `themes` + `theme_occurrences`.
+
+The `themes` and `theme_occurrences` tables are exported automatically via the dynamic snapshot in Stage 9 (no export code change needed — `_snapshot_canonical_only` drops only `candidate_*` and `llm_cache`). The reader theme-view is a deferred consumer; the exported tables are present in the bundle from day one of cast-profile extraction.
+
+The echo summary line includes `themes=N` so the load output is consistent regardless of profile.
 
 ## What would invalidate this article
 
