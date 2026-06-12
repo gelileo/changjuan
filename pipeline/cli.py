@@ -46,33 +46,33 @@ def _cfg(repo_root: Path | None, book_id: str = "dzl") -> Config:
 
 @app.command()
 def ingest(
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
     repo_root: Path | None = typer.Option(None, help="Override the repo root."),
 ) -> None:
-    """Stage 1: read source corpora into corpus.sqlite."""
-    cfg = _cfg(repo_root)
-    src = cfg.corpora_dir / "dongzhoulieguozhi" / "json" / "东周列国志.json"
+    """Stage 1: read a book's source corpus into corpus.sqlite."""
+    cfg = _cfg(repo_root, book_id)
+    meta_path = cfg.books_dir / book_id / "book-meta.json"
+    if not meta_path.exists():
+        typer.echo(f"book-meta.json not found for book '{book_id}': {meta_path}", err=True)
+        raise typer.Exit(code=1)
+    meta = _json.loads(meta_path.read_text("utf-8"))
+    src = cfg.corpora_dir / meta["corpus_dir"] / "json" / meta["corpus_json"]
     if not src.exists():
-        typer.echo(f"no corpora found at {src}", err=True)
+        typer.echo(f"corpus source not found: {src}", err=True)
         raise typer.Exit(code=1)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        _dzl_meta = {
-            "book_id": cfg.book_id,
-            "corpus": "dongzhoulieguozhi",
-            "corpus_dir": "dongzhoulieguozhi",
-            "corpus_json": "东周列国志.json",
-            "title": "东周列国志",
-        }
-        n = ingest_book(conn, cfg, _dzl_meta)
+        n = ingest_book(conn, cfg, meta)
     typer.echo(f"ingested {n} chapters into {cfg.corpus_db}")
 
 
 @app.command()
 def chunk(
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
     repo_root: Path | None = typer.Option(None),
 ) -> None:
     """Stage 2: split documents into overlapping paragraph-aware chunks."""
-    cfg = _cfg(repo_root)
+    cfg = _cfg(repo_root, book_id)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
         n = chunk_documents(conn, cfg)

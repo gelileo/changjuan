@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-11 — feat(cli): ingest/chunk take --book-id; ingest reads corpus source from book-meta
+
+`changjuan ingest` now takes `--book-id` (default `dzl`) and reads `corpus_dir`/`corpus_json` from `data/books/<book_id>/book-meta.json` to locate the corpus source, replacing the inline `_dzl_meta` shim. `changjuan chunk` now also takes `--book-id` (default `dzl`) so it operates on the correct book's `corpus.sqlite`. Both commands route through `_cfg(repo_root, book_id)`. Exits 1 with a clear message if `book-meta.json` is absent or corpus source path does not exist. Note: `ingest --book-id dzl` will KeyError on `corpus_dir`/`corpus_json` until Task 5 adds those fields to dzl's `book-meta.json` — intentional. Articles touched: `concepts/runtime/cli.md`.
+
 ## 2026-06-11 — feat(ingest): generalize to ingest_book(conn, cfg, book_meta) (book-registry)
 
 Replaced `ingest_dongzhoulieguozhi(conn, cfg)` in `pipeline/stage1_ingest.py` with `ingest_book(conn, cfg, book_meta)`. Source path, corpus label, and book id prefix now come from `book_meta` keys (`corpus`, `corpus_dir`, `corpus_json`, `title`); document ids are `<cfg.book_id>:<chapter_num>`. Updated `tests/unit/test_stage1_ingest.py` and `tests/integration/test_roundtrip.py` to use the new API with a `_DZL_META` fixture. Updated `pipeline/cli.py` to pass inline DZL meta (forward-compatible shim; Task 4 will replace with registry lookup). New tests: `tests/test_ingest_book.py` (2 cases). Articles touched: `concepts/pipeline/architecture.md` (article mapping row for stage1).
