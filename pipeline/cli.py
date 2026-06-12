@@ -803,6 +803,7 @@ def link(
             "the curator wants to revisit prior rejections (Phase 6)."
         ),
     ),
+    book_id: str = typer.Option("dzl", help="Book id under data/books/."),
     repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
 ) -> None:
     """Run Stage 5 (linker) for the given pipeline_run_id.
@@ -818,7 +819,7 @@ def link(
     """
     from pipeline.stage5_link import link_run
 
-    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
+    canonical = open_canonical_db(_cfg(repo_root, book_id).canonical_db)
     stats = link_run(canonical, pipeline_run_id, ignore_rejections=ignore_rejections)
     rejected_skipped = stats.get("rejected_filter_skipped", 0)
     suffix = " (ignore-rejections=ON)" if ignore_rejections else ""
