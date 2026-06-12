@@ -1,0 +1,11 @@
+{
+  "book_id": "hlm",
+  "slug": "hongloumeng",
+  "title": "红楼梦",
+  "author": "曹雪芹 高鹗",
+  "profile": "cast",
+  "capabilities": ["persons", "relations", "events", "groups", "themes"],
+  "corpus": "honglou",
+  "corpus_dir": "hlm",
+  "corpus_json": "红楼梦.json"
+}

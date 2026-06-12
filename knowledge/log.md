@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-11 — feat(books): corpus source fields in dzl+hlm book-meta; dzl ingest regression test
+
+Added `corpus`, `corpus_dir`, `corpus_json` to `data/books/dzl/book-meta.json` so `changjuan ingest --book-id dzl` resolves its source without a KeyError. Created `data/books/hlm/book-meta.json` with the same fields for 红楼梦 (corpus=`honglou`, corpus_dir=`hlm`). Added `tests/integration/test_hlm_ingest.py::test_dzl_ingest_unchanged` — verifies dzl ingest still produces 108 rows with `dzl:<n>` ids and corpus label `dongzhoulieguozhi` from the live book-meta. No schema or pipeline logic changed. Articles touched: none (data-only change; book-meta fields were documented in the previous ingest-generalize log entry).
+
 ## 2026-06-11 — feat(cli): ingest/chunk take --book-id; ingest reads corpus source from book-meta
 
 `changjuan ingest` now takes `--book-id` (default `dzl`) and reads `corpus_dir`/`corpus_json` from `data/books/<book_id>/book-meta.json` to locate the corpus source, replacing the inline `_dzl_meta` shim. `changjuan chunk` now also takes `--book-id` (default `dzl`) so it operates on the correct book's `corpus.sqlite`. Both commands route through `_cfg(repo_root, book_id)`. Exits 1 with a clear message if `book-meta.json` is absent or corpus source path does not exist. Note: `ingest --book-id dzl` will KeyError on `corpus_dir`/`corpus_json` until Task 5 adds those fields to dzl's `book-meta.json` — intentional. Articles touched: `concepts/runtime/cli.md`.

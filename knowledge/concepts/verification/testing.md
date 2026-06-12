@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
-note: "2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended for candidate_persons/candidate_states/candidate_person_states; test_dzl_export_parity skips when already migrated"
+note: "2026-06-11 hlm-cast: dzl ingest regression test added (test_dzl_ingest_unchanged, test_hlm_ingest.py); 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended for candidate_persons/candidate_states/candidate_person_states; test_dzl_export_parity skips when already migrated"
 status: mature
 load_bearing: false
 references:
@@ -801,6 +801,10 @@ Five issues cleared; three new test files added:
 - Golden fixture `tests/golden/ch01/states.yaml` → `tests/golden/ch01/groups.yaml` (git mv).
 
 Suite: 350 passed, 1 skipped (3 new tests from this pass).
+
+## dzl ingest regression test (feat/hlm-cast, 2026-06-11)
+
+`tests/integration/test_hlm_ingest.py::test_dzl_ingest_unchanged` is a corpus-source regression guard for `ingest_book`. It reads `corpus`, `corpus_dir`, and `corpus_json` from the live `data/books/dzl/book-meta.json`, skips if the corpus symlink is absent, and otherwise calls `ingest_book` on a fresh `:memory:` DB, asserting n==108, first row id `"dzl:1"`, and corpus label `"dongzhoulieguozhi"`. This locks three invariants in one pass: the book-meta has the three new corpus-source keys, the ingest produces exactly 108 chapters (dzl corpus), and the id prefix/corpus label come from book-meta rather than being hardcoded. Marked `@pytest.mark.integration`.
 
 ## What would invalidate this article
 

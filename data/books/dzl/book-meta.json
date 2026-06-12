@@ -6,5 +6,8 @@
   "edition": "明刊本",
   "cover": null,
   "profile": "history",
-  "capabilities": ["persons", "relations", "events", "chronology", "geography", "groups"]
+  "capabilities": ["persons", "relations", "events", "chronology", "geography", "groups"],
+  "corpus": "dongzhoulieguozhi",
+  "corpus_dir": "dongzhoulieguozhi",
+  "corpus_json": "东周列国志.json"
 }
