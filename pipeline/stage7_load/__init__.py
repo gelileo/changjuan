@@ -16,6 +16,7 @@ from pipeline.stage7_load.groups import load_candidate_groups
 from pipeline.stage7_load.persons import load_candidate_persons
 from pipeline.stage7_load.places import load_candidate_places
 from pipeline.stage7_load.relations import load_candidate_relations
+from pipeline.stage7_load.themes import load_candidate_themes
 
 __all__ = [
     "load_candidate_events",
@@ -23,4 +24,5 @@ __all__ = [
     "load_candidate_persons",
     "load_candidate_places",
     "load_candidate_relations",
+    "load_candidate_themes",
 ]

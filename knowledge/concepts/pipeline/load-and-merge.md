@@ -3,7 +3,7 @@ title: Stage 7 load-and-merge semantics
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases); 2026-06-11 feat/genre-profiles final-review: profile-wired relation vocab (Task 5); 2026-06-11 groups type/group_type split (load_candidate_groups gains profile param; type merged from candidate; group_type set from default_group_type)
+implemented: Task 20 (variant-aware matching); Phase 1 code-review fixes; Task 5 Phase 2 (citation accumulation); Task 16 Phase 2 (load_candidate_places); Task 17 Phase 2 (load_candidate_groups, was load_candidate_states); Task 18 Phase 2 (load_candidate_events + merge_date_field); Task 19 Phase 2 (load_candidate_relations); Task 38 Phase 2 (variant accumulation from extractions); Task 10 Phase 3 (match_target_id + cross-run chain resolution); Task 10 fix Phase 3 (ORDER BY id in candidate SELECT; structlog convention); Task 14 Phase 3 (group_id resolution fix in load_candidate_persons); Phase 3 closure fix (2-pass load to resolve forward-reference match_target_id); Phase 4 Task 7 (events.primary_place_id FK resolution); Phase 4 comprehensive FK fix (id_maps.py shared helpers + all 6 relation loaders); 2026-06-11 State→Group full rename (remove bridges/aliases); 2026-06-11 feat/genre-profiles final-review: profile-wired relation vocab (Task 5); 2026-06-11 groups type/group_type split (load_candidate_groups gains profile param; type merged from candidate; group_type set from default_group_type); 2026-06-11 Plan 3b Task 3: load_candidate_themes
 status: thin
 load_bearing: true
 references:
@@ -240,6 +240,37 @@ All Stage 7 loaders updated to use new column/table names:
 5. Updates `entity_citations.entity_kind` values `'state'` → `'group'` and `'state_capital'` → `'group_seat'`.
 
 Idempotency: if `groups` exists and `states` is absent, `run()` returns immediately (no-op). The CLI command `changjuan migrate --book-id dzl` invokes this migration.
+
+## Themes
+
+`pipeline/stage7_load/themes.py::load_candidate_themes(conn, pipeline_run_id)` promotes
+`candidate_themes` rows for a run into canonical `themes` + `theme_occurrences`. Returns the count
+of candidate rows processed. Only applicable to profiles with the `themes` capability (e.g. `cast`);
+`history` profile does not include `themes`.
+
+**Match rule:** by `name` equality — a candidate whose `name` matches an existing canonical theme
+merges into it rather than creating a duplicate. On merge, `description` is set only if the existing
+row has no description (`COALESCE` semantics). On create, id is `thm:<slug>` via `_slugify`.
+
+**Occurrence resolution:** each candidate row carries `occurrences_json`, a JSON array of
+`{"entity_kind": str, "entity_id": str}` objects.
+
+| `entity_kind` | Resolution |
+|---|---|
+| `"chapter"` | `entity_id` passes through unchanged (already a document id, e.g. `"hlm:1"`) |
+| `"person"` | resolved via `build_person_id_map(conn, run_id)` — local `p1` → canonical `per:…` |
+| `"event"` | resolved via `build_event_id_map` |
+| `"group"` | resolved via `build_group_id_map` |
+| `"place"` | resolved via `build_place_id_map` |
+
+Occurrences whose `entity_id` cannot be resolved (map miss) are silently skipped rather than
+crashing. `theme_occurrences` has a PRIMARY KEY `(theme_id, entity_kind, entity_id)` so
+`INSERT OR IGNORE` makes the insertion idempotent — re-running the same extraction twice produces
+exactly one row per (theme, kind, entity) triple.
+
+**Citation accumulation:** `record_citation(conn, "theme", theme_id, chunk_id)` is called for every
+candidate, consistent with other entity loaders. The `entity_citations.entity_kind` CHECK constraint
+already includes `'theme'`.
 
 ## What would invalidate this article
 

@@ -1,5 +1,15 @@
 # Build Log
 
+## 2026-06-11 — feat(load): load_candidate_themes — promote themes + resolve occurrences
+
+Plan 3b Task 3 (themes loader). Added `pipeline/stage7_load/themes.py::load_candidate_themes`.
+Promotes `candidate_themes` → canonical `themes` + `theme_occurrences`. Match by name (idempotent);
+occurrences resolve local extraction ids (`p1`, `e1`, etc.) via `build_*_id_map` helpers; `chapter`
+ids pass through unchanged. Citation accumulation via `record_citation`. Three tests in
+`tests/test_load_themes.py` (all pass). Full suite: 369 passed, 2 skipped.
+Articles touched: `concepts/pipeline/load-and-merge.md` (§Themes loader added);
+`concepts/verification/testing.md` (note updated with Plan 3b Task 3 tests).
+
 ## 2026-06-11 — feat(extract-schema): optional themes array (capability-gated)
 
 Plan 3b Task 2. Added `_THEME_SCHEMA` and `"themes"` optional array to `EXTRACT_OUTPUT_SCHEMA`
