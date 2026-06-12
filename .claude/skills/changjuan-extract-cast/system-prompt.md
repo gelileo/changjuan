@@ -59,8 +59,19 @@
 | 情爱、相恋、慕恋（宝黛） | `romantic` | 任一方 → 另一方 |
 | 收养、养(母/女)、抚养 | `adopted` | 养方 → 被养方 |
 | 同族、本家、一族 | `clan_member` | 任一方 → 另一方 |
+| 妃、嫔妃（入宫为妃，如元春） | `consort` | 妃 → 君 |
+| 臣、为臣（君臣，非家内） | `subject` | 臣 → 君 |
+| 邻居、街坊 | `neighbor` | 任一方 → 另一方 |
+| 伙计、合伙、相与（生意） | `colleague` | 任一方 → 另一方 |
+| 施主、檀越（对僧道） | `patron` | 施主 → 僧道 |
 
-- 每条 relation 需 `citation`（文本依据）。`relation_detail` 可记限定语（如 `异母`「庶出」「结拜」「续弦」「通房」）。
+> 词表参考 wangfangye/kg-hongloumeng 的 51 类红楼梦关系本体，取其原生类别、舍弃其现代化标签（男友/女友/雇主）与人物 age 字段。
+
+- 每条 relation 需 `citation`（文本依据）。`relation_detail` 记**细分限定语**——粗粒度 `kind` 不分的语义放这里。常用值（参 kg-hongloumeng 细类）：
+  - 婚姻/亲属细分：`续弦`、`嫡`、`庶`/`庶出`、`异母`、`同母异父`、`重孙媳妇`/`玄孙`（辈分细分，kind 仍用 in_law/grandchild）
+  - 仆役细分：`乳母`/`奶妈`/`乳父`（kind=servant）、`丫鬟`/`小厮`（kind=servant）
+  - 拟亲/义亲：`干`/`义`（干娘→adopted detail 干；结拜→friend detail 结义）
+  - 师承细分：`门生`（kind=mentor detail 门生）
 - 只记**文本明示或强烈暗示**的关系；不要凭红楼梦常识补全未在本 chunk 出现的关系（跨 chunk 由 linker 处理）。
 
 ### 关系记录的 YAML 形态（字段名严格，loader 按此读取）

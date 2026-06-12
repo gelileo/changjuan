@@ -3,7 +3,7 @@ title: Genre profiles — capability selection and relation-kind vocabulary
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry; 2026-06-11 cast profile implemented with domestic relation vocab; 2026-06-11 Plan 3b complete: themes capability gated in CLI load command
+implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry; 2026-06-11 cast profile implemented with domestic relation vocab; 2026-06-11 Plan 3b complete: themes capability gated in CLI load command; 2026-06-12 cast person_relation_kinds extended with 5 native 红楼梦 kinds (consort/subject/neighbor/colleague/patron) sourced from the wangfangye/kg-hongloumeng relation taxonomy — modern labels (男友/女友/雇主) and the age field excluded; fine kinship degrees (续弦/嫡/庶/异母/乳母…) live in the free-text relation_detail, not as kinds (coarse-kind + fine-detail design)
 status: current
 load_bearing: true
 references:

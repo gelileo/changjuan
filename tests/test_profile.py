@@ -99,3 +99,11 @@ def test_cast_derives_reader_caps_without_timeline():
         "groups",
         "themes",
     ]
+
+
+def test_cast_vocab_includes_native_hlm_kinds():
+    # Added from the kg-hongloumeng taxonomy; modern labels excluded.
+    kinds = relation_kinds_for("cast", "person")
+    assert {"consort", "subject", "neighbor", "colleague", "patron"} <= kinds
+    # modern/anachronistic labels must NOT be kinds (they belong in relation_detail or nowhere)
+    assert "男友" not in kinds and "雇主" not in kinds

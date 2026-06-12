@@ -3,7 +3,7 @@ title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed); 2026-06-11 group 'type' fix (group extraction schema property renamed group_type→type; candidate_groups column renamed accordingly); 2026-06-11 Plan 3b Task 2: optional themes array added to EXTRACT_OUTPUT_SCHEMA (capability-gated, not in required)
+implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed); 2026-06-11 group 'type' fix (group extraction schema property renamed group_type→type; candidate_groups column renamed accordingly); 2026-06-11 Plan 3b Task 2: optional themes array added to EXTRACT_OUTPUT_SCHEMA (capability-gated, not in required); 2026-06-12 cast skill system-prompt: relation table extended with consort/subject/neighbor/colleague/patron + a relation_detail reference list (fine kinship degrees), sourced from the kg-hongloumeng taxonomy
 status: thin
 load_bearing: true
 references:

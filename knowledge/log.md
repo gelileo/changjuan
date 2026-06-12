@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-12 — feat(profile): extend cast relation vocab from kg-hongloumeng taxonomy
+
+Reviewed the external `wangfangye/kg-hongloumeng` 红楼梦 KG (388 persons + 380 kinship triples; a 51-term relation vocabulary). Verdict: useful as a *reference*, not an import (its triples have no citations to our corpus, which would violate our verbatim-citation invariant). Acted on the high-value part: extended cast `person_relation_kinds` with 5 native kinds our coarse set lacked — `consort` (妃/嫔妃), `subject` (臣), `neighbor` (邻居), `colleague` (伙计), `patron` (施主). Excluded their modern/anachronistic labels (男友/女友/雇主) and the fabricated `age` field. Documented in the cast prompt: the new kinds in the relation table + a `relation_detail` reference list of fine kinship degrees (续弦/嫡/庶/异母/乳母/干…) — keeping our coarse-kind + free-text-detail design. Their triples remain a noted external recall benchmark. Articles: profiles.md, extraction.md, testing.md.
+
 ## 2026-06-12 — fix(load): person_group role free-text; Plan 3c hlm 3-chapter render
 
 Scaling cast extraction to 红楼梦 Ch.2–3 surfaced the 4th silent-drop: `person_groups` (clan membership) loaded 0 because `role` was validated against a history-era enum (`_VALID_PERSON_GROUP_ROLES` + a schema CHECK `role IN ('ruler','minister',…)`), but cast roles are free-text (成员/始祖/族长祖母). Dropped both the loader enum and the `person_groups.role` schema CHECK — role is now a free label (consistent with the relation-kind + corpus-label de-enumeration). Also added `link --book-id` (stage-5 was dzl-only). Result: hlm 3-chapter graph = 52 persons / 62 person-relations / 14 clan-memberships / 6 clans (贾·王·薛·史 四大家族 + 甄家/贾府) / 2 themes, **rendered in the reader** (名册 + 列国/clans, 0 console errors). Articles: knowledge-graph.md, load-and-merge.md, cli.md.

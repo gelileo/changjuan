@@ -51,6 +51,14 @@ _CAST_PERSON_KINDS = {
     "romantic",
     "adopted",
     "clan_member",
+    # Added from the wangfangye/kg-hongloumeng relation taxonomy (native 红楼梦
+    # kinds our coarse set lacked). Modern/anachronistic labels (男友/女友/雇主)
+    # deliberately excluded; fine kinship degrees go in `relation_detail`, not here.
+    "consort",  # 妃 / 嫔妃 — imperial consort (元春 入宫)
+    "subject",  # 臣 — court subject / minister to a sovereign
+    "neighbor",  # 邻居
+    "colleague",  # 伙计 — business partner / associate
+    "patron",  # 施主 — religious patron / benefactor
 }
 _CAST_EVENT_KINDS = {"causes", "precedes", "related"}
 
