@@ -13,7 +13,7 @@ from pathlib import Path
 from pipeline.config import Config
 from pipeline.db import apply_schema, connect
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
-from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
+from pipeline.stage1_ingest import ingest_book
 from pipeline.stage2_chunk import chunk_documents
 from pipeline.stage7_load import load_candidate_persons
 from pipeline.stage9_export import export_bundle
@@ -39,6 +39,15 @@ def _seed_fake_corpus(corpora_dir: Path) -> None:
     )
 
 
+_DZL_META = {
+    "book_id": "dzl",
+    "corpus": "dongzhoulieguozhi",
+    "corpus_dir": "dongzhoulieguozhi",
+    "corpus_json": "东周列国志.json",
+    "title": "东周列国志",
+}
+
+
 def test_phase1_roundtrip(tmp_path: Path) -> None:
     cfg = Config(repo_root=tmp_path)
     _seed_fake_corpus(cfg.corpora_dir)
@@ -46,7 +55,7 @@ def test_phase1_roundtrip(tmp_path: Path) -> None:
     # 1. Ingest
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        n_docs = ingest_dongzhoulieguozhi(conn, cfg)
+        n_docs = ingest_book(conn, cfg, _DZL_META)
     assert n_docs == 1
 
     # 2. Chunk

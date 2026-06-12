@@ -1,8 +1,8 @@
 """Stage 1 — Ingest source corpora into corpus.sqlite.
 
-Reads the upstream dongzhoulieguozhi repo's pre-built JSON (`json/东周列国志.json`)
-which holds one entry per chapter. Inserts one `documents` row per chapter with a
-stable id `dzl:<chapter_num>` so downstream stages get reproducible references.
+Reads a book's chaptered JSON (located via book_meta) and inserts one `documents`
+row per chapter with a stable id `<book_id>:<chapter_num>` so downstream stages
+get reproducible references.
 
 Idempotent: re-running over the same corpus has no effect (ON CONFLICT DO NOTHING
 on the unique `(corpus, chapter_num)` constraint).
@@ -12,28 +12,32 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Mapping
 
 from pipeline.config import Config
 
 
-def ingest_dongzhoulieguozhi(conn: sqlite3.Connection, cfg: Config) -> int:
-    """Ingest 东周列国志. Returns the number of actual inserts.
+def ingest_book(conn: sqlite3.Connection, cfg: Config, book_meta: Mapping[str, object]) -> int:
+    """Ingest a book's chaptered JSON into corpus.sqlite. Returns the number of inserts.
 
-    Idempotent: re-ingesting existing chapters is a no-op (ON CONFLICT DO NOTHING
-    on the unique (corpus, chapter_num) constraint).
+    Source + labels come from book_meta: `corpus_dir`/`corpus_json` locate the JSON
+    under corpora/, `corpus` is the stamped documents.corpus label. Document ids are
+    `<book_id>:<chapter_num>`. Idempotent (ON CONFLICT DO NOTHING on (corpus, chapter_num)).
     """
-    src = cfg.corpora_dir / "dongzhoulieguozhi" / "json" / "东周列国志.json"
+    corpus = str(book_meta["corpus"])
+    src = cfg.corpora_dir / str(book_meta["corpus_dir"]) / "json" / str(book_meta["corpus_json"])
     data = json.loads(src.read_text(encoding="utf-8"))
     chapters = data["chapters"]
+    title = str(book_meta.get("title") or data.get("title") or corpus)
     rows = [
         {
-            "id": f"dzl:{i + 1}",
-            "corpus": "dongzhoulieguozhi",
-            "title": data.get("title", "东周列国志"),
+            "id": f"{cfg.book_id}:{i + 1}",
+            "corpus": corpus,
+            "title": title,
             "chapter_num": i + 1,
             "chapter_title": ch["title"],
             "raw_text": ch["content"],
-            "source_edition": "dongzhoulieguozhi/json (upstream repo)",
+            "source_edition": f"{book_meta['corpus_dir']}/json",
         }
         for i, ch in enumerate(chapters)
     ]
@@ -50,6 +54,6 @@ def ingest_dongzhoulieguozhi(conn: sqlite3.Connection, cfg: Config) -> int:
             """,
             row,
         )
-        inserted += cur.rowcount  # 1 on insert, 0 on conflict-ignored
+        inserted += cur.rowcount
     conn.commit()
     return inserted

@@ -2,7 +2,7 @@
 title: Automation-first pipeline architecture
 type: concept
 area: pipeline
-updated: 2026-06-09
+updated: 2026-06-11
 status: thin
 load_bearing: true
 references:
@@ -117,6 +117,10 @@ version required blank lines (`r"\r?\n\s*\r?\n+"`) and silently collapsed every
 chapter into one chunk. The regression test
 `test_chunks_emerge_from_single_newline_separated_paragraphs` guards against
 re-introducing the bug.
+
+## Stage 1 — book-meta-driven ingest
+
+`pipeline/stage1_ingest.py` previously contained `ingest_dongzhoulieguozhi(conn, cfg)` hardwired to the DZL JSON path and `dzl:` id prefix. It has been replaced with `ingest_book(conn, cfg, book_meta)` — a general function that reads source path and corpus label from the `book_meta` mapping. Keys used: `corpus` (stamped on `documents.corpus`), `corpus_dir` (subdirectory under `corpora/`), `corpus_json` (filename), `title` (falls back to JSON root `"title"` then `corpus`). Document ids are `<cfg.book_id>:<chapter_num>`. Idempotent via `ON CONFLICT (corpus, chapter_num) DO NOTHING`. This is the ingest seam for Plan 3 multi-book support (HLM cast, etc.).
 
 ## First commitments (true once code lands)
 

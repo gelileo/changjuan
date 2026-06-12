@@ -24,7 +24,7 @@ from pipeline.dates import (
 from pipeline.db import apply_schema, connect, open_canonical_db, open_corpus_db
 from pipeline.publish_depot import publish_book
 from pipeline.schemas import CANONICAL_SCHEMA, CORPUS_SCHEMA
-from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
+from pipeline.stage1_ingest import ingest_book
 from pipeline.stage2_chunk import chunk_documents
 from pipeline.stage3_extract import load_extraction
 from pipeline.stage7_load import (
@@ -56,7 +56,14 @@ def ingest(
         raise typer.Exit(code=1)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        n = ingest_dongzhoulieguozhi(conn, cfg)
+        _dzl_meta = {
+            "book_id": cfg.book_id,
+            "corpus": "dongzhoulieguozhi",
+            "corpus_dir": "dongzhoulieguozhi",
+            "corpus_json": "东周列国志.json",
+            "title": "东周列国志",
+        }
+        n = ingest_book(conn, cfg, _dzl_meta)
     typer.echo(f"ingested {n} chapters into {cfg.corpus_db}")
 
 

@@ -215,9 +215,18 @@ The harness lives in `tests/golden/precision_recall.py`; it is test infrastructu
 
 All four assertions passed without modifying stage 7 merge logic; only the variant-writing path (`_write_variants` in `persons.py`) and schema change (`candidate_persons.variants_json`) were new additions.
 
+## ingest_book tests
+
+`tests/test_ingest_book.py` (Plan 3 Task 3) exercises `ingest_book(conn, cfg, book_meta)`. Two tests:
+
+- `test_ingest_book_uses_book_meta_source_and_book_id_prefix` — synthetic two-chapter corpus at `corpora/myc/json/x.json`; `Config(book_id="bk")`; asserts return == 2, first row id == `"bk:1"`, corpus == `"mycorpus"`, title == `"MyBook"`. Locks the `<book_id>:<n>` prefix and meta-key sourcing.
+- `test_ingest_book_is_idempotent` — same setup; second call returns 0. Locks `ON CONFLICT DO NOTHING`.
+
+`tests/unit/test_stage1_ingest.py` updated: imports `ingest_book`; calls use a module-level `_DZL_META` constant; behaviour assertions unchanged.
+
 ## Phase 1 round-trip integration test
 
-`tests/integration/test_roundtrip.py` is the regression target for the full Phase 1 deterministic pipeline. `test_phase1_roundtrip` walks all four stages against a synthetic 1-chapter corpus: (1) ingest a single-chapter JSON into `corpus.sqlite`, (2) chunk the document, (3) seed a `candidate_persons` row directly and call `load_candidate_persons`, (4) call `export_bundle`. Assertions: `manifest["counts"]["persons"] == 1`, `audit_log` key present in counts, no `candidate_*` tables in snapshot, canonical Person's `canonical_name == "重耳"`. The snapshot is opened via `out / "graph.sqlite"` (v2 layout, `SCHEMA_VERSION=2`). The `export_bundle` call passes `corpus_db=cfg.corpus_db` and `book_meta=_meta` (inline dzl book-meta dict); the corpus already has the ingested chunk `chk:dzl:1:0`, so `build_citations_table` finds and denormalizes it without error. This test uses direct function calls (not the CLI) so it validates the pipeline layer, not the CLI layer. It lives in `tests/integration/` and is collected by default (no marker required in Phase 1).
+`tests/integration/test_roundtrip.py` is the regression target for the full Phase 1 deterministic pipeline. `test_phase1_roundtrip` walks all four stages against a synthetic 1-chapter corpus: (1) ingest a single-chapter JSON into `corpus.sqlite` via `ingest_book(conn, cfg, _DZL_META)`, (2) chunk the document, (3) seed a `candidate_persons` row directly and call `load_candidate_persons`, (4) call `export_bundle`. Assertions: `manifest["counts"]["persons"] == 1`, `audit_log` key present in counts, no `candidate_*` tables in snapshot, canonical Person's `canonical_name == "重耳"`. The snapshot is opened via `out / "graph.sqlite"` (v2 layout, `SCHEMA_VERSION=2`). The `export_bundle` call passes `corpus_db=cfg.corpus_db` and `book_meta=_meta` (inline dzl book-meta dict); the corpus already has the ingested chunk `chk:dzl:1:0`, so `build_citations_table` finds and denormalizes it without error. This test uses direct function calls (not the CLI) so it validates the pipeline layer, not the CLI layer. It lives in `tests/integration/` and is collected by default (no marker required in Phase 1).
 
 ## Extraction-output schema tests
 

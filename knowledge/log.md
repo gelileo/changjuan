@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-11 — feat(ingest): generalize to ingest_book(conn, cfg, book_meta) (book-registry)
+
+Replaced `ingest_dongzhoulieguozhi(conn, cfg)` in `pipeline/stage1_ingest.py` with `ingest_book(conn, cfg, book_meta)`. Source path, corpus label, and book id prefix now come from `book_meta` keys (`corpus`, `corpus_dir`, `corpus_json`, `title`); document ids are `<cfg.book_id>:<chapter_num>`. Updated `tests/unit/test_stage1_ingest.py` and `tests/integration/test_roundtrip.py` to use the new API with a `_DZL_META` fixture. Updated `pipeline/cli.py` to pass inline DZL meta (forward-compatible shim; Task 4 will replace with registry lookup). New tests: `tests/test_ingest_book.py` (2 cases). Articles touched: `concepts/pipeline/architecture.md` (article mapping row for stage1).
+
 ## 2026-06-11 — refactor(schema): drop documents.corpus enum CHECK (Plan 3 Task 2)
 
 Removed the hardcoded enum CHECK constraint on `documents.corpus` in `pipeline/schemas/corpus_schema.sql`. The constraint enforced `corpus IN ('dongzhoulieguozhi', 'zuozhuan', 'shiji')`, which blocked new books from being registered without schema changes.

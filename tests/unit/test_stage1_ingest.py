@@ -7,7 +7,15 @@ import pytest
 from pipeline.config import Config
 from pipeline.db import apply_schema, connect
 from pipeline.schemas import CORPUS_SCHEMA
-from pipeline.stage1_ingest import ingest_dongzhoulieguozhi
+from pipeline.stage1_ingest import ingest_book
+
+_DZL_META = {
+    "book_id": "dzl",
+    "corpus": "dongzhoulieguozhi",
+    "corpus_dir": "dongzhoulieguozhi",
+    "corpus_json": "东周列国志.json",
+    "title": "东周列国志",
+}
 
 
 def _make_fake_corpus(corpora_dir: Path) -> Path:
@@ -31,7 +39,7 @@ def test_ingest_inserts_one_row_per_chapter(tmp_path: Path) -> None:
     _make_fake_corpus(cfg.corpora_dir)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        count = ingest_dongzhoulieguozhi(conn, cfg)
+        count = ingest_book(conn, cfg, _DZL_META)
     assert count == 2
     with connect(cfg.corpus_db) as conn:
         rows = list(
@@ -49,9 +57,9 @@ def test_ingest_is_idempotent(tmp_path: Path) -> None:
     _make_fake_corpus(cfg.corpora_dir)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        ingest_dongzhoulieguozhi(conn, cfg)
+        ingest_book(conn, cfg, _DZL_META)
         # second call must not crash on UNIQUE constraint
-        ingest_dongzhoulieguozhi(conn, cfg)
+        ingest_book(conn, cfg, _DZL_META)
         count = conn.execute("SELECT COUNT(*) FROM documents;").fetchone()[0]
     assert count == 2
 
@@ -64,8 +72,8 @@ def test_ingest_returns_actual_insert_count_not_input_length(tmp_path: Path) -> 
     _make_fake_corpus(cfg.corpora_dir)
     with connect(cfg.corpus_db) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        n1 = ingest_dongzhoulieguozhi(conn, cfg)
-        n2 = ingest_dongzhoulieguozhi(conn, cfg)
+        n1 = ingest_book(conn, cfg, _DZL_META)
+        n2 = ingest_book(conn, cfg, _DZL_META)
     assert n1 == 2, f"first ingest should report 2 inserts, got {n1}"
     assert n2 == 0, f"re-ingest of same rows should report 0 inserts, got {n2}"
 
@@ -86,7 +94,7 @@ def test_ingest_real_corpus_has_108_chapters() -> None:
 
     with connect(tmp) as conn:
         apply_schema(conn, CORPUS_SCHEMA)
-        n = ingest_dongzhoulieguozhi(conn, cfg_with_tmp)
+        n = ingest_book(conn, cfg_with_tmp, _DZL_META)
         assert n == 108
         assert (
             conn.execute(
