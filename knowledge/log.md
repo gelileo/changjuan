@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-11 — chore(corpora): stage 红楼梦 (hlm) source for Plan 3
+
+Cloned `EaconTang/gitbook-hongloumeng` to `unroll/gitbook-hongloumeng`; symlinked `corpora/hlm → ../../gitbook-hongloumeng` (mirrors `corpora/dongzhoulieguozhi`). Converted the 程高本 `ch_cgb/` 120 回 (`### 第N回` + `<p>` HTML) into `corpora/hlm/json/红楼梦.json` in the canonical `{title, chapters:[{title, content}]}` shape (HTML stripped to clean prose; 120 chapters, ~864K chars). New article `concepts/corpora/honglou.md`. **Staged only — not yet ingestable** (stage-1 ingest is still hardwired to the dzl path; reading `corpora/hlm` needs the Plan 3 ingest generalization). The generated JSON lives in the clone, not committed here.
+
 ## 2026-06-11 — fix(migrate): also migrate candidate_* tables; parity test skips when already migrated
 
 The `migrate_0001_state_to_group` migration only covered canonical tables; staging tables were left with the old `state_id`/`candidate_state_id` column names, causing `stage5_link/merge.py` to throw `no such column: group_id` on a migrated DB.
