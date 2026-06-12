@@ -1,5 +1,25 @@
 # Build Log
 
+## 2026-06-11 — feat(ingest): hlm ingestable (120ch); Plan 3a complete — book-driven ingest + cast profile
+
+Plan 3a is complete. Deliverables shipped across the branch `feat/hlm-cast`:
+
+1. **Cast genre profile** (`pipeline/profile.py`) — `cast` profile with 17 domestic
+   person-relation kinds, default group type `clan`, capabilities `persons/relations/
+   events/groups/themes`, no chronology/geography. Four tests in `tests/test_profile.py`.
+2. **Book-meta-driven ingest** — `ingest_book(conn, cfg, book_meta)` replaces the
+   hardwired DZL function; `changjuan ingest --book-id` and `changjuan chunk --book-id`
+   route through `book-meta.json`; `documents.corpus` is a free label (no enum CHECK).
+3. **红楼梦 corpus ingestable** — `corpora/hlm/json/红楼梦.json` (120 chapters, ~864K chars,
+   程高本); `data/books/hlm/book-meta.json` (book_id hlm, corpus honglou, profile cast).
+   `changjuan ingest --book-id hlm` → 120 documents; `changjuan chunk --book-id hlm` → 835
+   chunks. Integration test: `test_hlm_ingest_120_chapters` (PASS). dzl regression:
+   `test_dzl_ingest_unchanged` (PASS, n=108). Full suite: **361 passed, 2 skipped**.
+
+Articles touched: `concepts/pipeline/architecture.md` (stage-1 section updated: hlm counts
+confirmed, free-corpus-label note added, status thin→current), `concepts/corpora/honglou.md`
+(status staged→ingestable; document + chunk counts; integration test reference).
+
 ## 2026-06-11 — feat(books): corpus source fields in dzl+hlm book-meta; dzl ingest regression test
 
 Added `corpus`, `corpus_dir`, `corpus_json` to `data/books/dzl/book-meta.json` so `changjuan ingest --book-id dzl` resolves its source without a KeyError. Created `data/books/hlm/book-meta.json` with the same fields for 红楼梦 (corpus=`honglou`, corpus_dir=`hlm`). Added `tests/integration/test_hlm_ingest.py::test_dzl_ingest_unchanged` — verifies dzl ingest still produces 108 rows with `dzl:<n>` ids and corpus label `dongzhoulieguozhi` from the live book-meta. No schema or pipeline logic changed. Articles touched: none (data-only change; book-meta fields were documented in the previous ingest-generalize log entry).

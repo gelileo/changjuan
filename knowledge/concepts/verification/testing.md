@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
-note: "2026-06-11 hlm-cast: dzl ingest regression test added (test_dzl_ingest_unchanged, test_hlm_ingest.py); 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended for candidate_persons/candidate_states/candidate_person_states; test_dzl_export_parity skips when already migrated"
+note: "2026-06-11 Plan 3a complete: test_hlm_ingest_120_chapters added (n=120, id hlm:1, corpus honglou); dzl regression test_dzl_ingest_unchanged; 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended; test_dzl_export_parity skips when already migrated"
 status: mature
 load_bearing: false
 references:
@@ -805,6 +805,16 @@ Suite: 350 passed, 1 skipped (3 new tests from this pass).
 ## dzl ingest regression test (feat/hlm-cast, 2026-06-11)
 
 `tests/integration/test_hlm_ingest.py::test_dzl_ingest_unchanged` is a corpus-source regression guard for `ingest_book`. It reads `corpus`, `corpus_dir`, and `corpus_json` from the live `data/books/dzl/book-meta.json`, skips if the corpus symlink is absent, and otherwise calls `ingest_book` on a fresh `:memory:` DB, asserting n==108, first row id `"dzl:1"`, and corpus label `"dongzhoulieguozhi"`. This locks three invariants in one pass: the book-meta has the three new corpus-source keys, the ingest produces exactly 108 chapters (dzl corpus), and the id prefix/corpus label come from book-meta rather than being hardcoded. Marked `@pytest.mark.integration`.
+
+## hlm ingest integration test (Plan 3a complete, 2026-06-11)
+
+`tests/integration/test_hlm_ingest.py::test_hlm_ingest_120_chapters` validates the
+full book-meta-driven ingest path for 红楼梦. It reads `data/books/hlm/book-meta.json`,
+skips if `corpora/hlm/json/红楼梦.json` is absent, then calls `ingest_book` on a fresh
+`:memory:` DB and asserts: `n == 120`, first row id `"hlm:1"`, corpus label `"honglou"`,
+and `"第一回"` in `chapter_title`. Exercises the same code path as the dzl regression test
+but against a different book, confirming the `<book_id>:<chapter_num>` id scheme and the
+`corpus` free-label contract are generic. Marked `@pytest.mark.integration`.
 
 ## What would invalidate this article
 

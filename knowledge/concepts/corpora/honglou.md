@@ -3,7 +3,7 @@ title: 红楼梦 corpus (book_id hlm)
 affects:
   - corpora/hlm/**
   - corpora/**/红楼梦*
-status: staged (not yet ingestable — see below)
+status: ingestable (Plan 3a complete)
 ---
 
 # 红楼梦 corpus
@@ -31,11 +31,15 @@ whole novel. The generated JSON lives inside the clone (not committed to changju
 
 ## Status
 
-**Staged, not yet ingestable.** Stage-1 ingest is still hardwired to the dzl JSON
-path; reading `corpora/hlm` requires the **ingest generalization** that is Plan 3's
-first code task. 红楼梦 is the `cast`-profile test book (huge cast, dense kin/
-romance relations, no historical chronology) — see
-[[../pipeline/profiles]] and the design spec
+**Ingestable (Plan 3a complete).** `changjuan ingest --book-id hlm` reads
+`corpus_dir`/`corpus_json` from `data/books/hlm/book-meta.json` and populates
+`data/books/hlm/corpus.sqlite` with 120 documents (corpus label `honglou`,
+ids `hlm:1`–`hlm:120`). `changjuan chunk --book-id hlm` produces 835 chunks
+(paragraph-aware; avg ~7 chunks/chapter across ~864K chars). Both commands are
+idempotent. Integration test: `tests/integration/test_hlm_ingest.py::test_hlm_ingest_120_chapters`.
+
+红楼梦 is the `cast`-profile test book (huge cast, dense kin/romance relations,
+no historical chronology) — see [[../pipeline/profiles]] and the design spec
 `docs/superpowers/specs/2026-06-10-capability-genre-profiles-design.md`.
 
 ## Infrastructure prep (Plan 3 Task 2)

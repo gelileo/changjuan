@@ -3,7 +3,7 @@ title: Automation-first pipeline architecture
 type: concept
 area: pipeline
 updated: 2026-06-11
-status: thin
+status: current
 load_bearing: true
 references:
   - concepts/data-model/knowledge-graph.md
@@ -120,7 +120,7 @@ re-introducing the bug.
 
 ## Stage 1 — book-meta-driven ingest
 
-`pipeline/stage1_ingest.py` previously contained `ingest_dongzhoulieguozhi(conn, cfg)` hardwired to the DZL JSON path and `dzl:` id prefix. It has been replaced with `ingest_book(conn, cfg, book_meta)` — a general function that reads source path and corpus label from the `book_meta` mapping. Keys used: `corpus` (stamped on `documents.corpus`), `corpus_dir` (subdirectory under `corpora/`), `corpus_json` (filename), `title` (falls back to JSON root `"title"` then `corpus`). Document ids are `<cfg.book_id>:<chapter_num>`. Idempotent via `ON CONFLICT (corpus, chapter_num) DO NOTHING`. This is the ingest seam for Plan 3 multi-book support (HLM cast, etc.).
+`pipeline/stage1_ingest.py` previously contained `ingest_dongzhoulieguozhi(conn, cfg)` hardwired to the DZL JSON path and `dzl:` id prefix. It has been replaced with `ingest_book(conn, cfg, book_meta)` — a general function that reads source path and corpus label from the `book_meta` mapping. Keys used: `corpus` (stamped on `documents.corpus`), `corpus_dir` (subdirectory under `corpora/`), `corpus_json` (filename), `title` (falls back to JSON root `"title"` then `corpus`). Document ids are `<cfg.book_id>:<chapter_num>`. Idempotent via `ON CONFLICT (corpus, chapter_num) DO NOTHING`. `changjuan ingest --book-id hlm` ingests 红楼梦 to 120 documents; `changjuan chunk --book-id hlm` produces 835 chunks. This is the live multi-book ingest contract; `documents.corpus` is a free text label (no enum CHECK) so any book can be registered without schema edits.
 
 ## First commitments (true once code lands)
 
