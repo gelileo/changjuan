@@ -3,7 +3,7 @@ title: Genre profiles — capability selection and relation-kind vocabulary
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry
+implemented: feat/genre-profiles (2026-06-11); 2026-06-11 default_group_type added to each profile entry; 2026-06-11 cast profile implemented with domestic relation vocab
 status: current
 load_bearing: true
 references:
@@ -80,9 +80,9 @@ The grouping entity is now `groups` (table, columns, and code vocabulary), but `
 | Profile | Capabilities | Use case |
 |---|---|---|
 | `history` | persons, relations, events, chronology, geography, groups | 东周列国志 and similar dynastic histories |
-| `cast` | (Plan 3) | 红楼梦 slice — adds `themes`; no chronology |
+| `cast` | persons, relations, events, groups, themes | 红楼梦 slice — adds `themes`; no chronology/geography |
 
-The `cast` profile is stubbed in a comment in `PROFILES`; it lands in Plan 3.
+The `cast` profile uses domestic relation vocabulary (spouse, master, servant, romantic, concubine, etc.) with no history-specific terms (ruler, minister, killed_by); default `group_type = 'clan'`.
 
 ## Capability-guarded behaviors
 

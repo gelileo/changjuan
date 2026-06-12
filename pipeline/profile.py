@@ -33,6 +33,27 @@ _HISTORY_PERSON_KINDS = {
 }
 _HISTORY_EVENT_KINDS = {"causes", "precedes", "related"}
 
+_CAST_PERSON_KINDS = {
+    "parent",
+    "child",
+    "spouse",
+    "sibling",
+    "grandparent",
+    "grandchild",
+    "uncle_aunt",
+    "cousin",
+    "in_law",
+    "concubine",
+    "master",
+    "servant",
+    "mentor",
+    "friend",
+    "romantic",
+    "adopted",
+    "clan_member",
+}
+_CAST_EVENT_KINDS = {"causes", "precedes", "related"}
+
 PROFILES: dict[str, dict[str, object]] = {
     "history": {
         "capabilities": ["persons", "relations", "events", "chronology", "geography", "groups"],
@@ -40,7 +61,12 @@ PROFILES: dict[str, dict[str, object]] = {
         "event_relation_kinds": _HISTORY_EVENT_KINDS,
         "default_group_type": "state",
     },
-    # "cast" profile lands in Plan 3 (red-chamber slice).
+    "cast": {
+        "capabilities": ["persons", "relations", "events", "groups", "themes"],
+        "person_relation_kinds": _CAST_PERSON_KINDS,
+        "event_relation_kinds": _CAST_EVENT_KINDS,
+        "default_group_type": "clan",
+    },
 }
 
 # ETL capability → reader tab. Order here defines canonical tab order.

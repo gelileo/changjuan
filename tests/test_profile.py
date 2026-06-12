@@ -3,6 +3,7 @@ import pytest
 from pipeline.profile import (
     PROFILES,
     UnknownProfileError,
+    default_group_type,
     derive_reader_capabilities,
     relation_kinds_for,
 )
@@ -68,3 +69,33 @@ def test_relation_kinds_for_returns_a_copy_not_the_live_set():
     kinds = relation_kinds_for("history", "person")
     kinds.add("invented")
     assert "invented" not in relation_kinds_for("history", "person")
+
+
+def test_cast_profile_capabilities():
+    assert PROFILES["cast"]["capabilities"] == [
+        "persons",
+        "relations",
+        "events",
+        "groups",
+        "themes",
+    ]
+
+
+def test_cast_default_group_type_is_clan():
+    assert default_group_type("cast") == "clan"
+
+
+def test_cast_person_relation_vocab_is_domestic():
+    kinds = relation_kinds_for("cast", "person")
+    assert {"spouse", "master", "servant", "romantic", "concubine"} <= kinds
+    assert "ruler" not in kinds and "killed_by" not in kinds
+
+
+def test_cast_derives_reader_caps_without_timeline():
+    assert derive_reader_capabilities(
+        list(PROFILES["cast"]["capabilities"])  # type: ignore
+    ) == [
+        "cast",
+        "groups",
+        "themes",
+    ]

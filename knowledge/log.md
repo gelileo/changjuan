@@ -1,5 +1,17 @@
 # Build Log
 
+## 2026-06-11 — feat(profile): add cast genre profile (Plan 3 Task 1)
+
+Implemented the `cast` profile for domestic relation networks (红楼梦 family slice). New profile entry in `PROFILES` with:
+- Capabilities: `persons`, `relations`, `events`, `groups`, `themes` (no chronology/geography).
+- Person-relation kinds: 17 domestic terms (parent, spouse, master, servant, romantic, concubine, etc.); excludes history-specific terms (ruler, minister, killed_by).
+- Event-relation kinds: `causes`, `precedes`, `related` (same as history).
+- Default group type: `'clan'` (vs `'state'` for history).
+
+Added four tests to `tests/test_profile.py`: `test_cast_profile_capabilities`, `test_cast_default_group_type_is_clan`, `test_cast_person_relation_vocab_is_domestic`, `test_cast_derives_reader_caps_without_timeline`.
+
+Articles touched: `concepts/pipeline/profiles.md` (cast profile table + domestic vocab description), `concepts/verification/testing.md` (cast test documentation).
+
 ## 2026-06-11 — chore(corpora): stage 红楼梦 (hlm) source for Plan 3
 
 Cloned `EaconTang/gitbook-hongloumeng` to `unroll/gitbook-hongloumeng`; symlinked `corpora/hlm → ../../gitbook-hongloumeng` (mirrors `corpora/dongzhoulieguozhi`). Converted the 程高本 `ch_cgb/` 120 回 (`### 第N回` + `<p>` HTML) into `corpora/hlm/json/红楼梦.json` in the canonical `{title, chapters:[{title, content}]}` shape (HTML stripped to clean prose; 120 chapters, ~864K chars). New article `concepts/corpora/honglou.md`. **Staged only — not yet ingestable** (stage-1 ingest is still hardwired to the dzl path; reading `corpora/hlm` needs the Plan 3 ingest generalization). The generated JSON lives in the clone, not committed here.
