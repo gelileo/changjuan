@@ -1,5 +1,17 @@
 # Build Log
 
+## 2026-06-11 — refactor(schema): drop documents.corpus enum CHECK (Plan 3 Task 2)
+
+Removed the hardcoded enum CHECK constraint on `documents.corpus` in `pipeline/schemas/corpus_schema.sql`. The constraint enforced `corpus IN ('dongzhoulieguozhi', 'zuozhuan', 'shiji')`, which blocked new books from being registered without schema changes.
+
+Change: `documents.corpus TEXT NOT NULL` (was `TEXT NOT NULL CHECK (...)`).
+
+The `UNIQUE (corpus, chapter_num)` constraint remains and enforces the actual invariant (no duplicate chapters per book). This enables multi-corpus support for Plan 3 (honglou, 粘合本, etc.) without schema edits.
+
+Test: new `tests/test_corpus_schema.py::test_corpus_label_is_free_no_enum_check` inserts a honglou document and verifies no constraint violation.
+
+Articles touched: `concepts/corpora/honglou.md` (added infrastructure-prep section).
+
 ## 2026-06-11 — feat(profile): add cast genre profile (Plan 3 Task 1)
 
 Implemented the `cast` profile for domestic relation networks (红楼梦 family slice). New profile entry in `PROFILES` with:

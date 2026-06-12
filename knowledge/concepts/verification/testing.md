@@ -40,7 +40,7 @@ Test modules that exercise `apply_schema` must supply DDL using `CREATE TABLE IF
 
 ## Schema-application tests
 
-Tests in `tests/unit/test_corpus_schema.py` verify that `CORPUS_SCHEMA` (imported from `pipeline.schemas`) creates the expected tables (`documents`, `chunks`, `citations`), is idempotent under double-apply, and that `documents` has the required columns. These tests use `tmp_path` with `connect()` + `apply_schema()` directly — no fixtures beyond pytest built-ins.
+Tests in `tests/test_corpus_schema.py` (Plan 3 Task 2) verify corpus schema behavior. The `test_corpus_label_is_free_no_enum_check` test inserts a document with an arbitrary corpus label (`honglou`) into a `documents` table created from the live schema, asserting the INSERT succeeds. This regression guards against the hardcoded-enum CHECK constraint that previously blocked new books from being registered without schema changes (the constraint was removed in Plan 3 Task 2 to enable multi-corpus support). Uses `sqlite3.connect(":memory:")` + direct `executescript` with the full schema DDL from `pipeline/schemas/corpus_schema.sql` — no helper functions or fixtures.
 
 ## Synthetic corpus helpers
 

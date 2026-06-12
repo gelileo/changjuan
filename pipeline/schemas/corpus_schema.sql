@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS documents (
     id              TEXT PRIMARY KEY,
-    corpus          TEXT NOT NULL CHECK (corpus IN ('dongzhoulieguozhi', 'zuozhuan', 'shiji')),
+    corpus          TEXT NOT NULL,
     title           TEXT NOT NULL,
     chapter_num     INTEGER NOT NULL,
     chapter_title   TEXT NOT NULL,

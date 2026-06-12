@@ -37,3 +37,11 @@ first code task. 红楼梦 is the `cast`-profile test book (huge cast, dense kin
 romance relations, no historical chronology) — see
 [[../pipeline/profiles]] and the design spec
 `docs/superpowers/specs/2026-06-10-capability-genre-profiles-design.md`.
+
+## Infrastructure prep (Plan 3 Task 2)
+
+The `pipeline/schemas/corpus_schema.sql` CHECK constraint on `documents.corpus` — which
+hardcoded the enum `('dongzhoulieguozhi', 'zuozhuan', 'shiji')` — was removed to allow
+the corpus label to be a free string. This enables hlm (and future Plan 3+ books) to be
+registered without schema changes. The `UNIQUE (corpus, chapter_num)` uniqueness constraint
+remains and enforces the actual invariant (no duplicate chapters per book).

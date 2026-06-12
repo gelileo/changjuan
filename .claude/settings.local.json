@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(uv run *)",
-      "Bash(./scripts/fill-spans *)"
+      "Bash(./scripts/fill-spans *)",
+      "Read(//Users/kunlu/Projects/gelileo/unroll/**)",
+      "Read(//Users/kunlu/Projects/gelileo/**)",
+      "Bash(git -C /Users/kunlu/Projects/gelileo/unroll/changjuan log --oneline --all --full-history -- library-progress.png person-deeds.yml)",
+      "Bash(git *)",
+      "Bash(du -sh .)",
+      "Bash(du -sh .git node_modules .wrangler dist)",
+      "Bash(du -sh .git)",
+      "Bash(rm -f library-progress.png person-deeds.yml)",
+      "Bash(rm -rf data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v4 data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v5 data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v6 data/books/dzl/exports/dongzhoulieguozhi-export-2026-06-v7)",
+      "Bash(scripts/start-server.sh --project-dir /Users/kunlu/Projects/gelileo/unroll/changjuan)",
+      "Bash(curl -s -m 3 -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:64730)",
+      "Bash(scripts/start-server.sh --project-dir /Users/kunlu/Projects/gelileo/unroll/changjuan --host 0.0.0.0 --url-host localhost)",
+      "Bash(python3 -c \"import sqlite3; print\\(sqlite3.sqlite_version\\)\")",
+      "Bash(grep -v \"^commit\\\\|^Author\\\\|^Date\\\\|^$\\\\|^    \\\\|knowledge\\\\|tests/test_profile\\\\|pipeline/profile\")"
     ]
   }
 }
