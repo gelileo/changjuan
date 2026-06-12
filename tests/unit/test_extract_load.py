@@ -211,3 +211,102 @@ def test_loads_event_place_state_relation(
     assert stats["places_written"] == 1
     assert stats["groups_written"] == 1
     assert stats["relations_written"] >= 1
+
+
+def test_loads_themes_and_person_relation_kind_detail(tmp_path: Path) -> None:
+    """Regression (Plan 3c): load_extraction must write candidate_themes from the
+    `themes` array, and a person_relation's kind comes from `kind_detail` (not
+    `relation_kind`). Both were silent-drop bugs caught only by real cast extraction."""
+    corpus = open_corpus_db(tmp_path / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "changjuan.sqlite")
+    corpus.execute(
+        "INSERT INTO documents "
+        "(id, corpus, title, chapter_num, chapter_title, raw_text, source_edition, ingested_at) "
+        "VALUES (1, 'honglou', 't', 1, 'ch1', '...', 'test', datetime('now'))"
+    )
+    corpus.execute(
+        "INSERT INTO chunks (id, document_id, paragraph_start, paragraph_end, text, hash) "
+        "VALUES ('chk:c1', 1, 1, 1, '宝玉黛玉梦幻', 'h')"
+    )
+    corpus.commit()
+    f = tmp_path / "extract.yaml"
+    _write(
+        f,
+        {
+            "persons": [
+                {
+                    "id": "p1",
+                    "canonical_name": "宝玉",
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "宝玉",
+                    },
+                    "justifications": {"canonical_name": "宝玉"},
+                },
+                {
+                    "id": "p2",
+                    "canonical_name": "黛玉",
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "黛玉",
+                    },
+                    "justifications": {"canonical_name": "黛玉"},
+                },
+            ],
+            "events": [],
+            "places": [],
+            "groups": [],
+            "relations": [
+                {
+                    "kind": "person_relation",
+                    "from_person_id": "p1",
+                    "to_person_id": "p2",
+                    "kind_detail": "romantic",
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "宝玉黛玉",
+                    },
+                },
+            ],
+            "themes": [
+                {
+                    "name": "梦幻",
+                    "description": "d",
+                    "occurrences": [
+                        {"entity_kind": "person", "entity_id": "p1"},
+                        {"entity_kind": "chapter", "entity_id": "1"},
+                    ],
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "梦幻",
+                    },
+                    "justifications": {"name": "梦幻"},
+                },
+            ],
+        },
+    )
+    stats = load_extraction(
+        canonical,
+        corpus_conn=corpus,
+        chapter_num=1,
+        extraction_file=f,
+        prompt_version="cast",
+        pipeline_run_id="run:t",
+    )
+    assert stats["themes_written"] == 1
+    th = canonical.execute(
+        "SELECT name, occurrences_json FROM candidate_themes WHERE pipeline_run_id='run:t'"
+    ).fetchone()
+    assert th[0] == "梦幻" and "p1" in th[1]
+    pr = canonical.execute(
+        "SELECT kind FROM candidate_person_relations WHERE pipeline_run_id='run:t'"
+    ).fetchone()
+    assert pr is not None and pr[0] == "romantic"

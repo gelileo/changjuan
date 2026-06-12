@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-12 — test(extract): regression for load_extraction themes + person_relation kind_detail
+
+Closes the test gap that let the Plan 3c silent-drop bugs ship: `test_extract_load.py::test_loads_themes_and_person_relation_kind_detail` asserts a `themes` array lands in `candidate_themes` (with occurrences_json) and a `person_relation`'s kind is read from `kind_detail`. Article: testing.md.
+
 ## 2026-06-12 — feat(profile): extend cast relation vocab from kg-hongloumeng taxonomy
 
 Reviewed the external `wangfangye/kg-hongloumeng` 红楼梦 KG (388 persons + 380 kinship triples; a 51-term relation vocabulary). Verdict: useful as a *reference*, not an import (its triples have no citations to our corpus, which would violate our verbatim-citation invariant). Acted on the high-value part: extended cast `person_relation_kinds` with 5 native kinds our coarse set lacked — `consort` (妃/嫔妃), `subject` (臣), `neighbor` (邻居), `colleague` (伙计), `patron` (施主). Excluded their modern/anachronistic labels (男友/女友/雇主) and the fabricated `age` field. Documented in the cast prompt: the new kinds in the relation table + a `relation_detail` reference list of fine kinship degrees (续弦/嫡/庶/异母/乳母/干…) — keeping our coarse-kind + free-text-detail design. Their triples remain a noted external recall benchmark. Articles: profiles.md, extraction.md, testing.md.
