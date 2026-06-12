@@ -153,6 +153,7 @@ def load_extraction(
         "places_written": 0,
         "groups_written": 0,
         "relations_written": 0,
+        "themes_written": 0,
         "invariant_violations": [],
     }
 
@@ -177,6 +178,7 @@ def load_extraction(
     events = _validate("event", payload["events"])
     places = _validate("place", payload["places"])
     groups = _validate("group", payload["groups"])
+    themes = _validate("theme", payload.get("themes", []))
 
     # Relations: validate citation chunk_id only (no per-field justifications)
     relations: list[dict[str, Any]] = []
@@ -304,6 +306,33 @@ def load_extraction(
         )
         local_to_cand[grp["id"]] = cand_id
         stats["groups_written"] += 1
+
+    # ===== themes (cast profile) =====
+    # occurrences keep their chunk-local entity ids (e.g. 'p1','e1') / chapter ids;
+    # stage-7 load_candidate_themes resolves them to canonical via the id maps.
+    for i, th in enumerate(themes, 1):
+        # themes carry no local id (nothing references them); index the candidate id.
+        cand_id = f"cand:thm:{pipeline_run_id}:t{i}"
+        scoring = dict(th, _scalar_fields=["name"])
+        conf = score_extraction_record(scoring)
+        occ_json = json.dumps(th.get("occurrences") or [], ensure_ascii=False)
+        canonical_conn.execute(
+            "INSERT INTO candidate_themes "
+            "(id, name, description, occurrences_json, confidence, "
+            " pipeline_run_id, chunk_id, quote) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                cand_id,
+                th["name"],
+                th.get("description"),
+                occ_json,
+                conf,
+                pipeline_run_id,
+                th["citation"]["chunk_id"],
+                th["citation"]["quote"],
+            ),
+        )
+        stats["themes_written"] += 1
 
     # ===== relations =====
     # Map chunk-local id → candidate db id; fall back to the raw value for

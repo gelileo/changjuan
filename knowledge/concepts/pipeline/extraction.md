@@ -229,9 +229,13 @@ dict also uses key `"groups"`. The golden fixture file `tests/golden/ch01/states
 - `description`: optional string or null
 - `occurrences`: optional array of `{entity_kind, entity_id}` objects, where `entity_kind ∈ {person,event,group,place,chapter}`
 - `citation`: `_CITATION_SCHEMA` (same verbatim-quote anchor as all other entity kinds)
-- `justifications`: array (intentionally loose — themes may cite multiple passages)
+- `justifications`: **object** (`{field: substring-of-quote}`, same as every other entity — `validate_record` calls `.items()`, so a dict is required; an array silently fails to validate)
 
-Stage 7 theme loading and the `regen-extraction-schema` YAML mirror are additive follow-on tasks; this commit establishes the schema contract and capability-gate seam only.
+**Stage-3 loading (Plan 3c):** `load_extraction` now writes `candidate_themes` from the `themes` array (themes carry no local id — the candidate id is indexed `cand:thm:{run}:t{i}`; `occurrences` are stored as `occurrences_json` with their chunk-local entity ids for stage-7 resolution). Stage-7 `load_candidate_themes` promotes them, gated on the profile's `themes` capability.
+
+**Relation record field-name contract** (loose `_RELATION_SCHEMA`, `additionalProperties: True`, so the loader — not the schema — enforces it): a `kind: person_relation` record puts its relation kind in **`kind_detail`** (e.g. `spouse`); a `kind: event_relation` record uses **`relation_kind`** (`causes`/`precedes`/`related`); participants/places/group-membership use `role`. Emitting `relation_kind` on a person_relation loads an **empty** `kind` and the row is silently dropped at stage 7 — calibration on 红楼梦 Ch.1 caught exactly this.
+
+**Cast profile (世情小说):** the `changjuan-extract-cast` skill extracts persons + domestic relations (cast vocab) + clans-as-groups + social events + themes for cast-profile books (hlm). See `concepts/pipeline/profiles.md`.
 
 ## What would invalidate this article
 

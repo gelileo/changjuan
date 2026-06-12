@@ -260,7 +260,9 @@ properties:
           - string
           - 'null'
         justifications:
-          type: array
+          additionalProperties:
+            type: string
+          type: object
         name:
           type: string
         occurrences:

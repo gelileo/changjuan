@@ -161,7 +161,7 @@ _THEME_SCHEMA: dict[str, object] = {
             },
         },
         "citation": _CITATION_SCHEMA,
-        "justifications": {"type": "array"},
+        "justifications": {"type": "object", "additionalProperties": {"type": "string"}},
     },
 }
 

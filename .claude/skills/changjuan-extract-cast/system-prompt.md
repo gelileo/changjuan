@@ -63,6 +63,29 @@
 - 每条 relation 需 `citation`（文本依据）。`relation_detail` 可记限定语（如 `异母`「庶出」「结拜」「续弦」「通房」）。
 - 只记**文本明示或强烈暗示**的关系；不要凭红楼梦常识补全未在本 chunk 出现的关系（跨 chunk 由 linker 处理）。
 
+### 关系记录的 YAML 形态（字段名严格，loader 按此读取）
+
+所有关系都放在顶层 `relations` 列表，用 `kind` 区分关系类型；**各类型的"具体关系值"字段名不同**，务必照下表用对，否则 loader 会静默丢弃：
+
+| `kind`（类型判别） | 具体值字段 | 端点字段 |
+|---|---|---|
+| `person_relation` | **`kind_detail`**（取 §② 词表，如 `spouse`/`parent`/`master`） | `from_person_id` / `to_person_id` |
+| `person_group` | `role`（如 `成员`/`主母`，可空串） | `person_id` / `group_id` |
+| `event_participant` | `role`（如 `主行`/`受`/`亡`） | `event_id` / `person_id` |
+| `event_place` | `role`（如 `发生地`） | `event_id` / `place_id` |
+| `event_relation` | **`relation_kind`**（`causes`/`precedes`/`related`） | `from_event_id` / `to_event_id` |
+
+⚠️ **人物关系（person_relation）的关系词放在 `kind_detail`，不是 `relation_kind`**（`relation_kind` 仅用于事件因果 event_relation）。例：
+```yaml
+relations:
+  - kind: person_relation
+    from_person_id: p7
+    to_person_id: p8
+    kind_detail: spouse          # ← 关系词在这里
+    relation_detail: 续弦         # ← 可选限定语
+    citation: { chunk_id: "chk:hlm:1:5", paragraph: 10, quote: "嫡妻封氏", span: [0,0] }
+```
+
 ---
 
 ## ③、groups（家族 / 世家）

@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-12 — fix(extract): Plan 3c calibration — themes loading + relation field contract
+
+红楼梦 Ch.1 cast extraction (calibration) surfaced real gaps, all fixed: (1) `load_extraction` never wrote `candidate_themes` — added a themes block (themes carry no local id → indexed `cand:thm:{run}:t{i}`; occurrences → `occurrences_json`); (2) `_THEME_SCHEMA` used `justifications: array` but `validate_record` needs an `object`/dict — fixed + regenerated extraction-schema.yaml; (3) the cast prompt didn't pin the person_relation kind field — the loader reads `kind_detail` (not `relation_kind`, which is event_relation's field), and `_RELATION_SCHEMA` is `additionalProperties:True` so it didn't catch the wrong field → relations loaded with empty `kind` and were dropped; documented the relation field-name contract in the cast `system-prompt.md` + `extraction.md`. Result: Ch.1 → 17 persons / 10 person-relations / 1 group / 2 themes end-to-end. Articles: extraction.md, incremental.md.
+
 ## 2026-06-11 — fix(cli): add --book-id to extract-load command
 
 `pipeline/cli.py::extract_load_cmd` was missing `--book-id`, causing it to
