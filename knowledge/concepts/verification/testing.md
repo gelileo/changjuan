@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
-note: "2026-06-11 Plan 3a complete: test_hlm_ingest_120_chapters added (n=120, id hlm:1, corpus honglou); dzl regression test_dzl_ingest_unchanged; 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended; test_dzl_export_parity skips when already migrated"
+note: "2026-06-11 Plan 3a complete: test_hlm_ingest_120_chapters added (n=120, id hlm:1, corpus honglou); dzl regression test_dzl_ingest_unchanged; 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended; test_dzl_export_parity skips when already migrated; 2026-06-11 Plan 3b Task 1: test_canonical_schema_themes.py (3 tests — tables exist, entity_citations theme kind, candidate_themes columns)"
 status: mature
 load_bearing: false
 references:
@@ -815,6 +815,16 @@ skips if `corpora/hlm/json/红楼梦.json` is absent, then calls `ingest_book` o
 and `"第一回"` in `chapter_title`. Exercises the same code path as the dzl regression test
 but against a different book, confirming the `<book_id>:<chapter_num>` id scheme and the
 `corpus` free-label contract are generic. Marked `@pytest.mark.integration`.
+
+## Themes schema tests (Plan 3b Task 1, feat/hlm-cast)
+
+`tests/test_canonical_schema_themes.py` verifies the three new theme tables added to `pipeline/schemas/canonical_schema.sql`. Three tests using `sqlite3.connect(":memory:")` + `executescript(SCHEMA)` directly (same pattern as `tests/test_corpus_schema.py`):
+
+- `test_theme_tables_exist` — asserts `{"themes", "theme_occurrences", "candidate_themes"} <= _tables(c)`.
+- `test_theme_occurrence_insert_and_entity_citation_theme_kind` — inserts a `themes` row, a `persons` row, a `theme_occurrences` row, and an `entity_citations` row with `entity_kind='theme'`; asserts no constraint violations. This exercises the extended `entity_citations.entity_kind` CHECK that now includes `'theme'`.
+- `test_candidate_themes_columns` — uses `PRAGMA table_info(candidate_themes)` to assert all required columns are present: `id`, `name`, `description`, `occurrences_json`, `confidence`, `pipeline_run_id`, `chunk_id`, `quote`.
+
+No fixtures or database helpers needed; the schema SQL is read from the live file.
 
 ## What would invalidate this article
 

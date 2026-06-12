@@ -1,5 +1,13 @@
 # Build Log
 
+## 2026-06-11 — feat(schema): themes + theme_occurrences + candidate_themes (entity_citations 'theme')
+
+Plan 3b Task 1 (themes schema). Added three tables to `pipeline/schemas/canonical_schema.sql`:
+`themes`, `theme_occurrences`, `candidate_themes`. Extended `entity_citations.entity_kind` CHECK
+to include `'theme'`. Three tests in `tests/test_canonical_schema_themes.py` (all pass).
+Articles touched: `concepts/data-model/knowledge-graph.md` (entity_citations section updated;
+new §themes/theme_occurrences/candidate_themes added).
+
 ## 2026-06-11 — feat(ingest): hlm ingestable (120ch); Plan 3a complete — book-driven ingest + cast profile
 
 Plan 3a is complete. Deliverables shipped across the branch `feat/hlm-cast`:

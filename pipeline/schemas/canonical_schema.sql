@@ -150,11 +150,32 @@ CREATE TABLE IF NOT EXISTS entity_citations (
     entity_kind     TEXT NOT NULL CHECK (entity_kind IN (
         'person','group','place','event',
         'event_participant','event_place','event_relation',
-        'person_relation','person_group','group_seat'
+        'person_relation','person_group','group_seat','theme'
     )),
     entity_id       TEXT NOT NULL,
     citation_id     TEXT NOT NULL,
     PRIMARY KEY (entity_kind, entity_id, citation_id)
+);
+
+CREATE TABLE IF NOT EXISTS themes (
+    id              TEXT PRIMARY KEY,
+    name            TEXT NOT NULL,
+    description     TEXT,
+    confidence      REAL NOT NULL,
+    provenance      TEXT NOT NULL CHECK (provenance IN ('auto','curated')),
+    pipeline_run_id TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS theme_occurrences (
+    theme_id        TEXT NOT NULL REFERENCES themes(id),
+    entity_kind     TEXT NOT NULL CHECK (entity_kind IN ('person','event','group','place','chapter')),
+    entity_id       TEXT NOT NULL,
+    citation_id     TEXT,
+    confidence      REAL NOT NULL,
+    provenance      TEXT NOT NULL CHECK (provenance IN ('auto','curated')),
+    PRIMARY KEY (theme_id, entity_kind, entity_id)
 );
 
 -- =========================================================
@@ -291,6 +312,18 @@ CREATE TABLE IF NOT EXISTS candidate_facts (
     justification_quote     TEXT NOT NULL,
     justification_span      TEXT,
     pipeline_run_id         TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS candidate_themes (
+    id              TEXT PRIMARY KEY,
+    name            TEXT NOT NULL,
+    description     TEXT,
+    occurrences_json TEXT,
+    confidence      REAL NOT NULL,
+    pipeline_run_id TEXT NOT NULL,
+    chunk_id        TEXT NOT NULL,
+    quote           TEXT NOT NULL,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- =========================================================

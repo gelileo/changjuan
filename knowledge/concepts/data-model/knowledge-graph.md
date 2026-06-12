@@ -3,7 +3,7 @@ title: Knowledge graph — entities, relations, citations
 type: concept
 area: data-model
 updated: 2026-06-11
-note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule). 2026-06-11: State entity renamed to Group (tables states→groups, person_states→person_groups, state_capitals→group_seats, candidate_states→candidate_groups, candidate_person_states→candidate_person_groups); persons.state_id→group_id; person_relations.kind CHECK removed (validation moves to profile loader). 2026-06-11: groups table gains two separate columns: `type` (corpus-derived sub-classification, e.g. 诸侯国/戎/邑) and `group_type` (collective kind, set by loader from active profile, e.g. 'state'). These were previously conflated in a single `group_type` column. candidate_groups uses `type` (not `group_type`); the extraction schema property is `type`; `group_type` is loader-set only. 2026-06-11 (Plan 3 Task 2): corpus_schema.sql documents.corpus CHECK constraint removed to allow arbitrary corpus labels (enables multi-corpus support without schema changes).
+note: Ch.6-10 follow-on — promotion-waiver added in scoring.py (no schema change; see concepts/pipeline/linking.md for the rule). 2026-06-11: State entity renamed to Group (tables states→groups, person_states→person_groups, state_capitals→group_seats, candidate_states→candidate_groups, candidate_person_states→candidate_person_groups); persons.state_id→group_id; person_relations.kind CHECK removed (validation moves to profile loader). 2026-06-11: groups table gains two separate columns: `type` (corpus-derived sub-classification, e.g. 诸侯国/戎/邑) and `group_type` (collective kind, set by loader from active profile, e.g. 'state'). These were previously conflated in a single `group_type` column. candidate_groups uses `type` (not `group_type`); the extraction schema property is `type`; `group_type` is loader-set only. 2026-06-11 (Plan 3 Task 2): corpus_schema.sql documents.corpus CHECK constraint removed to allow arbitrary corpus labels (enables multi-corpus support without schema changes). 2026-06-11 (feat/hlm-cast Plan 3b Task 1): themes + theme_occurrences + candidate_themes tables added; entity_citations.entity_kind CHECK gains 'theme'.
 status: mature
 load_bearing: true
 references:
@@ -36,7 +36,7 @@ A flat events table would be cheap but useless for the eventual map UI — reade
 
 ## entity_citations table
 
-`entity_citations(entity_kind, entity_id, citation_id)` is the citation accumulator for all canonical records. The `entity_kind` CHECK constraint (Task 19, updated Task 2) covers four entity kinds (`person`, `group`, `place`, `event`) and six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_group`, `group_seat`). For relation rows (which have composite PKs and no surrogate `id`), `entity_id` is a synthetic string formed by joining the composite key elements with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
+`entity_citations(entity_kind, entity_id, citation_id)` is the citation accumulator for all canonical records. The `entity_kind` CHECK constraint (Task 19, updated Task 2, extended Plan 3b Task 1) covers four entity kinds (`person`, `group`, `place`, `event`), six relation kinds (`event_participant`, `event_place`, `event_relation`, `person_relation`, `person_group`, `group_seat`), and one thematic kind (`theme`). For relation rows (which have composite PKs and no surrogate `id`), `entity_id` is a synthetic string formed by joining the composite key elements with `:` — e.g. `evt:1:per:a:主将` for an event_participant row.
 
 ## What would invalidate this article
 
@@ -126,3 +126,13 @@ As of Phase 6 Task A3, `reject_merge` in `pipeline/stage5_link/merge.py` writes 
 As of Phase 6 Task A4, `link_run` reads the full `rejected_merges` set once per run and filters queue-band canonical-side pairs against it. See `concepts/pipeline/linking.md §Phase 6 linker filter` for the filter scope and `ignore_rejections` kwarg semantics.
 
 As of Phase 6 Task A6, `link_run` also reads all OPEN `merge_candidates` rows to build an `already_open` set keyed on `(candidate_b_id, fingerprint_of_candidate_a)`. New queue-band pairs that land in this set are skipped (counted under `already_open_skipped`) to prevent re-extraction/re-link runs from inserting duplicate open rows. No schema change; this is a read-only scan of the existing `merge_candidates` table.
+
+## themes / theme_occurrences / candidate_themes (Plan 3b Task 1)
+
+**Theme** is a seventh canonical entity kind — a named narrative or thematic thread (e.g. 命运, 忠义, 权谋) that links across persons, events, groups, places, and chapters without having a temporal anchor or a geographic coordinate. The schema adds three tables:
+
+- `themes(id, name, description, confidence, provenance, pipeline_run_id, created_at, updated_at)` — canonical theme records. `id` uses a `thm:` prefix by convention (e.g. `thm:命运`). `provenance` obeys the same `('auto','curated')` contract as all other canonical tables.
+- `theme_occurrences(theme_id, entity_kind, entity_id, citation_id, confidence, provenance)` — typed association between a theme and any linkable entity. `entity_kind` is `CHECK IN ('person','event','group','place','chapter')`. Primary key is `(theme_id, entity_kind, entity_id)`.
+- `candidate_themes(id, name, description, occurrences_json, confidence, pipeline_run_id, chunk_id, quote, created_at)` — staging area for extractor output, mirroring the pattern of `candidate_persons` / `candidate_events`. `occurrences_json` serialises the raw occurrence list before Stage 7 expands it into `theme_occurrences` rows.
+
+The `entity_citations.entity_kind` CHECK constraint was extended to include `'theme'` in the same commit, so theme citations can be recorded in the same accumulator table used by all other entity kinds. Stage 7 load and the extract-output schema extension for themes are additive follow-on tasks (capability-gated).
