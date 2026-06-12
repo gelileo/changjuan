@@ -1,5 +1,14 @@
 # Build Log
 
+## 2026-06-11 — feat(extract-schema): optional themes array (capability-gated)
+
+Plan 3b Task 2. Added `_THEME_SCHEMA` and `"themes"` optional array to `EXTRACT_OUTPUT_SCHEMA`
+in `pipeline/schemas/extract_output.py`. Not added to `required` — capability-gated for skills
+that declare the `themes` capability. Two tests in `tests/test_extract_output_themes.py` (both pass).
+Articles touched: `concepts/pipeline/extraction.md` (§Optional themes array added; frontmatter
+implemented note updated), `concepts/verification/testing.md` (§Extract-output themes schema tests
+added; frontmatter note updated).
+
 ## 2026-06-11 — feat(schema): themes + theme_occurrences + candidate_themes (entity_citations 'theme')
 
 Plan 3b Task 1 (themes schema). Added three tables to `pipeline/schemas/canonical_schema.sql`:

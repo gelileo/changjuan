@@ -250,6 +250,44 @@ properties:
       - citation
       type: object
     type: array
+  themes:
+    items:
+      additionalProperties: false
+      properties:
+        citation: *id001
+        description:
+          type:
+          - string
+          - 'null'
+        justifications:
+          type: array
+        name:
+          type: string
+        occurrences:
+          items:
+            additionalProperties: false
+            properties:
+              entity_id:
+                type: string
+              entity_kind:
+                enum:
+                - person
+                - event
+                - group
+                - place
+                - chapter
+                type: string
+            required:
+            - entity_kind
+            - entity_id
+            type: object
+          type: array
+      required:
+      - name
+      - citation
+      - justifications
+      type: object
+    type: array
 required:
 - persons
 - events

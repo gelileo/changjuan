@@ -138,6 +138,33 @@ _GROUP_SCHEMA: dict[str, object] = {
     },
 }
 
+_THEME_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "required": ["name", "citation", "justifications"],
+    "additionalProperties": False,
+    "properties": {
+        "name": {"type": "string"},
+        "description": {"type": ["string", "null"]},
+        "occurrences": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["entity_kind", "entity_id"],
+                "additionalProperties": False,
+                "properties": {
+                    "entity_kind": {
+                        "type": "string",
+                        "enum": ["person", "event", "group", "place", "chapter"],
+                    },
+                    "entity_id": {"type": "string"},
+                },
+            },
+        },
+        "citation": _CITATION_SCHEMA,
+        "justifications": {"type": "array"},
+    },
+}
+
 _RELATION_SCHEMA: dict[str, object] = {
     "type": "object",
     "required": ["kind", "citation"],
@@ -167,5 +194,6 @@ EXTRACT_OUTPUT_SCHEMA: dict[str, object] = {
         "places": {"type": "array", "items": _PLACE_SCHEMA},
         "groups": {"type": "array", "items": _GROUP_SCHEMA},
         "relations": {"type": "array", "items": _RELATION_SCHEMA},
+        "themes": {"type": "array", "items": _THEME_SCHEMA},
     },
 }

@@ -3,7 +3,7 @@ title: Testing conventions, golden chapters, and fixtures
 type: concept
 area: verification
 updated: 2026-06-11
-note: "2026-06-11 Plan 3a complete: test_hlm_ingest_120_chapters added (n=120, id hlm:1, corpus honglou); dzl regression test_dzl_ingest_unchanged; 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended; test_dzl_export_parity skips when already migrated; 2026-06-11 Plan 3b Task 1: test_canonical_schema_themes.py (3 tests — tables exist, entity_citations theme kind, candidate_themes columns)"
+note: "2026-06-11 Plan 3a complete: test_hlm_ingest_120_chapters added (n=120, id hlm:1, corpus honglou); dzl regression test_dzl_ingest_unchanged; 2026-06-11 groups type/group_type split: test_canonical_schema_groups.py, test_state_to_group_migration.py, test_extract_output_groups.py, test_stage7_load_states.py, test_cli.py updated; fixture ch01-extraction-v1.yaml updated (group_type:→type:); 2026-06-11 candidate migration gap-fill: test_state_to_group_migration OLD_SCHEMA + assertions extended; test_dzl_export_parity skips when already migrated; 2026-06-11 Plan 3b Task 1: test_canonical_schema_themes.py (3 tests — tables exist, entity_citations theme kind, candidate_themes columns); 2026-06-11 Plan 3b Task 2: test_extract_output_themes.py (2 tests — optional themes array, theme item shape)"
 status: mature
 load_bearing: false
 references:
@@ -825,6 +825,13 @@ but against a different book, confirming the `<book_id>:<chapter_num>` id scheme
 - `test_candidate_themes_columns` — uses `PRAGMA table_info(candidate_themes)` to assert all required columns are present: `id`, `name`, `description`, `occurrences_json`, `confidence`, `pipeline_run_id`, `chunk_id`, `quote`.
 
 No fixtures or database helpers needed; the schema SQL is read from the live file.
+
+## Extract-output themes schema tests (Plan 3b Task 2, feat/hlm-cast)
+
+`tests/test_extract_output_themes.py` verifies the optional `themes` array added to `EXTRACT_OUTPUT_SCHEMA`. Two tests using direct dict access on the live schema object (no database or fixtures needed):
+
+- `test_themes_is_an_optional_top_level_array` — asserts `"themes" in SCHEMA["properties"]`, `props["themes"]["type"] == "array"`, and `"themes" not in SCHEMA["required"]` (capability-gated, not mandatory).
+- `test_theme_item_shape` — asserts `SCHEMA["properties"]["themes"]["items"]["properties"]` contains both `"name"` and `"occurrences"` keys, verifying the `_THEME_SCHEMA` item shape is wired correctly.
 
 ## What would invalidate this article
 

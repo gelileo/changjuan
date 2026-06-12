@@ -3,7 +3,7 @@ title: Stage 3 extraction — Claude-Code-skill-driven architecture
 type: concept
 area: pipeline
 updated: 2026-06-11
-implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed); 2026-06-11 group 'type' fix (group extraction schema property renamed group_type→type; candidate_groups column renamed accordingly)
+implemented: Task 38 (variants_json stored in candidate_persons); 2026-06-11 State→Group full rename (bridges/aliases removed); 2026-06-11 group 'type' fix (group extraction schema property renamed group_type→type; candidate_groups column renamed accordingly); 2026-06-11 Plan 3b Task 2: optional themes array added to EXTRACT_OUTPUT_SCHEMA (capability-gated, not in required)
 status: thin
 load_bearing: true
 references:
@@ -218,6 +218,20 @@ harness in `tests/golden/precision_recall.py` likewise reads `golden["groups"]` 
 dict also uses key `"groups"`. The golden fixture file `tests/golden/ch01/states.yaml` was
 `git mv`'d to `tests/golden/ch01/groups.yaml`; its internal keys were already using `id`
 (not `state_id`), so no YAML edits were required.
+
+## Optional themes array in EXTRACT_OUTPUT_SCHEMA (Plan 3b Task 2)
+
+`EXTRACT_OUTPUT_SCHEMA` gains a sixth top-level property `"themes"` — an optional array of `_THEME_SCHEMA` objects. It is NOT added to the `"required"` list, making it **capability-gated**: skills that do not include the `themes` capability simply omit the key and pass schema validation unchanged. Skills that do (e.g. a future `changjuan-extract-v3` for the `cast` profile) emit theme objects alongside the five existing entity kinds.
+
+`_THEME_SCHEMA` shape:
+- `required`: `["name", "citation", "justifications"]`
+- `name`: string — the theme name (e.g. `命运`, `忠义`)
+- `description`: optional string or null
+- `occurrences`: optional array of `{entity_kind, entity_id}` objects, where `entity_kind ∈ {person,event,group,place,chapter}`
+- `citation`: `_CITATION_SCHEMA` (same verbatim-quote anchor as all other entity kinds)
+- `justifications`: array (intentionally loose — themes may cite multiple passages)
+
+Stage 7 theme loading and the `regen-extraction-schema` YAML mirror are additive follow-on tasks; this commit establishes the schema contract and capability-gate seam only.
 
 ## What would invalidate this article
 
