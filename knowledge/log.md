@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-12 — fix(load): person_group role free-text; Plan 3c hlm 3-chapter render
+
+Scaling cast extraction to 红楼梦 Ch.2–3 surfaced the 4th silent-drop: `person_groups` (clan membership) loaded 0 because `role` was validated against a history-era enum (`_VALID_PERSON_GROUP_ROLES` + a schema CHECK `role IN ('ruler','minister',…)`), but cast roles are free-text (成员/始祖/族长祖母). Dropped both the loader enum and the `person_groups.role` schema CHECK — role is now a free label (consistent with the relation-kind + corpus-label de-enumeration). Also added `link --book-id` (stage-5 was dzl-only). Result: hlm 3-chapter graph = 52 persons / 62 person-relations / 14 clan-memberships / 6 clans (贾·王·薛·史 四大家族 + 甄家/贾府) / 2 themes, **rendered in the reader** (名册 + 列国/clans, 0 console errors). Articles: knowledge-graph.md, load-and-merge.md, cli.md.
+
 ## 2026-06-12 — fix(extract): Plan 3c calibration — themes loading + relation field contract
 
 红楼梦 Ch.1 cast extraction (calibration) surfaced real gaps, all fixed: (1) `load_extraction` never wrote `candidate_themes` — added a themes block (themes carry no local id → indexed `cand:thm:{run}:t{i}`; occurrences → `occurrences_json`); (2) `_THEME_SCHEMA` used `justifications: array` but `validate_record` needs an `object`/dict — fixed + regenerated extraction-schema.yaml; (3) the cast prompt didn't pin the person_relation kind field — the loader reads `kind_detail` (not `relation_kind`, which is event_relation's field), and `_RELATION_SCHEMA` is `additionalProperties:True` so it didn't catch the wrong field → relations loaded with empty `kind` and were dropped; documented the relation field-name contract in the cast `system-prompt.md` + `extraction.md`. Result: Ch.1 → 17 persons / 10 person-relations / 1 group / 2 themes end-to-end. Articles: extraction.md, incremental.md.

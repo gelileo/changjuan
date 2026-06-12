@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS person_relations (
 CREATE TABLE IF NOT EXISTS person_groups (
     person_id       TEXT NOT NULL REFERENCES persons(id),
     group_id        TEXT NOT NULL REFERENCES groups(id),
-    role            TEXT NOT NULL CHECK (role IN ('ruler','minister','exile','defector','citizen','other')),
+    role            TEXT NOT NULL,
     from_date_json  TEXT,
     to_date_json    TEXT,
     citation_id     TEXT,

@@ -48,9 +48,8 @@ def _valid_event_kinds(profile: str) -> set[str]:
     return relation_kinds_for(profile, "event")
 
 
-_VALID_PERSON_GROUP_ROLES = frozenset(
-    {"ruler", "minister", "exile", "defector", "citizen", "other"}
-)
+# person_group `role` is a free-text membership label (cast: 成员/始祖/族长…;
+# history: ruler/minister/…) — not enum-validated, matching the dropped schema CHECK.
 
 
 def _resolve_fk(raw_id: str | None, id_map: dict[str, str]) -> str | None:
@@ -449,8 +448,8 @@ def load_candidate_person_groups(conn: sqlite3.Connection, run_id: str) -> int:
         person_id = _resolve_fk(raw_person_id, person_map)
         group_id = _resolve_fk(raw_group_id, group_map)
 
-        # Both FKs are NOT NULL and role must satisfy the CHECK constraint; skip if invalid.
-        if person_id is None or group_id is None or role not in _VALID_PERSON_GROUP_ROLES:
+        # Both FKs are NOT NULL; role is a free-text label (no enum). Skip unresolved FKs.
+        if person_id is None or group_id is None:
             continue
 
         if from_date_json is None:
