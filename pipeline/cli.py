@@ -835,6 +835,7 @@ def extract_load_cmd(
     extraction_file: Path = typer.Option(..., "--extraction-file", exists=True),
     prompt_version: str = typer.Option(..., "--prompt-version"),
     pipeline_run_id: str | None = typer.Option(None, "--pipeline-run-id"),
+    book_id: str = typer.Option("dzl", "--book-id", help="Book id under data/books/."),
     repo_root: Path = typer.Option(Path.cwd(), "--repo-root", exists=True, file_okay=False),
 ) -> None:
     """Validate + load a skill-produced extraction YAML into candidate_* tables."""
@@ -842,8 +843,9 @@ def extract_load_cmd(
         ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
         pipeline_run_id = f"run:extract-ch{chapter}-{prompt_version}-{ts}"
 
-    canonical = open_canonical_db(Config(repo_root=repo_root).canonical_db)
-    corpus = open_corpus_db(Config(repo_root=repo_root).corpus_db)
+    cfg = _cfg(repo_root, book_id)
+    canonical = open_canonical_db(cfg.canonical_db)
+    corpus = open_corpus_db(cfg.corpus_db)
     stats = load_extraction(
         canonical,
         corpus_conn=corpus,

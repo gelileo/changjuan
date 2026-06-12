@@ -1,5 +1,18 @@
 # Build Log
 
+## 2026-06-11 — fix(cli): add --book-id to extract-load command
+
+`pipeline/cli.py::extract_load_cmd` was missing `--book-id`, causing it to
+always default to `book_id="dzl"` and thus open `data/books/dzl/corpus.sqlite`
+regardless of the actual target book. All 54 candidate records for hlm ch1 were
+rejected with "unknown chunk_id". Fixed by adding `book_id: str = typer.Option("dzl", "--book-id")`,
+factoring `_cfg(repo_root, book_id)` out, and passing `cfg.canonical_db` / `cfg.corpus_db`
+to `open_canonical_db` / `open_corpus_db`. No test changes needed (existing tests
+use default book_id). Also: `changjuan extract-load --book-id hlm` now creates
+`data/books/hlm/canonical.sqlite` on first run (auto-create is handled by `open_canonical_db`).
+
+Articles touched: `concepts/runtime/cli.md` (extract-load entry updated with --book-id flag).
+
 ## 2026-06-11 — feat(load): capability-gated theme loading; Plan 3b complete — themes capability
 
 Plan 3b final task (CLI load gating). `pipeline/cli.py::load`:
