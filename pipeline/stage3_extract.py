@@ -340,8 +340,21 @@ def load_extraction(
     def _resolve_id(raw: str) -> str:
         return local_to_cand.get(raw, raw)
 
+    # Required endpoint fields per relation kind; a record missing any is skipped
+    # (one malformed relation must not abort the whole chapter's load).
+    _REQUIRED_REL_FIELDS = {
+        "event_participant": ("event_id", "person_id"),
+        "event_place": ("event_id", "place_id"),
+        "event_relation": ("from_event_id", "to_event_id"),
+        "person_relation": ("from_person_id", "to_person_id"),
+        "person_group": ("person_id", "group_id"),
+    }
     for r in relations:
         kind = r["kind"]
+        _req = _REQUIRED_REL_FIELDS.get(kind, ())
+        if any(r.get(_f) is None for _f in _req):
+            stats["invariant_violations"].append(f"{kind}: missing required field(s) {_req}")
+            continue
 
         if kind == "event_participant":
             ev_cand = _resolve_id(r["event_id"])

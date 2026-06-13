@@ -32,8 +32,8 @@ Read before extracting:
 Writes `data/books/hlm/readable/ch{N:02d}.md` (one section per chunk: chunk id + paragraph range heading + raw text). This is the single source of truth for `chunk_id`, paragraph ranges, and the exact NFC bytes of every quote.
 
 ### 3. Extract per chunk (process in `paragraph_start` order)
-Follow `system-prompt.md`. Chunk-local ids, reset per chunk:
-`p1,p2…` persons · `e1,e2…` events · `pl1,pl2…` places · `g1,g2…` groups (clans) · `t1,t2…` themes. Relations + theme occurrences reference these local ids.
+Follow `system-prompt.md`. **Local ids are unique across the WHOLE chapter YAML — do NOT reset them per chunk** (the loader keys candidates on `id`, so a reused id collides and the whole chapter fails to load):
+`p1,p2…` persons · `e1,e2…` events · `pl1,pl2…` places · `s1,s2…` groups (clans). Keep a single running counter per kind across all chunks. The same real-world entity gets ONE record (earliest chunk) reused by id; never reuse an id for a different entity. Relations + theme occurrences reference these ids.
 
 Every record needs a **citation** block + a **justifications** map:
 ```yaml

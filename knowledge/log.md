@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-12 — fix(extract): full-book batch run robustness (file-unique ids + relation guard)
+
+The batched full-红楼梦 extraction (120 回, 6 workflows) exposed two load bugs: (1) the cast SKILL/prompt said "reset local ids per chunk", but load_extraction keys candidates on `cand:per:{run}:{id}` — reused ids collided and silently failed 43/120 chapters (my load loop suppressed errors). Fixed the SKILL+prompt to require FILE-UNIQUE ids (running counter per kind); recovered the 43 already-extracted chapters with a chunk-scoped id-renumber transform (no re-extraction). (2) ch52 had a person_group relation missing `group_id` → KeyError aborted the chapter; load_extraction now skips a relation missing a required endpoint field (logged invariant violation). All 120 chapters now load: 395 persons / 572 relations / 139 clan-memberships / 23 clans / 619 events / 58 themes, dedup clean. Articles: extraction.md, incremental.md, testing.md.
+
 ## 2026-06-12 — test(extract): regression for load_extraction themes + person_relation kind_detail
 
 Closes the test gap that let the Plan 3c silent-drop bugs ship: `test_extract_load.py::test_loads_themes_and_person_relation_kind_detail` asserts a `themes` array lands in `candidate_themes` (with occurrences_json) and a `person_relation`'s kind is read from `kind_detail`. Article: testing.md.

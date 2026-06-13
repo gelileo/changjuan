@@ -310,3 +310,67 @@ def test_loads_themes_and_person_relation_kind_detail(tmp_path: Path) -> None:
         "SELECT kind FROM candidate_person_relations WHERE pipeline_run_id='run:t'"
     ).fetchone()
     assert pr is not None and pr[0] == "romantic"
+
+
+def test_malformed_relation_skipped_not_fatal(tmp_path: Path) -> None:
+    """Regression (Plan 3c batch): a relation missing a required endpoint field is
+    skipped with a logged violation — not a fatal KeyError that drops the chapter."""
+    corpus = open_corpus_db(tmp_path / "corpus.sqlite")
+    canonical = open_canonical_db(tmp_path / "changjuan.sqlite")
+    corpus.execute(
+        "INSERT INTO documents "
+        "(id, corpus, title, chapter_num, chapter_title, raw_text, source_edition, ingested_at) "
+        "VALUES (1, 'honglou', 't', 1, 'ch1', '...', 'test', datetime('now'))"
+    )
+    corpus.execute(
+        "INSERT INTO chunks (id, document_id, paragraph_start, paragraph_end, text, hash) "
+        "VALUES ('chk:c1', 1, 1, 1, '宝玉黛玉', 'h')"
+    )
+    corpus.commit()
+    f = tmp_path / "extract.yaml"
+    _write(
+        f,
+        {
+            "persons": [
+                {
+                    "id": "p1",
+                    "canonical_name": "宝玉",
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "宝玉",
+                    },
+                    "justifications": {"canonical_name": "宝玉"},
+                },
+            ],
+            "events": [],
+            "places": [],
+            "groups": [],
+            "themes": [],
+            "relations": [
+                # person_group missing group_id — must be skipped, not crash the load
+                {
+                    "kind": "person_group",
+                    "person_id": "p1",
+                    "role": "成员",
+                    "citation": {
+                        "chunk_id": "chk:c1",
+                        "paragraph": 1,
+                        "span": [0, 0],
+                        "quote": "宝玉",
+                    },
+                },
+            ],
+        },
+    )
+    stats = load_extraction(
+        canonical,
+        corpus_conn=corpus,
+        chapter_num=1,
+        extraction_file=f,
+        prompt_version="cast",
+        pipeline_run_id="run:t",
+    )
+    assert stats["persons_written"] == 1
+    assert any("missing required field" in v for v in stats["invariant_violations"])

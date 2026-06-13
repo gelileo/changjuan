@@ -3,7 +3,7 @@ title: Incremental extraction — re-extract semantics and prompt-version accumu
 type: concept
 area: pipeline
 updated: 2026-06-11
-note: 2026-06-11 extraction-schema.yaml auto-regenerated: group schema property renamed group_type→type (corpus-derived sub-classification; collective kind group_type is not an extraction field); 2026-06-11 Plan 3b Task 2: extraction-schema.yaml regenerated to include optional themes array (capability-gated, not in required); 2026-06-12 Plan 3c: theme justifications array→object (validate_record needs a dict); cast extraction skill changjuan-extract-cast added; 2026-06-12 cast skill relation vocab extended (consort/subject/neighbor/colleague/patron) + relation_detail reference list (kg-hongloumeng-sourced)
+note: 2026-06-11 extraction-schema.yaml auto-regenerated: group schema property renamed group_type→type (corpus-derived sub-classification; collective kind group_type is not an extraction field); 2026-06-11 Plan 3b Task 2: extraction-schema.yaml regenerated to include optional themes array (capability-gated, not in required); 2026-06-12 Plan 3c: theme justifications array→object (validate_record needs a dict); cast extraction skill changjuan-extract-cast added; 2026-06-12 cast skill relation vocab extended (consort/subject/neighbor/colleague/patron) + relation_detail reference list (kg-hongloumeng-sourced); 2026-06-12 cast SKILL/system-prompt fixed: local ids are FILE-UNIQUE across the whole chapter (running counter per kind), NOT reset per chunk — per-chunk reset collided in load_extraction and silently failed chapters
 status: thin
 load_bearing: true
 references:

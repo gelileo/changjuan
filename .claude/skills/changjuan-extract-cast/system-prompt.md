@@ -140,7 +140,7 @@ relations:
 
 - 每条记录必带 `citation`（`chunk_id` / `paragraph` / `quote` / `span:[0,0]`）与 `justifications`（各填充标量字段→quote 的子串）。
 - `quote` 必须是 chunk.text 的**逐字**子串（NFC）；最短能佐证即可（5–30 字）；勿含 `……`、勿含包裹引号 `“”`、勿含句末标点。
-- chunk-local id 每 chunk 重置：`p/e/pl/g/t` + 序号。同一实体跨 chunk 只记一次（取最早 chunk）。
+- id 在**整章 YAML 内全局唯一**：`p/e/pl/s` + 序号，**跨 chunk 连续编号、不要每 chunk 重置**（loader 以 `id` 建候选键，重号会整章加载失败）。同一实体跨 chunk 只记一次（取最早 chunk）、复用同一 id；不同实体不得复用同一 id。relations/occurrences 引用这些 id。
 - `span` 一律 `[0,0]`，由 `fill-spans` 计算。
 - **不做跨 chunk 推理；不臆造引文/justification。**
 
