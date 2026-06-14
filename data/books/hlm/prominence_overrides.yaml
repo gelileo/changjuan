@@ -1,0 +1,14 @@
+# Curated prominence for hlm (红楼梦). The `states:` key is the major-tier
+# allow-list read by export_enrich.add_group_prominence (historical key name;
+# applies to the `groups` table). Clan groups are now deduped to surname stems
+# (贾府/贾家/贾 → 贾), so list the stems. Marks the 四大家族 + 甄 major so the
+# reader's 列国 (clans) tab surfaces them under its default "重要" filter.
+states:
+  - 贾
+  - 王
+  - 薛
+  - 史
+  - 甄
+  - 尤
+  - 邢
+  - 林
