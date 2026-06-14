@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-13 — feat(load): clan group dedup on surname stem
+
+Deferred clan-name dedup tackled: cast clan-type groups now match + canonicalize on the surname stem (`_clan_stem` strips 府/家/氏家/侯家/世家), so 贾府/贾家/贾 → one 贾 node. Gated to `group_type=='clan'` — state (history) groups keep exact-name matching. Re-loaded all 120 红楼梦 chapters: **23 → 14 clans** (贾 roster 53, 薛 12, 王 6, …); 四大家族 each a single node. hlm prominence_overrides updated to stem names. Articles: load-and-merge.md, testing.md.
+
 ## 2026-06-12 — fix(extract): full-book batch run robustness (file-unique ids + relation guard)
 
 The batched full-红楼梦 extraction (120 回, 6 workflows) exposed two load bugs: (1) the cast SKILL/prompt said "reset local ids per chunk", but load_extraction keys candidates on `cand:per:{run}:{id}` — reused ids collided and silently failed 43/120 chapters (my load loop suppressed errors). Fixed the SKILL+prompt to require FILE-UNIQUE ids (running counter per kind); recovered the 43 already-extracted chapters with a chunk-scoped id-renumber transform (no re-extraction). (2) ch52 had a person_group relation missing `group_id` → KeyError aborted the chapter; load_extraction now skips a relation missing a required endpoint field (logged invariant violation). All 120 chapters now load: 395 persons / 572 relations / 139 clan-memberships / 23 clans / 619 events / 58 themes, dedup clean. Articles: extraction.md, incremental.md, testing.md.

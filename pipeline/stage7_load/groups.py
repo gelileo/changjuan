@@ -24,6 +24,20 @@ from pipeline.stage7_load.helpers import _SIMILAR_CONFIDENCE_DELTA, _slugify
 # Extracted scalar fields merged from candidates (higher-confidence-wins).
 _GROUP_SCALAR_FIELDS = ("type", "ruling_clan", "founded_date_json", "ended_date_json")
 
+# Household/lineage suffixes stripped to a clan's surname stem so name variants
+# merge (贾府/贾家/贾 → 贾; 史侯家/史家/史 → 史; 尤氏家/尤家/尤 → 尤). Applied ONLY to
+# clan-type groups (cast profile); state groups (history) keep exact-name matching.
+# 2-char suffixes are listed first so 史侯家 strips 侯家 (not 家 → 史侯).
+_CLAN_SUFFIXES = ("侯家", "氏家", "世家", "府", "家", "族")
+
+
+def _clan_stem(name: str) -> str:
+    """Strip one trailing household/lineage suffix to the clan surname stem."""
+    for suf in _CLAN_SUFFIXES:
+        if name.endswith(suf) and len(name) > len(suf):
+            return name[: -len(suf)]
+    return name
+
 
 def _last_field_confidence(
     conn: sqlite3.Connection, entity_kind: str, entity_id: str, field: str
@@ -73,16 +87,20 @@ def load_candidate_groups(
             confidence,
         ) = cand
 
-        existing = conn.execute("SELECT id FROM groups WHERE name = ?", (name,)).fetchone()
+        # Clan groups (cast) match + canonicalize on the surname stem so name
+        # variants (贾府/贾家/贾) collapse to one node; state groups match exactly.
+        match_name = _clan_stem(name) if grp_type == "clan" else name
+
+        existing = conn.execute("SELECT id FROM groups WHERE name = ?", (match_name,)).fetchone()
 
         if existing is None:
             # Build slug-based id; guard against slug collisions.
-            group_id = f"sta:{_slugify(name)}"
+            group_id = f"sta:{_slugify(match_name)}"
             if (
                 conn.execute("SELECT 1 FROM groups WHERE id = ?", (group_id,)).fetchone()
                 is not None
             ):
-                h = hashlib.sha256(name.encode("utf-8")).hexdigest()[:6]
+                h = hashlib.sha256(match_name.encode("utf-8")).hexdigest()[:6]
                 group_id = f"{group_id}-{h}"
 
             conn.execute(
@@ -92,7 +110,7 @@ def load_candidate_groups(
                 "VALUES (?, ?, ?, ?, ?, ?, ?, 'auto', ?, ?)",
                 (
                     group_id,
-                    name,
+                    match_name,
                     stype,
                     grp_type,
                     ruling_clan,
@@ -108,7 +126,7 @@ def load_candidate_groups(
                 group_id,
                 "create",
                 after_json=_json.dumps(
-                    {"value": name, "confidence": confidence}, ensure_ascii=False
+                    {"value": match_name, "confidence": confidence}, ensure_ascii=False
                 ),
                 actor="load@v1",
                 pipeline_run_id=pipeline_run_id,
