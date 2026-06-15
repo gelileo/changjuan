@@ -26,7 +26,7 @@ from pipeline.export_enrich import (
     build_citations_table,
     build_deed_importance,
 )
-from pipeline.profile import derive_reader_capabilities
+from pipeline.profile import default_group_type, derive_reader_capabilities
 
 SCHEMA_VERSION = 7  # v7: State→Group full rename (groups, group_id, person_groups, group_seats)
 
@@ -112,6 +112,9 @@ def export_bundle(
         "edition": book_meta.get("edition"),
         "cover": book_meta.get("cover"),
         "capabilities": manifest_reader_capabilities(book_meta),
+        # Collective kind of this book's groups (state|clan|faction|sect), derived
+        # from the profile. The reader maps it to the groups-tab label (列国/世家/…).
+        "group_type": default_group_type(str(book_meta.get("profile") or "history")),
         "counts": counts,
         "source_corpus_editions": _source_editions(corpus_db),
     }

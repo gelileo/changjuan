@@ -89,6 +89,10 @@ A single-LLM-agent pipeline (one tool-using agent decides everything per chapter
 
 `pipeline/stage9_export.py::validate_prices` is called by `export_bundle` immediately after the manifest dict is constructed and before `manifest.json` is written. It reads `book_meta.get("prices")` and normalises it: returns `None` for absent or empty values (free books); raises `ValueError` for unknown currencies (only CNY/USD supported via `PRICE_CURRENCIES`), non-positive amounts, non-numeric types, or booleans (which subclass `int` but must be rejected). When the result is non-None, `manifest["prices"]` is set — otherwise the key is omitted entirely. This preserves the reader's "absent → free" contract: free books carry no `prices` key, not `prices: null`.
 
+## Stage 9 — manifest group_type field
+
+`export_bundle` writes a `group_type` field into `manifest.json`, derived from the book's `profile` via `pipeline.profile.default_group_type` (history → `state`, cast → `clan`; absent profile → `state`). It is always present. The reader maps it to the groups-tab label (`state` → 列国, `clan` → 世家, …) so a clan book shows 世家 instead of 列国. This is the book-level counterpart of the loader-stamped `groups.group_type` column. Full contract in `concepts/pipeline/export-contract.md`.
+
 ## Stage 9 — texts/ copy pass
 
 `export_bundle` copies `data/books/<book-id>/readable/ch[0-9]*.md` files into `out_dir/texts/` in sorted order after the manifest write. The glob uses `ch[0-9]*.md` (not `ch*.md`) to exclude non-chapter files such as `changelog.md`. The copy is gated on `readable_dir.is_dir()`, so an absent `data/books/<book-id>/readable/` directory silently produces an empty `texts/` subdirectory. The source path is `cfg.readable_dir` (`data/books/<book-id>/readable/`). This is the phase-2 Reader payload; the v1 web bundle ships only `graph.sqlite`. `export_bundle` gains the required kw-only param `readable_dir: Path`; all call sites must supply it. `Config.readable_dir` is the canonical accessor.
