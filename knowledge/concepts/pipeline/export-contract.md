@@ -159,6 +159,7 @@ After the drops, `VACUUM` is called to reclaim space.
   "edition": "明刊本",
   "cover": null,
   "capabilities": ["cast", "timeline", "groups"],
+  "group_type": "state",
   "counts": {
     "persons": N,
     "person_variants": N,
@@ -182,6 +183,13 @@ fine-grained ETL capabilities via `manifest_reader_capabilities(book_meta)`. Thi
 
 Tabs whose required ETL capability is absent are omitted. This means the manifest carries only
 tabs the reader can actually populate, not raw ETL cap names. Consumers should gate on this value if the schema ever changes incompatibly.
+
+`group_type` is the collective kind of this book's groups — `state | clan | faction | sect` — derived
+from the book's `profile` via `pipeline.profile.default_group_type(profile)` (history → `state`,
+cast → `clan`; absent profile falls back to `state`). It is **always present** in the manifest. The
+reader maps it to the groups-tab label (`state` → 列国, `clan` → 世家, etc.) so a clan book shows
+世家 instead of 列国 — the per-`group_type` tab label. This is the book-level default; it mirrors the
+loader-stamped `groups.group_type` column (every group in a book shares the profile's kind).
 
 `book_id`, `title`, `author`, `edition`, `cover`, and `capabilities` are sourced from `data/books/<book_id>/book-meta.json` (authored by hand, not inferred). `book_id` and `capabilities` are required fields; `title`, `author`, `edition`, `cover` are optional (absent from the dict → `null` in the manifest). The default book id is `dzl` (东周列国志). Pass `--book-id` to `changjuan export` to target a different book.
 

@@ -257,6 +257,44 @@ def test_manifest_includes_book_identity_and_capabilities(tmp_path: Path) -> Non
     assert manifest["cover"] == _MINIMAL_BOOK_META["cover"]  # None → JSON null branch
 
 
+def test_manifest_group_type_defaults_to_state_for_history(tmp_path: Path) -> None:
+    # _MINIMAL_BOOK_META carries no "profile" → falls back to history → state.
+    src = tmp_path / "changjuan.sqlite"
+    corpus = _empty_corpus(tmp_path)
+    out = tmp_path / "exports" / "gt-state"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    export_bundle(
+        src,
+        out,
+        version="b",
+        corpus_db=corpus,
+        book_meta=_MINIMAL_BOOK_META,
+        readable_dir=tmp_path / "readable",
+    )
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["group_type"] == "state"
+
+
+def test_manifest_group_type_is_clan_for_cast_profile(tmp_path: Path) -> None:
+    src = tmp_path / "changjuan.sqlite"
+    corpus = _empty_corpus(tmp_path)
+    out = tmp_path / "exports" / "gt-clan"
+    with connect(src) as conn:
+        apply_schema(conn, CANONICAL_SCHEMA)
+    meta = {**_MINIMAL_BOOK_META, "profile": "cast", "capabilities": ["persons", "groups"]}
+    export_bundle(
+        src,
+        out,
+        version="b",
+        corpus_db=corpus,
+        book_meta=meta,
+        readable_dir=tmp_path / "readable",
+    )
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["group_type"] == "clan"
+
+
 def test_export_folds_chapter_texts_and_bumps_schema(tmp_path: Path) -> None:
     src = tmp_path / "changjuan.sqlite"
     corpus = _empty_corpus(tmp_path)

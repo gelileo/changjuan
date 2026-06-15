@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-14 — feat(export): manifest carries group_type for per-genre tab labels
+
+The export manifest now always emits `group_type` (`state | clan | faction | sect`), derived from the book's `profile` via `default_group_type` (history → state, cast → clan; absent → state). The reader maps it to the groups-tab label so clan books (红楼梦) show 世家 instead of 列国 — a dynamic per-`group_type` label rather than the hardcoded 列国. Mirrors the loader-stamped `groups.group_type` column at the book level. Article: export-contract.md (+ tests: test_stage9_export.py group_type cases).
+
 ## 2026-06-13 — feat(load): clan group dedup on surname stem
 
 Deferred clan-name dedup tackled: cast clan-type groups now match + canonicalize on the surname stem (`_clan_stem` strips 府/家/氏家/侯家/世家), so 贾府/贾家/贾 → one 贾 node. Gated to `group_type=='clan'` — state (history) groups keep exact-name matching. Re-loaded all 120 红楼梦 chapters: **23 → 14 clans** (贾 roster 53, 薛 12, 王 6, …); 四大家族 each a single node. hlm prominence_overrides updated to stem names. Articles: load-and-merge.md, testing.md.
