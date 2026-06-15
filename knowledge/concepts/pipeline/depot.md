@@ -37,6 +37,7 @@ bundles from `raw.githubusercontent.com` without any server infrastructure.
       "language": "zh-CN",
       "cover": null,
       "capabilities": ["cast", "timeline", "states"],
+      "group_type": "state",
       "schema_version": 6,
       "counts": { "persons": 0 },
       "version": "2026-06-v8",
@@ -53,7 +54,7 @@ bundles from `raw.githubusercontent.com` without any server infrastructure.
 Key fields:
 - `catalog_schema` — always `1` (schema version for the catalog envelope itself; separate from the book's `schema_version`).
 - `source.baseUrl` — prefix the reader appends to `bundle.path` to form a download URL.
-- Each `books[]` entry is the book's `manifest.json` fields plus `language` (defaults to `"zh-CN"` if absent from the manifest) plus a `bundle` descriptor.
+- Each `books[]` entry is the book's `manifest.json` fields plus `language` (defaults to `"zh-CN"` if absent from the manifest) plus a `bundle` descriptor. The whitelist is `_MANIFEST_FIELDS` in `publish_depot.py`; **only listed fields survive** into the catalog. The reader treats the catalog entry (minus `bundle`) AS the downloaded book's manifest, so any manifest field the reader needs at the book level must be whitelisted — e.g. `group_type` (the collective group kind that drives the groups-tab label 列国/世家/…) is in the whitelist so a downloaded clan book still shows 世家.
 - `bundle.path` — relative path within the depot repo: `books/<book_id>/<book_id>-<version>.sqlite`.
 - `bundle.bytes` / `bundle.sha256` — computed at publish time from the on-disk file; the reader can use these for integrity verification.
 - `prices` (optional) — an object mapping currency codes to amounts (e.g. `{"CNY": 18, "USD": 2.99}`), passed through from the manifest only when present. Free books omit this key entirely; the reader treats an absent `prices` as free.

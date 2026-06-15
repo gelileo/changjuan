@@ -26,6 +26,7 @@ _MANIFEST_FIELDS = (
     "edition",
     "cover",
     "capabilities",
+    "group_type",
     "schema_version",
     "counts",
     "version",

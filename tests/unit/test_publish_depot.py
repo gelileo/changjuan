@@ -19,6 +19,7 @@ def test_build_entry_carries_manifest_fields_and_defaults_language() -> None:
         "edition": "明",
         "cover": None,
         "capabilities": ["cast"],
+        "group_type": "state",
         "schema_version": 6,
         "counts": {"persons": 1},
         "version": "2026-06-v8",
@@ -27,6 +28,7 @@ def test_build_entry_carries_manifest_fields_and_defaults_language() -> None:
         manifest, bundle_path="books/dzl/dzl-2026-06-v8.sqlite", bytes_=10, sha256="abc"
     )
     assert entry["book_id"] == "dzl"
+    assert entry["group_type"] == "state"  # carried so downloaded books label the groups tab
     assert entry["language"] == "zh-CN"  # manifest lacks language → default
     assert entry["bundle"] == {
         "path": "books/dzl/dzl-2026-06-v8.sqlite",
