@@ -1,5 +1,9 @@
 # Build Log
 
+## 2026-06-14 — feat(depot): whitelist group_type into the catalog entry
+
+`build_entry`'s `_MANIFEST_FIELDS` now includes `group_type`. The reader treats a catalog entry (minus `bundle`) AS the downloaded book's manifest, so without this a downloaded clan book (红楼梦) would lose `group_type` and fall back to the 列国 groups-tab label. Article: depot.md (+ test_publish_depot.py asserts the field carries).
+
 ## 2026-06-14 — feat(export): manifest carries group_type for per-genre tab labels
 
 The export manifest now always emits `group_type` (`state | clan | faction | sect`), derived from the book's `profile` via `default_group_type` (history → state, cast → clan; absent → state). The reader maps it to the groups-tab label so clan books (红楼梦) show 世家 instead of 列国 — a dynamic per-`group_type` label rather than the hardcoded 列国. Mirrors the loader-stamped `groups.group_type` column at the book level. Article: export-contract.md (+ tests: test_stage9_export.py group_type cases).

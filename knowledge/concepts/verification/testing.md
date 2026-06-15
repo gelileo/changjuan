@@ -731,7 +731,7 @@ Four new tests lock the "promotion waiver" branch in `person_match_score` (added
 `tests/unit/test_publish_depot.py` (Depot B1 Task 2) exercises the three pure helpers in `pipeline.publish_depot`:
 
 - `test_sha256_file` — writes 10 bytes to a temp file, calls `sha256_file`, and asserts the hex digest matches `hashlib.sha256(b"SQLITEDATA").hexdigest()`. Validates the streamed 1 MiB-chunk read loop.
-- `test_build_entry_carries_manifest_fields_and_defaults_language` — constructs a manifest without a `language` key; calls `build_entry` and asserts: all ten `_MANIFEST_FIELDS` are copied verbatim, `language` defaults to `"zh-CN"`, and `bundle` contains the correct `path`/`bytes`/`sha256` descriptor.
+- `test_build_entry_carries_manifest_fields_and_defaults_language` — constructs a manifest without a `language` key; calls `build_entry` and asserts: every `_MANIFEST_FIELDS` entry is copied verbatim, `language` defaults to `"zh-CN"`, and `bundle` contains the correct `path`/`bytes`/`sha256` descriptor. As of 2026-06-14 the manifest fixture also carries `group_type: "state"` and the test asserts `entry["group_type"] == "state"` — the field is whitelisted so a downloaded clan book keeps its 世家 groups-tab label.
 - `test_upsert_appends_then_replaces_and_sorts` — calls `upsert_catalog` three times to verify: first call appends and sets `catalog_schema==1` + `generated_at`; second call with the same `book_id` replaces (no duplicate); third call with a new `book_id` produces a list sorted by `book_id`. Guards the replace-not-duplicate contract and sort ordering.
 
 ## publish_book orchestrator end-to-end test
